@@ -114,7 +114,7 @@ object webApp extends js.JSApp {
           root = elemToTreeItem(proxy.props.value.children),
           openByDefault = true,
           modelProxy = proxy.props
-          //          onItemSelect = onItemSelect _
+          //onItemSelect = onItemSelect _
         ),
         <.strong(
           ^.id := "treeviewcontent"
@@ -184,8 +184,8 @@ object webApp extends js.JSApp {
         <.button(
           ^.border := "1px solid",
           Styles.bootstrapButton,
-          ^.onClick --> dispatch(AddE),
-          "Add"
+          ^.onClick --> dispatch(RemoveElem(Seq(""))),
+          "Remove"
         )
       )
     }

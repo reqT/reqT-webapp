@@ -49,7 +49,9 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) => {
             modelRW.value.find(_.toString == path.last) match {
-              case Some(foundElem) => updated(modelRW.updated(modelRW.value.map(elem => if (elem == foundElem) Relation(elem.asInstanceOf[Entity], has, Tree(Seq(newElem))) else elem)).tree)
+              case Some(foundElem) => updated(modelRW.updated(modelRW.value.map(
+                elem => if (elem == foundElem) Relation(elem.asInstanceOf[Entity], has, Tree(Seq(newElem))) else elem
+              )).tree)
 
               case None => updated(modelRW.updated(modelRW.value :+ newElem).tree)
             }
@@ -58,12 +60,21 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         }
       }
       case RemoveElem(path: Seq[String]) => {
-        noChange
+        if (path.size <= 1)
+        updated(Tree(Seq()))
+        else {
+          val elemToRemove = path.last
+
+          zoomToChildren(modelRW, path.init.tail) match {
+            case Some(modelRW) => {
+              updated(modelRW.updated(modelRW.value.filterNot(retrieveEntity(_).toString == elemToRemove)).tree)
+            }
+            case None => noChange
+          }
+
+        }
       }
-
     }
-
-
   }
 
   override protected def actionHandler = new TreeHandler(zoomTo(_.tree))
