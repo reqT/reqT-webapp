@@ -7,7 +7,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 import org.scalajs.dom.{console, document}
 import scala.scalajs.js.Dynamic.{global => g}
-
+import scalacss.ScalaCssReact._
+import scalacss.Defaults._
 import scala.scalajs.js
 
 case class TreeItem(var item: Any, var children: Seq[TreeItem]) {
@@ -20,19 +21,20 @@ object ReactTreeView {
 
     def reactTreeView = Seq[TagMod]()
 
-    def treeGroup = Seq(^.margin := 0, ^.padding := "0 0 0 14px")
+    def treeGroup = Seq(^.margin := 0, ^.padding := "0 0 0 40px")
 
     def treeItem = Seq(^.listStyleType := "none")
 
     def selectedTreeItemContent = Seq(^.backgroundColor := "#1B8EB0",
       ^.color := "white", ^.fontWeight := 400,
-      ^.padding := "0 7px")
+      ^.padding := "0 40px")
 
     def treeItemBefore = Seq(
+      ^.verticalAlign := "middle",
       ^.display := "inline-block",
-      ^.fontSize := "11px",
+      ^.fontSize := "14px",
       ^.color := "grey",
-      ^.margin := "3px 7px 0 0",
+//      ^.margin := "3px 7px 0 0",
       ^.textAlign := "center",
       ^.width := "11px"
     )
@@ -163,8 +165,15 @@ object ReactTreeView {
       Callback()
     }
 
+    def removeElem(P: NodeProps): Callback = {
+      val dispatch: Action => Callback = P.modelProxy.dispatchCB
+      val path = if (P.parent.isEmpty) P.root.item.toString
+      else P.parent + "/" + P.root.item
+      dispatch(RemoveElem(path.split("/")))
+    }
 
     def render(P: NodeProps, S: NodeState): ReactTag = {
+      val dispatch: Action => Callback = P.modelProxy.dispatchCB
       val depth    = P.depth + 1
       val parent   = if  (P.parent.isEmpty) P.root.item.toString
       else s"${P.parent}/${P.root.item.toString}"
@@ -189,18 +198,49 @@ object ReactTreeView {
 
       <.li(
         P.style.treeItem,
-        treeMenuToggle,
-        ^.key := "toggle",
-        ^.cursor := "pointer",
-        <.span(
-          ^.id := P.root.item.toString,
-          S.selected ?= P.style.selectedTreeItemContent,
+//        treeMenuToggle,
+//        ^.key := "toggle",
+//        ^.cursor := "pointer",
+        <.div(
+          ^.overflow.hidden,
+          ^.position.relative,
+          ^.border := "1px solid",
+          ^.borderRadius := "5px",
+          ^.backgroundColor := "#EDF2F4",
+          ^.padding := "5px",
+          ^.width := "400px",
+          ^.height := "40px",
+          treeMenuToggle,
+          ^.key := "toggle",
+          ^.cursor := "pointer",
+          ^.className := "container",
           ^.onClick ==> onItemSelect(P),
-          P.root.item.toString,
           ^.draggable := true,
           ^.onDragStart ==> dragStart(P),
           ^.onDrop ==> onDrop(P),
-          ^.onDragOver ==> dragOver
+          ^.onDragOver ==> dragOver,
+          <.span(
+
+            ^.id := P.root.item.toString,
+            S.selected ?= P.style.selectedTreeItemContent,
+            P.root.item.toString,
+            ^.verticalAlign := "middle"
+//            ^.onClick ==> onItemSelect(P),
+//            ^.draggable := true,
+//            ^.onDragStart ==> dragStart(P),
+//            ^.onDrop ==> onDrop(P),
+//            ^.onDragOver ==> dragOver
+          ),
+          <.button(
+            Styles.bootStrapContentButton
+//            ^.onClick --> ViewContent()
+          ),
+          <.button(
+//            ^.height := "100%",
+            Styles.bootStrapRemoveButton,
+            ^.onClick --> removeElem(P)
+          )
+
 
         ),
         <.ul(P.style.treeGroup)(

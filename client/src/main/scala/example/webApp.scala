@@ -67,12 +67,13 @@ object webApp extends js.JSApp {
       <.pre(
         Styles.searchView,
         ^.paddingLeft := "10px",
-        ^.height := 100.px,
+        ^.height := "100%",
         ^.border := "1px solid",
         ^.onDrop ==> onDrop,
         ^.overflow := "auto",
         ^.onDragOver ==> dragOver,
         ^.id := "searchView"
+
       )
     )
     .build
@@ -179,19 +180,19 @@ object webApp extends js.JSApp {
         ^.paddingLeft := "15px",
         entityComponent(state.entities),
         sc(proxy => treeView(proxy)),
-        searchView(state.content),
-        <.button(
-          ^.border := "1px solid",
-          Styles.bootstrapButton,
-          ^.onClick --> dispatch(Reset),
-          "Reset"
-        ),
-        <.button(
-          ^.border := "1px solid",
-          Styles.bootstrapButton,
-          ^.onClick --> dispatch(RemoveElem(Seq())),
-          "Remove"
-        )
+        searchView(state.content)
+//        <.button(
+//          ^.border := "1px solid",
+//          Styles.bootstrapButton,
+//          ^.onClick --> dispatch(Reset),
+//          "Reset"
+//        ),
+//        <.button(
+//          ^.border := "1px solid",
+//          Styles.bootstrapButton,
+//          ^.onClick --> dispatch(RemoveElem(Seq())),
+//          "Remove"
+//        )
       )
     }
 
