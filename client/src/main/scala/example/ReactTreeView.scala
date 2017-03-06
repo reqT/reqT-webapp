@@ -66,15 +66,14 @@ object ReactTreeView {
       val setSelection: Callback =
         selected.modState(_.copy(selected = true))
 
-      //val tell: Callback =
-      //  P.onItemSelect.asCbo(
-      //    selected.props.root.item.toString,
-      //    selected.props.parent,
-      //    selected.props.depth
-      //  )
+      val tell: Callback = Callback(println(selected.props.root.item.toString))
+   /*     P.onItemSelect.asCbo(
+          selected.props.root.item.toString,
+          selected.props.parent,
+          selected.props.depth
+        )*/
 
-      removeSelection >> updateThis >> setSelection
-//      >> tell
+      removeSelection >> updateThis >> setSelection >> tell
     }
 
     def onTextChange(text: String): Callback =

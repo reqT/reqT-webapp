@@ -60,8 +60,10 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         }
       }
       case RemoveElem(path: Seq[String]) => {
-        if (path.size <= 1)
-        updated(Tree(Seq()))
+        if (path.isEmpty)
+          noChange
+        else if (path.size == 1)
+          updated(Tree(Seq()))
         else {
           val elemToRemove = path.last
 

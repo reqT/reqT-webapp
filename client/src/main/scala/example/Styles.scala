@@ -10,7 +10,7 @@ import scalacss.Defaults._
 object Styles extends StyleSheet.Inline {
   import dsl._
 
-  val dropArea = style(
+  val searchView = style(
     overflow.auto,
     width((100/3).%%),
     height(100.%%),

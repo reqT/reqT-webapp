@@ -20,12 +20,13 @@ import scalacss.Defaults._
 @JSExport
 object webApp extends js.JSApp {
   val url = "ws://127.0.0.1:9000/socket"
-  val entities = List("Req", "Stakeholder", "Label", "User")
+  val entities = List("Req", "Stakeholder", "Label", "User", "Item", "Label", "Meta", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release", "Resource", "Risk", "Service", "System", "User")
+  val elems =List(Req(""), Label(""), User("") )
   val headerButtons = List(("Export", NoAction), ("Import", NoAction), ("Release Planning", NoAction), ("Templates", NoAction), ("Help", NoAction))
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, entities: List[String]) {
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, entities: List[String], content: String) {
     // Create a new state with a line added to the log
     def log(line: String): State =
       copy(logLines = logLines :+ line)
@@ -61,17 +62,17 @@ object webApp extends js.JSApp {
     case node: Node => TreeItem(node, Seq())
   }
 
-  val searchView = ReactComponentB[Unit]("dropArea")
+  val searchView = ReactComponentB[Unit]("searchView")
     .render(_ =>
       <.pre(
-        Styles.dropArea,
+        Styles.searchView,
         ^.paddingLeft := "10px",
         ^.height := 100.px,
         ^.border := "1px solid",
         ^.onDrop ==> onDrop,
         ^.overflow := "auto",
         ^.onDragOver ==> dragOver,
-        ^.id := "dropArea"
+        ^.id := "searchView"
       )
     )
     .build
@@ -89,11 +90,11 @@ object webApp extends js.JSApp {
     ))
     .build
 
-  val entityListView = ReactComponentB[List[String]]("dragList")
+
+
+  val entityListView = ReactComponentB[List[String]]("entityList")
     .render(elemNames => <.pre(
-      Styles.dragList,
       ^.id := "dragList",
-      //      ^.width := 300.px,
       ^.height := 200.px,
       ^.border := "1px solid",
       ^.overflow := "auto",
@@ -103,6 +104,7 @@ object webApp extends js.JSApp {
     )
     )
     .build
+
 
   val treeView = ReactComponentB[ModelProxy[Tree]]("treeView")
     .render(proxy => <.pre(
@@ -133,6 +135,8 @@ object webApp extends js.JSApp {
       )
     ).build
 
+
+
   val navigationBar = ReactComponentB[Seq[(String, Action)]]("navigationBar")
     .render($ => <.nav(
       ^.paddingLeft := "15px",
@@ -153,6 +157,7 @@ object webApp extends js.JSApp {
         for (websocket <- state.websocket if state.message.nonEmpty)
           yield sendMessage(websocket, state.message)
 
+
       /**
         * Previous functionality, which will be used at a later stage (Server integration)
         */
@@ -172,9 +177,9 @@ object webApp extends js.JSApp {
       //        <.p("Write \'reqT\' to start reqT"),
       <.div(
         ^.paddingLeft := "15px",
-        entityListView(state.entities),
+        entityComponent(state.entities),
         sc(proxy => treeView(proxy)),
-        searchView(),
+        searchView(state.content),
         <.button(
           ^.border := "1px solid",
           Styles.bootstrapButton,
@@ -184,7 +189,7 @@ object webApp extends js.JSApp {
         <.button(
           ^.border := "1px solid",
           Styles.bootstrapButton,
-          ^.onClick --> dispatch(RemoveElem(Seq(""))),
+          ^.onClick --> dispatch(RemoveElem(Seq())),
           "Remove"
         )
       )
@@ -198,6 +203,26 @@ object webApp extends js.JSApp {
         None
     }
 
+
+    val entityComponent = ReactComponentB[List[String]]("entityComponent")
+      .render(elemList =>
+        <.pre(
+          Styles.dragList,
+          <.form(
+            <.input.text(
+              ^.placeholder := "Search..",
+              ^.onChange ==> onTextChange
+            ),
+            <.p(
+              <.input.checkbox(),
+              "Relations"
+            )
+          ),
+          entityListView(elemList.props)
+        )
+      )
+      .build
+
     val log = ReactComponentB[Vector[String]]("log")
       .render($ =>
         <.pre(
@@ -208,6 +233,10 @@ object webApp extends js.JSApp {
           $.props.map(<.p(_)))
       )
       .build
+
+    def onTextChange(event: ReactEventI) =
+      event.extract(_.target.value)(value => $.modState(_.copy(entities = entities.filter(_.toLowerCase.contains(value.toLowerCase)))))
+
 
 
     def onChange(event: ReactEventI): Callback = {
@@ -282,7 +311,7 @@ object webApp extends js.JSApp {
   }
 
   val Content = ReactComponentB[Props]("Content")
-    .initialState(State(None, Vector.empty, "", entities))
+    .initialState(State(None, Vector.empty, "", entities, ""))
     .renderBackend[Backend]
     .componentDidMount(_.backend.start)
     .componentWillUnmount(_.backend.end)
