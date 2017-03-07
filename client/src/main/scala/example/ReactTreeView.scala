@@ -9,9 +9,10 @@ import org.scalajs.dom.{console, document}
 
 import scala.scalajs.js.Dynamic.{global => g}
 import scalacss.ScalaCssReact._
-import scalacss.Defaults._
 import scala.scalajs.js
-import scalacss.internal.StringRenderer.Default
+import upickle.default._
+
+
 
 case class TreeItem(var item: Any, var children: Seq[TreeItem]) {
   def apply(item: Any): TreeItem = this(item, Seq())
@@ -105,6 +106,7 @@ object ReactTreeView {
     def dragStart(P: NodeProps)(e: ReactDragEvent): Callback = {
       val path = if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item
+
       if (e.currentTarget.textContent.tail != "Model( )"){
         e.dataTransfer.effectAllowed = "move"
         e.dataTransfer.setData("existing", "true")
@@ -141,9 +143,15 @@ object ReactTreeView {
     def onDrop(P: NodeProps)(e: ReactDragEvent): Callback = {
       val path = (if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item).split("/")
+
+      val u =e.dataTransfer.getData("elem")
+      val r = read[Entity](u)
+      println(r.toString)
+
       val pathToDraggedElem = e.dataTransfer.getData("path")
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       e.preventDefault()
+
 
       def elemFromString(elemType: String, id: String): Elem =
         elemType match {
@@ -159,9 +167,6 @@ object ReactTreeView {
       if(P.root.item.toString != "Model()"){
         isAttribute = P.root.item.asInstanceOf[Elem].isAttribute
       }
-
-      println(pathToDraggedElem)
-      println(path)
 
       if (e.dataTransfer.getData("existing") == "false") {
         val id = g.prompt("Input Entity ID").toString

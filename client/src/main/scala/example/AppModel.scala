@@ -1,7 +1,6 @@
 package example
 
 import diode.Action
-import org.scalajs.dom.svg.Path
 
 /**
   * Created by johan on 2/22/17.
@@ -29,7 +28,6 @@ case class Relation(entity:Entity, link:RelationTypes, submodel:Tree) extends El
 sealed trait Node extends Elem
 
 sealed trait Attribute[T] extends Node {
-  val value: T
   isAttribute = true
 }
 
@@ -105,7 +103,7 @@ case class Risk(id: String) extends Context
 
 case class Service(id: String) extends Context
 
-case class Stakeholder(id: String) extends Context
+case class Stakeholder(id: String = "") extends Context
 
 case class System(id: String) extends Context
 
