@@ -226,8 +226,9 @@ object ReactTreeView {
             ^.unselectable := "true",
             P.root.item.toString,
             ^.position := "absolute",
-            ^.height := "100.%%",
-            ^.left := "10.%%"
+            ^.left := "7%",
+            ^.top := "25%",
+            ^.fontSize := "large"
 //            ^.onClick ==> onItemSelect(P),
 //            ^.draggable := true,
 //            ^.onDragStart ==> dragStart(P),
@@ -239,7 +240,6 @@ object ReactTreeView {
 //            ^.onClick --> ViewContent()
           ),
           <.button(
-//            ^.height := "100%",
             Styles.bootStrapRemoveButton,
             ^.onClick --> removeElem(P)
           )

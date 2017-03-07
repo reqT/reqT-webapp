@@ -1,3 +1,19 @@
 p.reqT {
     color: green;
 }
+
+html {
+    height: 100vh;
+}
+
+body{
+    height: 100vh;
+}
+
+div#header{
+    height: 5%;
+}
+
+div#content{
+    height: 90%;
+}

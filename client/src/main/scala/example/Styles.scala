@@ -13,24 +13,27 @@ object Styles extends StyleSheet.Inline {
 
   val searchView = style(
     overflow.auto,
-    width((100/4).%%),
-    height(100.%%),
-    float.left
-  )
+    width(100.%%),
+    height(49.%%)
+//    float.left
 
-  val treeView = style(
-    overflow.auto,
-    width((100/2).%%),
-    height(100.%%),
-    float.left
   )
 
   val dragList = style(
     overflow.auto,
-    width((100/4).%%),
+    width(100.%%),
+    height(50.%%)
+//    float.left
+
+
+  )
+  val treeView = style(
+    overflow.auto,
+    width(80.%%),
     height(100.%%),
     float.left
   )
+
 
   val listElem = style(
 
