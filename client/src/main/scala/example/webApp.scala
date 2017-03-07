@@ -15,6 +15,7 @@ import org.scalajs.dom.ext.KeyCode
 
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
+import upickle.default._
 
 
 @JSExport
@@ -41,13 +42,12 @@ object webApp extends js.JSApp {
   def dragStart(event: ReactDragEvent): Callback = {
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("existing", "false")
-    console.log(event.currentTarget.textContent)
-    Callback(event.dataTransfer.setData("text", event.currentTarget.textContent))
+
+    Callback(event.dataTransfer.setData("elem", event.target.textContent))
   }
 
   def onDrop(event: ReactDragEvent): Callback = {
     // event.preventDefault()
-    console.log("target: " + event.target.textContent + " + Transfer: " + event.dataTransfer.getData("text"))
     event.target.appendChild(document.getElementById(event.dataTransfer.getData("text")))
     Callback()
   }
@@ -80,7 +80,7 @@ object webApp extends js.JSApp {
 
   val listElem = ReactComponentB[String]("listElem")
     .render($ => <.ul(
-      $.props,
+      $.props.toString.takeWhile(_!='('),
       Styles.listElem,
       ^.id := $.props,
       ^.classID := $.props,
@@ -94,14 +94,14 @@ object webApp extends js.JSApp {
 
 
   val entityListView = ReactComponentB[List[String]]("entityList")
-    .render(elemNames => <.pre(
+    .render(elems => <.pre(
       ^.id := "dragList",
       ^.height := 200.px,
       ^.border := "1px solid #ccc",
       ^.overflow := "auto",
       ^.onDragOver ==> dragOver,
       ^.onDrop ==> onDrop,
-      elemNames.props.map(listElem(_))
+      elems.props.map(listElem(_))
     )
     )
     .build

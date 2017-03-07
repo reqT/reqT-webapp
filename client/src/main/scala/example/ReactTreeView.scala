@@ -6,10 +6,12 @@ import japgolly.scalajs.react.CompScope._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 import org.scalajs.dom.{console, document}
+
 import scala.scalajs.js.Dynamic.{global => g}
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import scala.scalajs.js
+import scalacss.internal.StringRenderer.Default
 
 case class TreeItem(var item: Any, var children: Seq[TreeItem]) {
   def apply(item: Any): TreeItem = this(item, Seq())
@@ -101,16 +103,16 @@ object ReactTreeView {
   case class NodeBackend($: BackendScope[NodeProps, NodeState]) {
 
     def dragStart(P: NodeProps)(e: ReactDragEvent): Callback = {
-      e.dataTransfer.effectAllowed = "move"
-      e.dataTransfer.setData("existing", "true")
-      printChildren(P.root)
-
-
-      def printChildren(x: TreeItem): Unit = {
-        println(x.item)
-        x.children.map(printChildren )
+      val path = if (P.parent.isEmpty) P.root.item.toString
+      else P.parent + "/" + P.root.item
+      if (e.currentTarget.textContent.tail != "Model( )"){
+        e.dataTransfer.effectAllowed = "move"
+        e.dataTransfer.setData("existing", "true")
+        e.dataTransfer.setData("path", path)
+        Callback(e.dataTransfer.setData("elem", e.currentTarget.textContent))
+      }else{
+        Callback()
       }
-      Callback(e.dataTransfer.setData("text", e.currentTarget.textContent))
     }
 
     def onTreeMenuToggle(P: NodeProps)(e: ReactEventH): Callback =
@@ -137,27 +139,43 @@ object ReactTreeView {
     }
 
     def onDrop(P: NodeProps)(e: ReactDragEvent): Callback = {
-      val path = if (P.parent.isEmpty) P.root.item.toString
-        else P.parent + "/" + P.root.item
-
+      val path = (if (P.parent.isEmpty) P.root.item.toString
+      else P.parent + "/" + P.root.item).split("/")
+      val pathToDraggedElem = e.dataTransfer.getData("path")
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       e.preventDefault()
-      if(e.dataTransfer.getData("existing").equals("true")) {
-        console.log(e.dataTransfer.getData("text"))
 
-        Callback()
-      } else {
-      val id = g.prompt("Input Entity ID").toString
-      def elemFromString(elemType: String): Elem =
-        elemType match{
+      def elemFromString(elemType: String, id: String): Elem =
+        elemType match {
           case "Req" => Req(id)
           case "Stakeholder" => Stakeholder(id)
           case "Label" => Label(id)
           case "User" => User(id)
-
+          case _ => Relation(Req("Placeholder"), has, Tree(Seq(Label("Placeholder"))))
         }
-        dispatch(AddElem(path.split("/"), elemFromString(e.dataTransfer.getData("Text"))))
 
+      var isAttribute = false
+
+      if(P.root.item.toString != "Model()"){
+        isAttribute = P.root.item.asInstanceOf[Elem].isAttribute
+      }
+
+      println(pathToDraggedElem)
+      println(path)
+
+      if (e.dataTransfer.getData("existing") == "false") {
+        val id = g.prompt("Input Entity ID").toString
+        dispatch(AddElem(path, elemFromString(e.dataTransfer.getData("elem"), id)))
+
+      } else if (isAttribute || pathToDraggedElem.split("/").diff(path).isEmpty) {
+        dispatch(NoAction)
+      }else{
+        val elemType = e.dataTransfer.getData("elem").split('(').head
+        val id = e.dataTransfer.getData("elem").split('(').last.init
+        println("parent" + P.parent)
+
+        dispatch(RemoveElem(pathToDraggedElem.split("/"))) >> dispatch(AddElem(path, elemFromString(elemType,id)))
+        //dispatch(MoveElem(pathToDraggedElem.split("/"), path, elemFromString(elemType,id)))
       }
     }
 

@@ -310,7 +310,9 @@ case class AddElem(path: Seq[String], elem: Elem) extends Action
 
 case class RemoveElem(path: Seq[String]) extends Action
 
-case class UpdateElem(path: Seq[String]) extends Action
+case class MoveElem(oldPath: Seq[String], newPath: Seq[String], elem: Elem) extends Action
+
+case class UpdateElem(path: Seq[String], elem: Elem) extends  Action
 
 case class Select() extends Action
 
