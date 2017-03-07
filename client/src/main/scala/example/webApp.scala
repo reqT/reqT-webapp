@@ -1,6 +1,5 @@
 package example
 
-//import scalacss.ScalaCssReact._
 import diode.Action
 import org.scalajs.dom._
 
@@ -12,14 +11,18 @@ import japgolly.scalajs.react._
 import scala.util.{Failure, Success}
 import diode.react.ModelProxy
 import org.scalajs.dom.ext.KeyCode
+import org.scalajs.dom.raw.{HTMLElement, HTMLStyleElement}
 
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
 
 
+
+
 @JSExport
 object webApp extends js.JSApp {
+
   val url = "ws://127.0.0.1:9000/socket"
   val entities = List("Req", "Stakeholder", "Label", "User", "Item", "Label", "Meta", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release", "Resource", "Risk", "Service", "System", "User")
   val elems =List(Req(""), Label(""), User("") )
@@ -67,7 +70,6 @@ object webApp extends js.JSApp {
       <.pre(
         Styles.searchView,
         ^.paddingLeft := "10px",
-        ^.height := "100%",
         ^.border := "1px solid #ccc",
         ^.onDrop ==> onDrop,
         ^.overflow := "auto",
@@ -128,6 +130,7 @@ object webApp extends js.JSApp {
 
   val buttonComponent = ReactComponentB[(String, Action)]("buttonComponent")
     .render($ =>
+
       <.button(
         ^.padding := "10px",
         $.props._1,
@@ -177,10 +180,24 @@ object webApp extends js.JSApp {
       //        log(state.logLines), // Display log
       //        <.p("Write \'reqT\' to start reqT"),
       <.div(
-        ^.paddingLeft := "15px",
-        entityComponent(state.entities),
-        sc(proxy => treeView(proxy)),
-        searchView(state.content)
+        ^.className := "container",
+        ^.width := "100%",
+        ^.height := "100%",
+//        ^.paddingLeft := "15px",
+        <.div(
+          ^.className := "col-1",
+          ^.float := "left",
+          ^.width := "20%",
+          ^.height := "100%",
+          entityComponent(state.entities),
+          searchView(state.content)
+        ),
+        <.div(
+          ^.height := "100%",
+          sc(proxy => treeView(proxy))
+
+        )
+
 //        <.button(
 //          ^.border := "1px solid",
 //          Styles.bootstrapButton,
@@ -322,6 +339,8 @@ object webApp extends js.JSApp {
 
   def main(): Unit = {
     Styles.addToDocument()
+    println(Standalone.render[String])
+    Standalone.render[HTMLStyleElement].outerHTML
     ReactDOM.render(navigationBar(headerButtons), document.getElementById("header"))
     ReactDOM.render(dc(proxy => Content(Props(proxy))), document.getElementById("content"))
   }
