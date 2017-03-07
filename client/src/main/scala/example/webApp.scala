@@ -68,7 +68,7 @@ object webApp extends js.JSApp {
         Styles.searchView,
         ^.paddingLeft := "10px",
         ^.height := "100%",
-        ^.border := "1px solid",
+        ^.border := "1px solid #ccc",
         ^.onDrop ==> onDrop,
         ^.overflow := "auto",
         ^.onDragOver ==> dragOver,
@@ -97,7 +97,7 @@ object webApp extends js.JSApp {
     .render(elemNames => <.pre(
       ^.id := "dragList",
       ^.height := 200.px,
-      ^.border := "1px solid",
+      ^.border := "1px solid #ccc",
       ^.overflow := "auto",
       ^.onDragOver ==> dragOver,
       ^.onDrop ==> onDrop,
@@ -110,7 +110,7 @@ object webApp extends js.JSApp {
   val treeView = ReactComponentB[ModelProxy[Tree]]("treeView")
     .render(proxy => <.pre(
       Styles.treeView,
-      ^.border := "1px solid",
+      ^.border := "1px solid #ccc",
       ^.id := "treeView",
       <.div(
         ReactTreeView(

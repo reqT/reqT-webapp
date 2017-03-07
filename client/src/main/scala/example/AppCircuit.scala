@@ -66,7 +66,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 //          updated(Tree(Seq()))
         else {
           val elemToRemove = path.last
-          path.foreach(println)
           zoomToChildren(modelRW, path.init.tail) match {
             case Some(modelRW) => {
               updated(modelRW.updated(modelRW.value.filterNot(retrieveEntity(_).toString == elemToRemove)).tree)

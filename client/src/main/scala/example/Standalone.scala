@@ -8,11 +8,11 @@ import scalacss.Defaults._
 object Standalone extends StyleSheet.Standalone {
   import dsl._
 
-  "html" - (
+  "html" - {
     height(100.%%)
-    )
+  }
 
-  "body" - (
+  "body" - {
     height(100.%%)
-    )
+  }
 }

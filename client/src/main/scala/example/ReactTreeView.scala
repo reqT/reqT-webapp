@@ -30,7 +30,9 @@ object ReactTreeView {
       ^.padding := "0 40px")
 
     def treeItemBefore = Seq(
-      ^.verticalAlign := "middle",
+      ^.position := "absolute",
+      ^.height := "100.%%",
+      ^.left := "2.%%",
       ^.display := "inline-block",
       ^.fontSize := "14px",
       ^.color := "grey",
@@ -220,11 +222,12 @@ object ReactTreeView {
           ^.onDrop ==> onDrop(P),
           ^.onDragOver ==> dragOver,
           <.span(
-
             ^.id := P.root.item.toString,
-            S.selected ?= P.style.selectedTreeItemContent,
+            ^.unselectable := "true",
             P.root.item.toString,
-            ^.verticalAlign := "middle"
+            ^.position := "absolute",
+            ^.height := "100.%%",
+            ^.left := "10.%%"
 //            ^.onClick ==> onItemSelect(P),
 //            ^.draggable := true,
 //            ^.onDragStart ==> dragStart(P),
