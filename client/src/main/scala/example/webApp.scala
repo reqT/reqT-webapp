@@ -13,8 +13,11 @@ import diode.react.ModelProxy
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.raw.{HTMLElement, HTMLStyleElement}
 
+import scala.scalajs.js.JSON
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
+import upickle.default._
+
 
 
 
@@ -24,35 +27,37 @@ object webApp extends js.JSApp {
 
   val url = "ws://127.0.0.1:9000/socket"
   val entities = List("Req", "Stakeholder", "Label", "User", "Item", "Label", "Meta", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release", "Resource", "Risk", "Service", "System", "User")
-  val elems =List(Req(""), Label(""), User("") )
+  val elems =List(Req(""), Label(""), User(""), Stakeholder("joan"), Prio(0))
   val headerButtons = List(("Export", NoAction), ("Import", NoAction), ("Release Planning", NoAction), ("Templates", NoAction), ("Help", NoAction))
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, entities: List[String], content: String) {
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], content: String) {
     // Create a new state with a line added to the log
     def log(line: String): State =
       copy(logLines = logLines :+ line)
   }
 
-  def dragOver(event: ReactDragEvent): Callback = {
-    event.preventDefault()
-    event.dataTransfer.dropEffect = "move"
-    Callback()
-  }
 
-  def dragStart(event: ReactDragEvent): Callback = {
+  def dragStart(elem: Elem)(event: ReactDragEvent): Callback = {
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("existing", "false")
-
-    Callback(event.dataTransfer.setData("elem", event.target.textContent))
+    elem match  {
+      case entity: Entity =>
+        event.dataTransfer.setData("type", "entity")
+        Callback(event.dataTransfer.setData("elem", write[Entity](entity)))
+      case attribute: StringAttribute =>
+        event.dataTransfer.setData("type", "stringAttr")
+        Callback(event.dataTransfer.setData("elem", write[StringAttribute](attribute)))
+      case attribute: IntAttribute =>
+        event.dataTransfer.setData("type", "intAttr")
+        Callback(event.dataTransfer.setData("elem", write[IntAttribute](attribute)))
+      case _ =>
+        event.dataTransfer.setData("type", "invalid")
+        Callback(println("Dragged element is not valid"))
+    }
   }
 
-  def onDrop(event: ReactDragEvent): Callback = {
-    // event.preventDefault()
-    event.target.appendChild(document.getElementById(event.dataTransfer.getData("text")))
-    Callback()
-  }
 
   def elemToTreeItem(elems: Seq[Elem]): TreeItem = {
     TreeItem("Model()", elems.map(elem => convert(elem)))
@@ -70,38 +75,34 @@ object webApp extends js.JSApp {
         Styles.searchView,
         ^.paddingLeft := "10px",
         ^.border := "1px solid #ccc",
-        ^.onDrop ==> onDrop,
         ^.overflow := "auto",
-        ^.onDragOver ==> dragOver,
         ^.id := "searchView"
 
       )
     )
     .build
 
-  val listElem = ReactComponentB[String]("listElem")
+  val listElem = ReactComponentB[Elem]("listElem")
     .render($ => <.ul(
       $.props.toString.takeWhile(_!='('),
       Styles.listElem,
-      ^.id := $.props,
-      ^.classID := $.props,
+      ^.id := $.props.toString,
+      ^.classID := $.props.toString,
       ^.background := "#eee",
       ^.padding := 5.px,
       ^.draggable := "true",
-      ^.onDragStart ==> dragStart
+      ^.onDragStart ==> dragStart($.props)
     ))
     .build
 
 
 
-  val entityListView = ReactComponentB[List[String]]("entityList")
+  val entityListView = ReactComponentB[List[Elem]]("entityList")
     .render(elems => <.pre(
       ^.id := "dragList",
-      ^.height := 200.px,
+      ^.height := "80%",
       ^.border := "1px solid #ccc",
       ^.overflow := "auto",
-      ^.onDragOver ==> dragOver,
-      ^.onDrop ==> onDrop,
       elems.props.map(listElem(_))
     )
     )
@@ -164,20 +165,7 @@ object webApp extends js.JSApp {
       /**
         * Previous functionality, which will be used at a later stage (Server integration)
         */
-      //      <.div(
-      //        <.h3("Type a message to get it reversed:"),
-      //        <.div(
-      //          <.input(
-      //            ^.onChange ==> onChange,
-      //            ^.value := state.message),
-      //            ^.onKeyDown ==>? handleNewTodoKeyDown(dispatch),
-      //          <.button(
-      //            ^.disabled := send.isEmpty, // Disable button if unable to send
-      //            ^.onClick -->? send, // --> suffixed by ? because it's for Option[Callback]
-      //            "Reverse")),
-      //        <.h4("Connection log"),
-      //        log(state.logLines), // Display log
-      //        <.p("Write \'reqT\' to start reqT"),
+
       <.div(
         ^.className := "container",
         ^.width := "100%",
@@ -188,15 +176,29 @@ object webApp extends js.JSApp {
           ^.float := "left",
           ^.width := "20%",
           ^.height := "100%",
-          entityComponent(state.entities),
-          searchView(state.content)
+          entityComponent(state.elems),
+//          searchView(state.content)
+          <.pre(
+            ^.height := "49%",
+            <.h4("Type a message to get it reversed:"),
+            <.div(
+              <.input(
+                ^.onChange ==> onChange,
+                ^.value := state.message),
+              ^.onKeyDown ==>? handleNewTodoKeyDown(dispatch),
+              <.button(
+                ^.disabled := send.isEmpty, // Disable button if unable to send
+                ^.onClick -->? send, // --> suffixed by ? because it's for Option[Callback]
+                "Reverse")),
+            <.h4("Connection log"),
+            log(state.logLines), // Display log
+            <.p("Write \'reqT\' to start reqT")
+          )
         ),
         <.div(
           ^.height := "100%",
           sc(proxy => treeView(proxy))
-
         )
-
 //        <.button(
 //          ^.border := "1px solid",
 //          Styles.bootstrapButton,
@@ -221,7 +223,7 @@ object webApp extends js.JSApp {
     }
 
 
-    val entityComponent = ReactComponentB[List[String]]("entityComponent")
+    val entityComponent = ReactComponentB[List[Elem]]("entityComponent")
       .render(elemList =>
         <.pre(
           Styles.dragList,
@@ -229,11 +231,11 @@ object webApp extends js.JSApp {
             <.input.text(
               ^.placeholder := "Search..",
               ^.onChange ==> onTextChange
-            ),
-            <.p(
-              <.input.checkbox(),
-              "Relations"
             )
+//            <.p(
+//              <.input.checkbox(),
+//              "Relations"
+//            )
           ),
           entityListView(elemList.props)
         )
@@ -252,7 +254,7 @@ object webApp extends js.JSApp {
       .build
 
     def onTextChange(event: ReactEventI) =
-      event.extract(_.target.value)(value => $.modState(_.copy(entities = entities.filter(_.toLowerCase.contains(value.toLowerCase)))))
+      event.extract(_.target.value)(value => $.modState(_.copy(elems = elems.filter(_.toString.toLowerCase.contains(value.toLowerCase)))))
 
 
 
@@ -328,7 +330,7 @@ object webApp extends js.JSApp {
   }
 
   val Content = ReactComponentB[Props]("Content")
-    .initialState(State(None, Vector.empty, "", entities, ""))
+    .initialState(State(None, Vector.empty, "", elems, ""))
     .renderBackend[Backend]
     .componentDidMount(_.backend.start)
     .componentWillUnmount(_.backend.end)
@@ -337,11 +339,6 @@ object webApp extends js.JSApp {
   val dc = AppCircuit.connect(_.tree)
 
   def main(): Unit = {
-    import upickle.default._
-
-    val x = write(Req("Hej"))
-    println(read[Req](x))
-
     Styles.addToDocument()
     ReactDOM.render(navigationBar(headerButtons), document.getElementById("header"))
     ReactDOM.render(dc(proxy => Content(Props(proxy))), document.getElementById("content"))

@@ -7,14 +7,13 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 import org.scalajs.dom.{console, document}
 
-import scala.scalajs.js.Dynamic.{global => g}
+import scala.scalajs.js.Dynamic.{global => global}
 import scalacss.ScalaCssReact._
-import scalacss.Defaults._
 import scala.scalajs.js
-import scalacss.internal.StringRenderer.Default
+
 
 case class TreeItem(var item: Any, var children: Seq[TreeItem]) {
-  def apply(item: Any): TreeItem = this(item, Seq())
+  def apply(item: Any): TreeItem = this (item, Seq())
 }
 
 object ReactTreeView {
@@ -38,7 +37,7 @@ object ReactTreeView {
       ^.display := "inline-block",
       ^.fontSize := "14px",
       ^.color := "grey",
-//      ^.margin := "3px 7px 0 0",
+      //      ^.margin := "3px 7px 0 0",
       ^.textAlign := "center",
       ^.width := "11px"
     )
@@ -73,11 +72,11 @@ object ReactTreeView {
         selected.modState(_.copy(selected = true))
 
       val tell: Callback = Callback(println(selected.props.root.item.toString))
-   /*     P.onItemSelect.asCbo(
-          selected.props.root.item.toString,
-          selected.props.parent,
-          selected.props.depth
-        )*/
+      /*     P.onItemSelect.asCbo(
+             selected.props.root.item.toString,
+             selected.props.parent,
+             selected.props.depth
+           )*/
 
       removeSelection >> updateThis >> setSelection >> tell
     }
@@ -89,29 +88,39 @@ object ReactTreeView {
       <.div(P.style.reactTreeView)(
         //P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
         TreeNode.withKey("root")(NodeProps(
-          root         = P.root,
-          open         = if (S.filterText.nonEmpty) true else P.open,
+          root = P.root,
+          open = if (S.filterText.nonEmpty) true else P.open,
           onNodeSelect = onNodeSelect(P),
-          filterText   = S.filterText,
-          style        = P.style,
-          filterMode   = S.filterMode,
-          modelProxy   = P.modelProxy
+          filterText = S.filterText,
+          style = P.style,
+          filterMode = S.filterMode,
+          modelProxy = P.modelProxy
         ))
       )
   }
 
   case class NodeBackend($: BackendScope[NodeProps, NodeState]) {
-
-    def dragStart(P: NodeProps)(e: ReactDragEvent): Callback = {
+    import upickle.default.read
+    def dragStart(P: NodeProps)(event: ReactDragEvent): Callback = {
       val path = if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item
-      if (e.currentTarget.textContent.tail != "Model( )"){
-        e.dataTransfer.effectAllowed = "move"
-        e.dataTransfer.setData("existing", "true")
-        e.dataTransfer.setData("path", path)
-        Callback(e.dataTransfer.setData("elem", e.currentTarget.textContent))
+
+      if(path != "Model()"){
+        event.dataTransfer.effectAllowed = "move"
+        event.dataTransfer.setData("existing", "true")
+        event.dataTransfer.setData("path", path)
+        Callback()
       }else{
         Callback()
+      }
+
+    }
+
+    def getElem(treeItem: TreeItem): Elem = {
+      if (treeItem.children.isEmpty)
+        treeItem.item.asInstanceOf[Elem]
+      else {
+        Relation(treeItem.item.asInstanceOf[Entity], has, Tree(treeItem.children.map(getElem)))
       }
     }
 
@@ -138,46 +147,54 @@ object ReactTreeView {
       matches(data) || loop(data.children)
     }
 
-    def onDrop(P: NodeProps)(e: ReactDragEvent): Callback = {
-      val path = (if (P.parent.isEmpty) P.root.item.toString
-      else P.parent + "/" + P.root.item).split("/")
-      val pathToDraggedElem = e.dataTransfer.getData("path")
+    def onDrop(P: NodeProps)(event: ReactDragEvent): Callback = {
+      event.preventDefault()
+
+      val pathFrom = event.dataTransfer.getData("path")
+      val pathTo = (if (P.parent.isEmpty) P.root.item.toString
+        else P.parent + "/" + P.root.item).split("/")
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
-      e.preventDefault()
-
-      def elemFromString(elemType: String, id: String): Elem =
-        elemType match {
-          case "Req" => Req(id)
-          case "Stakeholder" => Stakeholder(id)
-          case "Label" => Label(id)
-          case "User" => User(id)
-          case _ => Relation(Req("Placeholder"), has, Tree(Seq(Label("Placeholder"))))
-        }
-
       var isAttribute = false
-
-      if(P.root.item.toString != "Model()"){
+      if (P.root.item.toString != "Model()") {
         isAttribute = P.root.item.asInstanceOf[Elem].isAttribute
       }
 
-      println(pathToDraggedElem)
-      println(path)
 
-      if (e.dataTransfer.getData("existing") == "false") {
-        val id = g.prompt("Input Entity ID").toString
-        dispatch(AddElem(path, elemFromString(e.dataTransfer.getData("elem"), id)))
+      def getElem(event: ReactDragEvent): Elem = event.dataTransfer.getData("type") match {
+        case "entity" =>
+          val elem = read[Entity](event.dataTransfer.getData("elem"))
+          if (event.dataTransfer.getData("existing") == "false"){
+            val newId = global.prompt("Input Entity ID").toString
+            elem.setID(newId)
+          }
+          elem
+        case "stringAttr" =>
+          val elem = read[StringAttribute](event.dataTransfer.getData("elem"))
+          if (event.dataTransfer.getData("existing") == "false"){
+            val newValue = global.prompt("Input String Attribute Value").toString
+            elem.setValue(newValue)
+          }
+          elem
+        case "intAttr" =>
+          val elem = read[IntAttribute](event.dataTransfer.getData("elem"))
+          if (event.dataTransfer.getData("existing") == "false"){
+            val newValue = global.prompt("Input Int Attribute Value").toString.toInt
+            elem.setValue(newValue)
+          }
+          elem
+      }
 
-      } else if (isAttribute || pathToDraggedElem.split("/").diff(path).isEmpty) {
+
+      if (event.dataTransfer.getData("existing") == "false") {
+        dispatch(AddElem(pathTo, getElem(event)))
+      } else
+      if (isAttribute || pathFrom.split("/").diff(pathTo).isEmpty) { // Hindra att dra till Attribute och sina egna children
         dispatch(NoAction)
-      }else{
-        val elemType = e.dataTransfer.getData("elem").split('(').head
-        val id = e.dataTransfer.getData("elem").split('(').last.init
-        println("parent" + P.parent)
-
-        dispatch(RemoveElem(pathToDraggedElem.split("/"))) >> dispatch(AddElem(path, elemFromString(elemType,id)))
-        //dispatch(MoveElem(pathToDraggedElem.split("/"), path, elemFromString(elemType,id)))
+      } else {
+        dispatch(RemoveElem(pathFrom.split("/"))) >> dispatch(MoveElem(pathFrom.split("/"), pathTo))
       }
     }
+
 
     def dragOver(e: ReactDragEvent): Callback = {
       e.preventDefault()
@@ -194,8 +211,8 @@ object ReactTreeView {
 
     def render(P: NodeProps, S: NodeState): ReactTag = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
-      val depth    = P.depth + 1
-      val parent   = if  (P.parent.isEmpty) P.root.item.toString
+      val depth = P.depth + 1
+      val parent = if (P.parent.isEmpty) P.root.item.toString
       else s"${P.parent}/${P.root.item.toString}"
 
 
@@ -218,9 +235,9 @@ object ReactTreeView {
 
       <.li(
         P.style.treeItem,
-//        treeMenuToggle,
-//        ^.key := "toggle",
-//        ^.cursor := "pointer",
+        //        treeMenuToggle,
+        //        ^.key := "toggle",
+        //        ^.cursor := "pointer",
         <.div(
           ^.overflow.hidden,
           ^.position.relative,
@@ -252,10 +269,11 @@ object ReactTreeView {
 //            ^.onDragStart ==> dragStart(P),
 //            ^.onDrop ==> onDrop(P),
 //            ^.onDragOver ==> dragOver
+
           ),
           <.button(
             Styles.bootStrapContentButton
-//            ^.onClick --> ViewContent()
+            //            ^.onClick --> ViewContent()
           ),
           <.button(
             Styles.bootStrapRemoveButton,
