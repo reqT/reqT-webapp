@@ -41,10 +41,18 @@ object webApp extends js.JSApp {
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("existing", "false")
     elem match  {
-      case entity: Entity => Callback(event.dataTransfer.setData("elem", write[Entity](entity)))
-      case attribute: StringAttribute => Callback(event.dataTransfer.setData("elem", write[StringAttribute](attribute)))
-      case attribute: IntAttribute => Callback(event.dataTransfer.setData("elem", write[IntAttribute](attribute)))
-      case _ => Callback(println("Dragged element is not valid"))
+      case entity: Entity =>
+        event.dataTransfer.setData("type", "entity")
+        Callback(event.dataTransfer.setData("elem", write[Entity](entity)))
+      case attribute: StringAttribute =>
+        event.dataTransfer.setData("type", "stringAttr")
+        Callback(event.dataTransfer.setData("elem", write[StringAttribute](attribute)))
+      case attribute: IntAttribute =>
+        event.dataTransfer.setData("type", "intAttr")
+        Callback(event.dataTransfer.setData("elem", write[IntAttribute](attribute)))
+      case _ =>
+        event.dataTransfer.setData("type", "invalid")
+        Callback(println("Dragged element is not valid"))
     }
   }
 
