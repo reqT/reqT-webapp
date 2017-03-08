@@ -15,7 +15,6 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLStyleElement}
 
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
-import upickle.default._
 
 
 
@@ -338,9 +337,12 @@ object webApp extends js.JSApp {
   val dc = AppCircuit.connect(_.tree)
 
   def main(): Unit = {
+    import upickle.default._
+
+    val x = write(Req("Hej"))
+    println(read[Req](x))
+
     Styles.addToDocument()
-    println(Standalone.render[String])
-    Standalone.render[HTMLStyleElement].outerHTML
     ReactDOM.render(navigationBar(headerButtons), document.getElementById("header"))
     ReactDOM.render(dc(proxy => Content(Props(proxy))), document.getElementById("content"))
   }
