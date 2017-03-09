@@ -233,10 +233,17 @@ object webApp extends js.JSApp {
               ^.placeholder := "Search..",
               ^.onChange ==> onTextChange
             )
-            //            <.p(
-            //              <.input.checkbox(),
-            //              "Relations"
-            //            )
+//            ,
+//            <.p(
+//              <.input.checkbox(
+//                ^.onClick ==> filterEntities
+//              ),
+//              "Entities",
+//              <.input.checkbox(
+//                ^.onClick ==> filterAttr
+//              ),
+//              "Attributes"
+//            )
           ),
           entityListView(elemList.props)
         )
@@ -255,7 +262,21 @@ object webApp extends js.JSApp {
       .build
 
     def onTextChange(event: ReactEventI) =
-      event.extract(_.target.value)(value => $.modState(_.copy(elems = elems.filter(_.toString.toLowerCase.contains(value.toLowerCase)))))
+      event.extract(_.target.value) {
+        case "entity" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
+        case "attribute" => $.modState(_.copy(elems = elems.filter(_.isAttribute)))
+        case value =>
+          if(value.toLowerCase.startsWith("entity:"))
+            $.modState(_.copy(elems = elems.filter(_.isEntity).filter(_.toString.toLowerCase.contains(value.drop(7).trim.toLowerCase))))
+          else if(value.toLowerCase.startsWith("attribute:"))
+            $.modState(_.copy(elems = elems.filter(_.isAttribute).filter(_.toString.toLowerCase.contains(value.drop(11).trim.toLowerCase))))
+          else
+            $.modState(_.copy(elems = elems.filter(_.toString.toLowerCase.contains(value.toLowerCase))))
+      }
+
+//    def filterEntities(event: ReactEvent) = $.modState(_.copy(elems = elems.filter(_.isEntity)))
+//
+//    def filterAttr(event: ReactEvent) = $.modState(_.copy(elems = elems.filter(_.isAttribute)))
 
 
     def onChange(event: ReactEventI): Callback = {

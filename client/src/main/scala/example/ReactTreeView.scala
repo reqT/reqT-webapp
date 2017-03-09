@@ -101,6 +101,7 @@ object ReactTreeView {
 
   case class NodeBackend($: BackendScope[NodeProps, NodeState]) {
     import upickle.default.read
+
     def dragStart(P: NodeProps)(event: ReactDragEvent): Callback = {
       val path = if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item
