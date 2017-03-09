@@ -327,6 +327,8 @@ case class MoveElem(oldPath: Seq[String], newPath: Seq[String]) extends Action
 
 case class UpdateElem(path: Seq[String], elem: Elem) extends  Action
 
+case object SetTemplate extends Action
+
 case class Select() extends Action
 
 case object Reset extends Action

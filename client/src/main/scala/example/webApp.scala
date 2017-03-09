@@ -19,16 +19,18 @@ import scalacss.Defaults._
 import upickle.default._
 
 
-
-
-
 @JSExport
 object webApp extends js.JSApp {
 
   val url = "ws://127.0.0.1:9000/socket"
-  val entities = List("Req", "Stakeholder", "Label", "User", "Item", "Label", "Meta", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release", "Resource", "Risk", "Service", "System", "User")
-  val elems =List(Req(""), Label(""), User(""), Stakeholder("joan"), Prio(0))
-  val headerButtons = List(("Export", NoAction), ("Import", NoAction), ("Release Planning", NoAction), ("Templates", NoAction), ("Help", NoAction))
+  //val entities = List("Req", "Stakeholder", "Label", "User", "Item", "Label", "Meta", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release", "Resource", "Risk", "Service", "System", "User")
+  val elems = List(Item(""), Label(""), Meta(""), Section(""),Term(""), Actor(""), App(""), Component(""), Module(""), Product(""), Release(""), Resource(""),
+    Risk(""), Service(""), Stakeholder(""), System(""), User(""), Class(""), Data(""), Input(""), Member(""),Output(""), Relationship(""), Design(""), Screen(""), MockUp(""), Function(""),
+    Interface(""), Epic(""), Feature(""), Goal(""), Idea(""), Issue(""), Req(""), Ticket(""), WorkPackage(""), Breakpoint(""), Barrier(""), Quality(""), Target(""), Scenario(""), Task(""),
+    Test(""), Story(""), UseCase(""), VariationPoint(""), Variant(""), Code(""), Comment(""), Deprecated(""), Example(""), Expectation(""), FileName(""), Gist(""), Image(""), Spec(""),
+    Text(""), Title(""), Why(""), Benefit(0), Capacity(0), Cost(0), Damage(0), Frequency(0), Min(0), Max(0), Order(0), Prio(0), Probability(0), Profit(0), Value(0))
+
+  val headerButtons = List(("Export", NoAction), ("Import", NoAction), ("Release Planning", NoAction), ("Templates", SetTemplate), ("Help", NoAction))
 
   case class Props(proxy: ModelProxy[Tree])
 
@@ -42,7 +44,7 @@ object webApp extends js.JSApp {
   def dragStart(elem: Elem)(event: ReactDragEvent): Callback = {
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("existing", "false")
-    elem match  {
+    elem match {
       case entity: Entity =>
         event.dataTransfer.setData("type", "entity")
         Callback(event.dataTransfer.setData("elem", write[Entity](entity)))
@@ -88,13 +90,12 @@ object webApp extends js.JSApp {
       Styles.listElem,
       ^.id := $.props.toString,
       ^.classID := $.props.toString,
-      ^.background := "#eee",
+      ^.background := (if ($.props.isEntity) "#eee" else "#ddd"),
       ^.padding := 5.px,
       ^.draggable := "true",
       ^.onDragStart ==> dragStart($.props)
     ))
     .build
-
 
 
   val entityListView = ReactComponentB[List[Elem]]("entityList")
@@ -103,9 +104,8 @@ object webApp extends js.JSApp {
       ^.height := "80%",
       ^.border := "1px solid #ccc",
       ^.overflow := "auto",
-      elems.props.map(listElem(_))
-    )
-    )
+      elems.props.sortWith((a,b) => a.toString < b.toString).map(listElem(_))
+    ))
     .build
 
 
@@ -130,14 +130,14 @@ object webApp extends js.JSApp {
 
   val buttonComponent = ReactComponentB[(String, Action)]("buttonComponent")
     .render($ =>
-
       <.button(
         ^.padding := "10px",
         $.props._1,
-        //^.onClick --> dispatch(s.props._2),
+        //^.onClick ==> HandleButtonPress($.props._2),
         Styles.navBarButton
       )
     ).build
+
 
 
 
@@ -170,14 +170,14 @@ object webApp extends js.JSApp {
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
-//        ^.paddingLeft := "15px",
+        //        ^.paddingLeft := "15px",
         <.div(
           ^.className := "col-1",
           ^.float := "left",
           ^.width := "20%",
           ^.height := "100%",
           entityComponent(state.elems),
-//          searchView(state.content)
+          //          searchView(state.content)
           <.pre(
             ^.height := "49%",
             <.h4("Type a message to get it reversed:"),
@@ -199,18 +199,18 @@ object webApp extends js.JSApp {
           ^.height := "100%",
           sc(proxy => treeView(proxy))
         )
-//        <.button(
-//          ^.border := "1px solid",
-//          Styles.bootstrapButton,
-//          ^.onClick --> dispatch(Reset),
-//          "Reset"
-//        ),
-//        <.button(
-//          ^.border := "1px solid",
-//          Styles.bootstrapButton,
-//          ^.onClick --> dispatch(RemoveElem(Seq())),
-//          "Remove"
-//        )
+        //        <.button(
+        //          ^.border := "1px solid",
+        //          Styles.bootstrapButton,
+        //          ^.onClick --> dispatch(Reset),
+        //          "Reset"
+        //        ),
+        //        <.button(
+        //          ^.border := "1px solid",
+        //          Styles.bootstrapButton,
+        //          ^.onClick --> dispatch(RemoveElem(Seq())),
+        //          "Remove"
+        //        )
       )
     }
 
@@ -223,6 +223,7 @@ object webApp extends js.JSApp {
     }
 
 
+
     val entityComponent = ReactComponentB[List[Elem]]("entityComponent")
       .render(elemList =>
         <.pre(
@@ -232,10 +233,10 @@ object webApp extends js.JSApp {
               ^.placeholder := "Search..",
               ^.onChange ==> onTextChange
             )
-//            <.p(
-//              <.input.checkbox(),
-//              "Relations"
-//            )
+            //            <.p(
+            //              <.input.checkbox(),
+            //              "Relations"
+            //            )
           ),
           entityListView(elemList.props)
         )
@@ -255,7 +256,6 @@ object webApp extends js.JSApp {
 
     def onTextChange(event: ReactEventI) =
       event.extract(_.target.value)(value => $.modState(_.copy(elems = elems.filter(_.toString.toLowerCase.contains(value.toLowerCase)))))
-
 
 
     def onChange(event: ReactEventI): Callback = {

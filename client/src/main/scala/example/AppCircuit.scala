@@ -11,6 +11,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
   var element: Elem = Req("")
 
 
+
   def initialModel: Model = Model(Tree(Seq(Req("R1"), Req("R2"), Stakeholder("BOSS"),
     Relation(Req("R3"), has, Tree(Seq(Relation(Req("R3.1"), has, Tree(Seq(Prio(1))))))), Relation(Req("R4"), has, Tree(Seq(Prio(2)))))))
 
@@ -95,6 +96,16 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
             }
           case None => noChange
         }
+
+      case SetTemplate =>
+        val model = Tree(Seq(
+          Relation(Goal("accuracy"), has, Tree(Seq(Spec("Our pre-calculations shall hit within 5%")))),
+          Relation(Feature("quotation"), has, Tree(Seq(Spec("Product shall support cost recording and quotation with experience data")))),
+          Relation(Function("experienceData"), has, Tree(Seq(Spec("Product shall have recording and retrieval functions for experience data")))),
+          Relation(Design("screenX"), has, Tree(Seq(Spec("System shall have screen pictures as shown in Fig. X"))))
+        ))
+        updated(model)
+
       case NoAction => noChange
     }
   }
