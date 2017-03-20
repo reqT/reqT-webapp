@@ -8,10 +8,6 @@ import scala.annotation.tailrec
 
 object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
-  var element: Elem = Req("")
-
-
-
   def initialModel: Model = Model(Tree(Seq(Req("R1"), Req("R2"), Stakeholder("BOSS"),
     Relation(Req("R3"), has, Tree(Seq(Relation(Req("R3.1"), has, Tree(Seq(Prio(1))))))), Relation(Req("R4"), has, Tree(Seq(Prio(2)))))))
 
@@ -50,7 +46,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
       case AddElem(path: Seq[String], newElem: Elem) =>
         zoomToChildren(modelRW, path.tail) match {
-          case Some(modelRW) => {
+          case Some(modelRW) =>
             modelRW.value.find(_.toString == path.last) match {
               case Some(foundElem) => updated(modelRW.updated(modelRW.value.map(
                 elem => if (elem == foundElem) Relation(elem.asInstanceOf[Entity], has, Tree(Seq(newElem))) else elem
@@ -58,9 +54,9 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
               case None => updated(modelRW.updated(modelRW.value :+ newElem).tree)
             }
-          }
           case None => noChange
         }
+
       case RemoveElem(path: Seq[String]) =>
         if (path.isEmpty)
           noChange
@@ -71,31 +67,32 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
           zoomToChildren(modelRW, path.init.tail) match {
             case Some(modelRW) =>
-              element = modelRW.value.find(retrieveEntity(_).toString == elemToRemove).getOrElse(Req(""))
               updated(modelRW.updated(modelRW.value.filterNot(retrieveEntity(_).toString == elemToRemove)).tree)
             case None => noChange
           }
         }
 
       case MoveElem(oldPath: Seq[String], newPath: Seq[String]) =>
-        println("from: " + oldPath)
-        println("to: " + newPath)
+          var element: Elem = Req("")
+          val elemToRemove = oldPath.last
 
+          zoomToChildren(modelRW, oldPath.init.tail) match {
+            case Some(modelRW) =>
+              element = modelRW.value.find(retrieveEntity(_).toString == elemToRemove).getOrElse(Req(""))
+            case None => noChange
+          }
 
-        zoomToChildren(modelRW, newPath.tail) match {
-          case Some(rw) =>
-            println(rw.value)
-            println(newPath.last)
-            rw.value.find(_.toString == newPath.last) match {
-              case Some(foundElem) =>
-                updated(rw.updated(rw.value.map(
-                elem => if (elem == foundElem) Relation(elem.asInstanceOf[Entity], has, Tree(Seq(element))) else elem
-              )).tree)
-
-              case None => updated(rw.updated(rw.value :+ element).tree)
-            }
-          case None => noChange
-        }
+          zoomToChildren(modelRW, newPath.tail) match {
+            case Some(rw) =>
+              rw.value.find(_.toString == newPath.last) match {
+                case Some(foundElem) =>
+                  updated(rw.updated(rw.value.map(
+                    elem => if (elem == foundElem) Relation(elem.asInstanceOf[Entity], has, Tree(Seq(element))) else elem
+                  )).tree)
+                case None => updated(rw.updated(rw.value :+ element).tree)
+              }
+            case None => noChange
+          }
 
       case SetTemplate =>
         val model = Tree(Seq(
@@ -105,6 +102,14 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
           Relation(Design("screenX"), has, Tree(Seq(Spec("System shall have screen pictures as shown in Fig. X"))))
         ))
         updated(model)
+
+      case ReplaceElem(path: Seq[String], newElem: Elem) =>
+        val elemID = path.last
+        zoomToChildren(modelRW, path.tail) match {
+          case Some(modelRW) =>
+            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).toString == elemID) newElem else elem)).tree)
+          case None => noChange
+        }
 
       case NoAction => noChange
     }

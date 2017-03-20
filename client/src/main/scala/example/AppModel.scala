@@ -80,7 +80,7 @@ sealed trait IntAttribute extends Attribute[Int]{
 sealed trait VectorAttribute[T] extends Attribute[Vector[T]]
 
 
-//sealed trait StatusValueAttribute extends Attribute[String] - What is this?
+sealed trait StatusValueAttribute extends Attribute[Enumeration]
 
 /**
   * General Entities
@@ -269,7 +269,10 @@ case class Value(var value: Int) extends IntAttribute
   * StatusValue Attribute Types
   */
 
-//  case class Status(value: ??) extends StatusValueAttribute
+object Status extends Enumeration {
+  type Status = Value
+  val ELICITED, SPECIFIED, VALIDATED, PLANNED, IMPLEMENTED, TESTED, RELEASED, FAILED, POSTPONED, DROPPED = Value
+}
 
 /**
   * Vector Attribute Types
@@ -325,7 +328,7 @@ case class RemoveElem(path: Seq[String]) extends Action
 
 case class MoveElem(oldPath: Seq[String], newPath: Seq[String]) extends Action
 
-case class UpdateElem(path: Seq[String], elem: Elem) extends  Action
+case class ReplaceElem(path: Seq[String], elem: Elem) extends  Action
 
 case object SetTemplate extends Action
 

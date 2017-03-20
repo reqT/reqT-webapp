@@ -5,7 +5,6 @@ import diode.react.ModelProxy
 import japgolly.scalajs.react.CompScope._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
-import org.scalajs.dom.{console, document}
 
 import scala.scalajs.js.Dynamic.{global => global}
 import scalacss.ScalaCssReact._
@@ -17,7 +16,6 @@ case class TreeItem(var item: Any, var children: Seq[TreeItem]) {
 }
 
 object ReactTreeView {
-
   trait Style {
 
     def reactTreeView = Seq[TagMod]()
@@ -26,9 +24,9 @@ object ReactTreeView {
 
     def treeItem = Seq(^.listStyleType := "none")
 
-    def selectedTreeItemContent = Seq(^.backgroundColor := "#1B8EB0",
-      ^.color := "white", ^.fontWeight := 400,
-      ^.padding := "0 40px")
+    def selectedTreeItemContent = Seq(^.color := "blue")
+
+    def dragOverTreeItemContent = Seq(^.opacity := 0.5)
 
     def treeItemBefore = Seq(
       ^.position := "absolute",
@@ -37,7 +35,6 @@ object ReactTreeView {
       ^.display := "inline-block",
       ^.fontSize := "14px",
       ^.color := "grey",
-      //      ^.margin := "3px 7px 0 0",
       ^.textAlign := "center",
       ^.width := "11px"
     )
@@ -45,14 +42,14 @@ object ReactTreeView {
     def treeItemHasChildrenClosed = Seq(^.contentStyle := "▶")
 
     def treeItemHasChildrenOpened = Seq(^.contentStyle := "▼")
-
   }
 
   type NodeC = DuringCallbackU[NodeProps, NodeState, NodeBackend]
 
   case class State(filterText: String,
                    filterMode: Boolean,
-                   selectedNode: js.UndefOr[NodeC])
+                   selectedNode: js.UndefOr[NodeC],
+                   dragOverNode: js.UndefOr[NodeC])
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -78,7 +75,25 @@ object ReactTreeView {
              selected.props.depth
            )*/
 
-      removeSelection >> updateThis >> setSelection >> tell
+      removeSelection >> updateThis >> setSelection //>> tell
+    }
+
+    def onNodeDrag(P: Props)(draggedOver: NodeC): Callback = {
+      val removeCurrent: Callback =
+        $.state.flatMap(
+          _.dragOverNode
+            .filterNot(_ == draggedOver)
+            .filter(_.isMounted())
+            .fold(Callback.empty)(_.modState(_.copy(draggedOver = false)))
+        )
+
+      val updateThis: Callback =
+        $.modState(_.copy(dragOverNode = draggedOver, filterMode = false))
+
+      val setCurrent: Callback =
+        draggedOver.modState(_.copy(draggedOver = true))
+
+      removeCurrent >> updateThis >> setCurrent
     }
 
     def onTextChange(text: String): Callback =
@@ -86,11 +101,12 @@ object ReactTreeView {
 
     def render(P: Props, S: State) =
       <.div(P.style.reactTreeView)(
-        //P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
+        P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
         TreeNode.withKey("root")(NodeProps(
           root = P.root,
           open = if (S.filterText.nonEmpty) true else P.open,
           onNodeSelect = onNodeSelect(P),
+          onNodeDrag = onNodeDrag(P),
           filterText = S.filterText,
           style = P.style,
           filterMode = S.filterMode,
@@ -99,6 +115,8 @@ object ReactTreeView {
       )
   }
 
+
+
   case class NodeBackend($: BackendScope[NodeProps, NodeState]) {
     import upickle.default.read
 
@@ -106,15 +124,10 @@ object ReactTreeView {
       val path = if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item
 
-      if(path != "Model()"){
         event.dataTransfer.effectAllowed = "move"
         event.dataTransfer.setData("existing", "true")
         event.dataTransfer.setData("path", path)
         Callback()
-      }else{
-        Callback()
-      }
-
     }
 
     def getElem(treeItem: TreeItem): Elem = {
@@ -129,7 +142,10 @@ object ReactTreeView {
       childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
 
     def onItemSelect(P: NodeProps)(e: ReactEventH): Callback =
-      P.onNodeSelect($.asInstanceOf[NodeC]) >> childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
+      P.onNodeSelect($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
+
+    def onItemDragOver(P: NodeProps)(e: ReactEventH): Callback =
+      P.onNodeDrag($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
 
     def childrenFromProps(P: NodeProps): CallbackTo[Option[Unit]] =
       $.modState(S => S.copy(children = if (S.children.isEmpty) P.root.children else Nil))
@@ -137,12 +153,16 @@ object ReactTreeView {
 
 
     def isFilterTextExist(filterText: String, data: TreeItem): Boolean = {
-      def matches(item: TreeItem): Boolean =
-        item.item.toString.toLowerCase.contains(filterText.toLowerCase)
+      def matches(treeItem: TreeItem): Boolean ={
+        treeItem.item match {
+          case relation: Relation => relation.entity.toString.toLowerCase.contains(filterText.toLowerCase)
+          case node: Node => node.toString.toLowerCase.contains(filterText.toLowerCase)
+        }
+      }
 
       def loop(data: Seq[TreeItem]): Boolean =
         data.view.exists(
-          item => if (item.children.isEmpty) matches(item) else loop(item.children)
+          item => matches(item) || loop(item.children)
         )
 
       matches(data) || loop(data.children)
@@ -151,11 +171,12 @@ object ReactTreeView {
     def onDrop(P: NodeProps)(event: ReactDragEvent): Callback = {
       event.preventDefault()
 
-      val pathFrom = event.dataTransfer.getData("path")
+      val pathFrom = event.dataTransfer.getData("path").split("/")
       val pathTo = (if (P.parent.isEmpty) P.root.item.toString
         else P.parent + "/" + P.root.item).split("/")
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       var isAttribute = false
+
       if (P.root.item.toString != "Model()") {
         isAttribute = P.root.item.asInstanceOf[Elem].isAttribute
       }
@@ -185,21 +206,24 @@ object ReactTreeView {
           elem
       }
 
-
-      if (event.dataTransfer.getData("existing") == "false") {
-        dispatch(AddElem(pathTo, getElem(event)))
+      if(P.root.item.toString != "Model()" || pathFrom != "Model()"){
+        if (event.dataTransfer.getData("existing") == "false")
+          dispatch(AddElem(pathTo, getElem(event)))
+        else if (isAttribute || pathFrom.diff(pathTo).isEmpty)  // Hindra att dra till Attribute och sina egna children
+          dispatch(NoAction)
+        else if(!pathFrom.init.corresponds(pathTo)(_ == _ ))
+          dispatch(MoveElem(pathFrom, pathTo)) >> dispatch(RemoveElem(pathFrom))
+        else
+          dispatch(NoAction)
       } else
-      if (isAttribute || pathFrom.split("/").diff(pathTo).isEmpty) { // Hindra att dra till Attribute och sina egna children
         dispatch(NoAction)
-      } else {
-        dispatch(RemoveElem(pathFrom.split("/"))) >> dispatch(MoveElem(pathFrom.split("/"), pathTo))
-      }
     }
 
 
-    def dragOver(e: ReactDragEvent): Callback = {
+    def dragOver(P:NodeProps)(e: ReactDragEvent): Callback = {
       e.preventDefault()
       e.dataTransfer.dropEffect = "move"
+
       Callback()
     }
 
@@ -208,10 +232,10 @@ object ReactTreeView {
       val path = if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item
       dispatch(RemoveElem(path.split("/")))
+
     }
 
     def render(P: NodeProps, S: NodeState): ReactTag = {
-      val dispatch: Action => Callback = P.modelProxy.dispatchCB
       val depth = P.depth + 1
       val parent = if (P.parent.isEmpty) P.root.item.toString
       else s"${P.parent}/${P.root.item.toString}"
@@ -236,15 +260,12 @@ object ReactTreeView {
 
       <.li(
         P.style.treeItem,
-        //        treeMenuToggle,
-        //        ^.key := "toggle",
-        //        ^.cursor := "pointer",
         <.div(
           ^.overflow.hidden,
           ^.position.relative,
           ^.border := "1px solid",
           ^.borderRadius := "5px",
-          ^.backgroundColor := "#EDF2F4",
+          ^.backgroundColor := "#e3e8ea",
           ^.padding := "5px",
           ^.width := "400px",
           ^.height := "40px",
@@ -256,7 +277,9 @@ object ReactTreeView {
           ^.draggable := true,
           ^.onDragStart ==> dragStart(P),
           ^.onDrop ==> onDrop(P),
-          ^.onDragOver ==> dragOver,
+          ^.onDragOver ==> onItemDragOver(P),
+          S.selected ?= P.style.selectedTreeItemContent,
+          S.draggedOver ?= P.style.dragOverTreeItemContent,
           <.span(
             ^.id := P.root.item.toString,
             ^.unselectable := "true",
@@ -265,11 +288,6 @@ object ReactTreeView {
             ^.left := "7%",
             ^.top := "25%",
             ^.fontSize := "large"
-//            ^.onClick ==> onItemSelect(P),
-//            ^.draggable := true,
-//            ^.onDragStart ==> dragStart(P),
-//            ^.onDrop ==> onDrop(P),
-//            ^.onDragOver ==> dragOver
 
           ),
           <.button(
@@ -298,13 +316,14 @@ object ReactTreeView {
     }
   }
 
-  case class NodeState(children: Seq[TreeItem] = Nil, selected: Boolean = false)
+  case class NodeState(children: Seq[TreeItem] = Nil, selected: Boolean = false, draggedOver: Boolean = false)
 
   case class NodeProps(root: TreeItem,
                        open: Boolean,
                        depth: Int = 0,
                        parent: String = "",
                        onNodeSelect: (NodeC) => Callback,
+                       onNodeDrag: (NodeC) => Callback,
                        filterText: String,
                        style: Style,
                        filterMode: Boolean,
@@ -323,7 +342,7 @@ object ReactTreeView {
     .build
 
   val component = ReactComponentB[Props]("ReactTreeView")
-    .initialState(State("", false, js.undefined))
+    .initialState(State("", filterMode = false, js.undefined, js.undefined))
     .renderBackend[Backend]
     .build
 

@@ -118,7 +118,8 @@ object webApp extends js.JSApp {
         ReactTreeView(
           root = elemToTreeItem(proxy.props.value.children),
           openByDefault = true,
-          modelProxy = proxy.props
+          modelProxy = proxy.props,
+          showSearchBox = true
           //onItemSelect = onItemSelect _
         ),
         <.strong(
