@@ -11,7 +11,7 @@ import scalacss.ScalaCssReact._
 import scala.scalajs.js
 
 
-case class TreeItem(var item: Any, var children: Seq[TreeItem]) {
+case class TreeItem(var item: Any, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def apply(item: Any): TreeItem = this (item, Seq())
 }
 
@@ -42,6 +42,13 @@ object ReactTreeView {
     def treeItemHasChildrenClosed = Seq(^.contentStyle := "▶")
 
     def treeItemHasChildrenOpened = Seq(^.contentStyle := "▼")
+  }
+
+  def getRelationType(treeItem: TreeItem): Option[String] = {
+    treeItem.item match {
+      case "Model()" => None
+      case elem : Elem  => if (elem.hasRelation) Some(" - " + treeItem.link.get.toString) else None
+    }
   }
 
   type NodeC = DuringCallbackU[NodeProps, NodeState, NodeBackend]
@@ -130,14 +137,6 @@ object ReactTreeView {
         Callback()
     }
 
-    def getElem(treeItem: TreeItem): Elem = {
-      if (treeItem.children.isEmpty)
-        treeItem.item.asInstanceOf[Elem]
-      else {
-        Relation(treeItem.item.asInstanceOf[Entity], has, Tree(treeItem.children.map(getElem)))
-      }
-    }
-
     def onTreeMenuToggle(P: NodeProps)(e: ReactEventH): Callback =
       childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
 
@@ -206,7 +205,6 @@ object ReactTreeView {
           elem
       }
 
-      if(P.root.item.toString != "Model()" || pathFrom != "Model()"){
         if (event.dataTransfer.getData("existing") == "false")
           dispatch(AddElem(pathTo, getElem(event)))
         else if (isAttribute || pathFrom.diff(pathTo).isEmpty)  // Hindra att dra till Attribute och sina egna children
@@ -215,8 +213,6 @@ object ReactTreeView {
           dispatch(MoveElem(pathFrom, pathTo)) >> dispatch(RemoveElem(pathFrom))
         else
           dispatch(NoAction)
-      } else
-        dispatch(NoAction)
     }
 
 
@@ -283,7 +279,8 @@ object ReactTreeView {
           <.span(
             ^.id := P.root.item.toString,
             ^.unselectable := "true",
-            P.root.item.toString,
+            //toText(P.root),
+            P.root.item.toString + getRelationType(P.root).getOrElse(""),
             ^.position := "absolute",
             ^.left := "7%",
             ^.top := "25%",
