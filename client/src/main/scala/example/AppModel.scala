@@ -1,11 +1,6 @@
 package example
 
 import diode.Action
-import upickle.default.{ReadWriter, macroRW}
-
-/**
-  * Created by johan on 2/22/17.
-  */
 
 case class Model(tree: Tree)
 
@@ -22,9 +17,20 @@ sealed trait Elem {
 }
 
 
-case class Relation(entity:Entity, link:RelationType, submodel:Tree) extends Elem {
+case class Relation(entity: Entity, var link: RelationType, submodel:Tree) extends Elem {
   isRelation = true
   entity.hasRelation = true
+
+  def setLink(newLink: RelationType): Relation = {
+    link = newLink
+    this
+  }
+
+  def setEntity(newEntityName: String): Relation = {
+    entity.setID(newEntityName)
+    this
+  }
+
 }
 
 sealed trait Node extends Elem
@@ -36,7 +42,10 @@ sealed trait Attribute[T] extends Node {
 
 sealed trait Entity extends Node {
   var id: String
-  def setID(newID:String) = {id = newID}
+  def setID(newID:String): Node = {
+    id = newID
+    this
+  }
   def getID() : String = id
   isEntity = true
 
@@ -68,13 +77,19 @@ sealed trait VariabilityReq extends Requirement
 sealed trait StringAttribute extends Attribute[String]{
   isStringAttribute = true
   var value:String
-  def setValue(newValue:String) = {value = newValue}
+  def setValue(newValue:String): StringAttribute = {
+    value = newValue
+    this
+  }
 }
 
 sealed trait IntAttribute extends Attribute[Int]{
   isIntAttribute = true
   var value: Int
-  def setValue(newValue:Int) = {value = newValue}
+  def setValue(newValue:Int): IntAttribute = {
+    value = newValue
+    this
+  }
 }
 
 sealed trait VectorAttribute[T] extends Attribute[Vector[T]]
@@ -322,13 +337,19 @@ case object Init extends Action
 
 case object AddE extends Action
 
-case class AddElem(path: Seq[String], elem: Elem) extends Action
+case class AddElem(path: Seq[String], elem: Elem, relationType: RelationType) extends Action
 
 case class RemoveElem(path: Seq[String]) extends Action
 
-case class MoveElem(oldPath: Seq[String], newPath: Seq[String]) extends Action
+case class MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) extends Action
 
-case class ReplaceElem(path: Seq[String], elem: Elem) extends  Action
+case class updateEntity(path: Seq[String], newId: String) extends  Action
+
+case class updateStringAttribute(path: Seq[String], newValue: String) extends  Action
+
+case class updateIntAttribute(path: Seq[String], newValue: Int) extends  Action
+
+case class updateRelation(path: Seq[String], newId: String, newRelationType: RelationType) extends  Action
 
 case object SetTemplate extends Action
 

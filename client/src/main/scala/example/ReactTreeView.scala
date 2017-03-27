@@ -60,6 +60,7 @@ object ReactTreeView {
 
   class Backend($: BackendScope[Props, State]) {
 
+
     def onNodeSelect(P: Props)(selected: NodeC): Callback = {
       val removeSelection: Callback =
         $.state.flatMap(
@@ -151,20 +152,18 @@ object ReactTreeView {
         .conditionally(P.root.children.nonEmpty)
 
 
-    def isFilterTextExist(filterText: String, data: TreeItem): Boolean = {
-      def matches(treeItem: TreeItem): Boolean ={
-        treeItem.item match {
-          case relation: Relation => relation.entity.toString.toLowerCase.contains(filterText.toLowerCase)
-          case node: Node => node.toString.toLowerCase.contains(filterText.toLowerCase)
-        }
-      }
+    def ifFilterTextExist(filterText: String, data: TreeItem): Boolean = {
+
+      def matches(treeItem: TreeItem): Boolean = treeItem.toString.toLowerCase.contains(filterText.toLowerCase)
+
+      def relationTypeMatches(treeItem: TreeItem): Boolean = treeItem.link.getOrElse("").toString.toLowerCase.contains(filterText.toLowerCase)
 
       def loop(data: Seq[TreeItem]): Boolean =
         data.view.exists(
-          item => matches(item) || loop(item.children)
+          item => matches(item) || loop(item.children) || relationTypeMatches(item)
         )
 
-      matches(data) || loop(data.children)
+      matches(data) || loop(data.children) || relationTypeMatches(data)
     }
 
     def onDrop(P: NodeProps)(event: ReactDragEvent): Callback = {
@@ -176,10 +175,8 @@ object ReactTreeView {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       var isAttribute = false
 
-      if (P.root.item.toString != "Model()") {
+      if (P.root.item.toString != "Model()")
         isAttribute = P.root.item.asInstanceOf[Elem].isAttribute
-      }
-
 
       def getElem(event: ReactDragEvent): Elem = event.dataTransfer.getData("type") match {
         case "entity" =>
@@ -206,35 +203,57 @@ object ReactTreeView {
       }
 
         if (event.dataTransfer.getData("existing") == "false")
-          dispatch(AddElem(pathTo, getElem(event)))
-        else if (isAttribute || pathFrom.diff(pathTo).isEmpty)  // Hindra att dra till Attribute och sina egna children
+          dispatch(AddElem(pathTo, getElem(event), has)) // has is placeholder
+        else if (isAttribute || pathFrom.diff(pathTo).isEmpty)
           dispatch(NoAction)
         else if(!pathFrom.init.corresponds(pathTo)(_ == _ ))
-          dispatch(MoveElem(pathFrom, pathTo)) >> dispatch(RemoveElem(pathFrom))
+          dispatch(MoveElem(pathFrom, pathTo, has)) >> dispatch(RemoveElem(pathFrom))  // has is placeholder
         else
           dispatch(NoAction)
     }
 
+    def onDoubleClick(P: NodeProps)(e: ReactEvent): Callback = {
+      val dispatch: Action => Callback = P.modelProxy.dispatchCB
+      val path = (if (P.parent.isEmpty) P.root.item.toString
+      else P.parent + "/" + P.root.item).split("/")
+
+      P.root.item match {
+        case entity: Entity =>
+          if (entity.hasRelation)
+            dispatch(updateRelation(path, global.prompt("Input Entity ID").toString, precedes))
+          else
+            dispatch(updateEntity(path, global.prompt("Input Entity ID").toString))
+
+        case _: IntAttribute =>
+          dispatch(updateIntAttribute(path, global.prompt("Input Int Attribute Value").toString.toInt))
+
+        case _: StringAttribute =>
+          dispatch(updateStringAttribute(path, global.prompt("Input String Attribute Value").toString))
+
+        case Model => dispatch(NoAction)
+      }
+    }
+
 
     def dragOver(P:NodeProps)(e: ReactDragEvent): Callback = {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = "move"
-
-      Callback()
+      e.preventDefaultCB >> Callback(e.dataTransfer.dropEffect = "move")
     }
 
     def removeElem(P: NodeProps): Callback = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       val path = if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item
-      dispatch(RemoveElem(path.split("/")))
 
+      dispatch(RemoveElem(path.split("/")))
     }
 
     def render(P: NodeProps, S: NodeState): ReactTag = {
       val depth = P.depth + 1
       val parent = if (P.parent.isEmpty) P.root.item.toString
       else s"${P.parent}/${P.root.item.toString}"
+
+
+
 
 
       val treeMenuToggle: TagMod =
@@ -274,13 +293,15 @@ object ReactTreeView {
           ^.onDragStart ==> dragStart(P),
           ^.onDrop ==> onDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
+          ^.onDblClick ==> onDoubleClick(P),
           S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= P.style.dragOverTreeItemContent,
           <.span(
             ^.id := P.root.item.toString,
             ^.unselectable := "true",
             //toText(P.root),
-            P.root.item.toString + getRelationType(P.root).getOrElse(""),
+            P.root.item.toString,
+            <.span(getRelationType(P.root)),
             ^.position := "absolute",
             ^.left := "7%",
             ^.top := "25%",
@@ -300,7 +321,7 @@ object ReactTreeView {
         ),
         <.ul(P.style.treeGroup)(
           S.children.map(child =>
-            isFilterTextExist(P.filterText, child) ?=
+            ifFilterTextExist(P.filterText, child) ?=
               TreeNode.withKey(s"$parent/${child.item}")(P.copy(
                 root = child,
                 open = true, //!P.filterText.trim.isEmpty,

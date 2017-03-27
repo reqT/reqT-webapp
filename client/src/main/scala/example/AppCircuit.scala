@@ -1,5 +1,7 @@
 package example
 
+import javax.management.relation.RelationType
+
 import diode._
 import diode.react.ReactConnector
 import diode.ActionResult.ModelUpdate
@@ -20,18 +22,37 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
       val elemFound = retrieveEntity(modelRW.value.children(index))
 
       if (elemFound.hasRelation) {
-        println("hasRelation")
-        val elemRW = modelRW.zoomRW(_.children.apply(index))((tree, newElem) => tree.copy(children = (tree.children.take(index) :+ newElem) ++ tree.children.drop(index + 1)))
-        zoomToChildren(elemRW.zoomRW(_.asInstanceOf[Relation].submodel)((relation, newSubmodel) => relation.asInstanceOf[Relation].copy(submodel = newSubmodel)), path.tail)
+        val elemRW = modelRW.zoomRW(_.children.apply(index))((tree, newElem)
+          => tree.copy(children = (tree.children.take(index) :+ newElem) ++ tree.children.drop(index + 1)))
+
+        zoomToChildren(elemRW.zoomRW(_.asInstanceOf[Relation].submodel)((relation, newSubmodel)
+          => relation.asInstanceOf[Relation].copy(submodel = newSubmodel)), path.tail)
 
       } else if (elemFound.isEntity) {
-        println("isEntity")
         zoomToChildren(modelRW, path.tail)
       } else {
-        println("Can't add Elems to Attribute")
-        None
+        zoomToChildren(modelRW, path.tail)
       }
     }
+  }
+
+  def zoomToRelation(modelRW: ModelRW[Model, Tree], path: Seq[String]): Option[ModelRW[Model, Elem]] = {
+      val index = modelRW.value.children.indexWhere(retrieveEntity(_).toString == path.head)
+      val elemFound = retrieveEntity(modelRW.value.children(index))
+
+      if (elemFound.hasRelation) {
+        val elemRW = modelRW.zoomRW(_.children.apply(index))((tree, newElem)
+        => tree.copy(children = (tree.children.take(index) :+ newElem) ++ tree.children.drop(index + 1)))
+
+        if(!elemRW.value.isRelation || path.size == 1){
+          Some(elemRW)
+        } else {
+          zoomToRelation(elemRW.zoomRW(_.asInstanceOf[Relation].submodel)((relation, newSubmodel)
+          => relation.asInstanceOf[Relation].copy(submodel = newSubmodel)), path.tail)
+        }
+      } else {
+        None
+      }
   }
 
   def retrieveEntity(elem: Elem): Elem = elem match {
@@ -44,12 +65,12 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
     override def handle = {
       case Reset => updated(Tree(Seq()))
 
-      case AddElem(path: Seq[String], newElem: Elem) =>
+      case AddElem(path: Seq[String], newElem: Elem, relationType: RelationType) =>
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) =>
             modelRW.value.find(_.toString == path.last) match {
               case Some(foundElem) => updated(modelRW.updated(modelRW.value.map(
-                elem => if (elem == foundElem) Relation(elem.asInstanceOf[Entity], has, Tree(Seq(newElem))) else elem
+                elem => if (elem == foundElem && !elem.isAttribute) Relation(elem.asInstanceOf[Entity], relationType, Tree(Seq(newElem))) else elem
               )).tree)
 
               case None => updated(modelRW.updated(modelRW.value :+ newElem).tree)
@@ -66,13 +87,13 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
           val elemToRemove = path.last
 
           zoomToChildren(modelRW, path.init.tail) match {
-            case Some(modelRW) =>
-              updated(modelRW.updated(modelRW.value.filterNot(retrieveEntity(_).toString == elemToRemove)).tree)
+            case Some(modelRW) => updated(modelRW.updated(modelRW.value.filterNot(retrieveEntity(_).toString == elemToRemove)).tree)
+
             case None => noChange
           }
         }
 
-      case MoveElem(oldPath: Seq[String], newPath: Seq[String]) =>
+      case MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) =>
           var element: Elem = Req("")
           val elemToRemove = oldPath.last
 
@@ -87,7 +108,9 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
               rw.value.find(_.toString == newPath.last) match {
                 case Some(foundElem) =>
                   updated(rw.updated(rw.value.map(
-                    elem => if (elem == foundElem) Relation(elem.asInstanceOf[Entity], has, Tree(Seq(element))) else elem
+                    elem => if (elem == foundElem) Relation(elem.asInstanceOf[Entity],
+                      relationType,
+                      Tree(Seq(element))) else elem
                   )).tree)
                 case None => updated(rw.updated(rw.value :+ element).tree)
               }
@@ -103,11 +126,49 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         ))
         updated(model)
 
-      case ReplaceElem(path: Seq[String], newElem: Elem) =>
+
+      case updateEntity(path: Seq[String], newId: String) =>
         val elemID = path.last
+
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) =>
-            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).toString == elemID) newElem else elem)).tree)
+            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).toString == elemID)
+              elem.asInstanceOf[Entity].setID(newId) else elem)).tree)
+
+          case None => noChange
+        }
+
+
+      case updateIntAttribute(path: Seq[String], newValue: Int) =>
+        val elemID = path.last
+
+        zoomToChildren(modelRW, path.tail) match {
+          case Some(modelRW) =>
+            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).toString == elemID)
+                elem.asInstanceOf[IntAttribute].setValue(newValue) else elem)).tree)
+
+          case None => noChange
+        }
+
+
+      case updateStringAttribute(path: Seq[String], newValue: String) =>
+        val elemID = path.last
+
+        zoomToChildren(modelRW, path.tail) match {
+          case Some(modelRW) =>
+            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).toString == elemID)
+              elem.asInstanceOf[StringAttribute].setValue(newValue) else elem)).tree)
+
+          case None => noChange
+        }
+
+
+      case updateRelation(path: Seq[String], newId: String, newRelationType: RelationType) =>
+        println(path)
+
+        zoomToRelation(modelRW, path.tail) match {
+          case Some(modelRW) => updated(modelRW.updated(modelRW.value.asInstanceOf[Relation].setEntity(newId)).tree)
+
           case None => noChange
         }
 
