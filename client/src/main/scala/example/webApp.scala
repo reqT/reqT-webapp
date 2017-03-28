@@ -263,9 +263,11 @@ object webApp extends js.JSApp {
       .build
 
     def onTextChange(event: ReactEventI) =
-      event.extract(_.target.value) {
+      event.extract(_.target.value.toLowerCase) {
         case "entity" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
         case "attribute" => $.modState(_.copy(elems = elems.filter(_.isAttribute)))
+        case "entities" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
+        case "attributes" => $.modState(_.copy(elems = elems.filter(_.isAttribute)))
         case value =>
           if(value.toLowerCase.startsWith("entity:"))
             $.modState(_.copy(elems = elems.filter(_.isEntity).filter(_.toString.toLowerCase.contains(value.drop(7).trim.toLowerCase))))

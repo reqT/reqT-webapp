@@ -6,7 +6,7 @@ import japgolly.scalajs.react.CompScope._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 
-import scala.scalajs.js.Dynamic.{global => global}
+import scala.scalajs.js.Dynamic.global
 import scalacss.ScalaCssReact._
 import scala.scalajs.js
 
@@ -24,7 +24,7 @@ object ReactTreeView {
 
     def treeItem = Seq(^.listStyleType := "none")
 
-    def selectedTreeItemContent = Seq(^.color := "blue")
+    def selectedTreeItemContent = Seq(^.color := "darkblue")
 
     def dragOverTreeItemContent = Seq(^.opacity := 0.5)
 
@@ -123,8 +123,6 @@ object ReactTreeView {
       )
   }
 
-
-
   case class NodeBackend($: BackendScope[NodeProps, NodeState]) {
     import upickle.default.read
 
@@ -154,16 +152,24 @@ object ReactTreeView {
 
     def ifFilterTextExist(filterText: String, data: TreeItem): Boolean = {
 
-      def matches(treeItem: TreeItem): Boolean = treeItem.toString.toLowerCase.contains(filterText.toLowerCase)
+        def matchesType(treeItem: TreeItem): Boolean =
+          treeItem.item match {
+            case _: Entity => filterText.toLowerCase.contains("entity") || filterText.toLowerCase.contains("entities")
+            case _: IntAttribute => filterText.toLowerCase.contains("attribute") && !filterText.toLowerCase.contains("stringattribute")
+            case _: StringAttribute => filterText.toLowerCase.contains("attribute") && !filterText.toLowerCase.contains("intattribute")
+            case _ => false
+          }
 
-      def relationTypeMatches(treeItem: TreeItem): Boolean = treeItem.link.getOrElse("").toString.toLowerCase.contains(filterText.toLowerCase)
+        def matches(treeItem: TreeItem): Boolean = treeItem.toString.toLowerCase.contains(filterText.toLowerCase)
 
-      def loop(data: Seq[TreeItem]): Boolean =
-        data.view.exists(
-          item => matches(item) || loop(item.children) || relationTypeMatches(item)
-        )
+        def relationTypeMatches(treeItem: TreeItem): Boolean = treeItem.link.getOrElse("").toString.toLowerCase.contains(filterText.toLowerCase)
 
-      matches(data) || loop(data.children) || relationTypeMatches(data)
+        def loop(data: Seq[TreeItem]): Boolean =
+          data.view.exists(
+            item => matches(item) || loop(item.children) || relationTypeMatches(item) || matchesType(item)
+          )
+
+      (matches(data) || loop(data.children) || relationTypeMatches(data) || matchesType(data)) && (data.item != "Model()")
     }
 
     def onDrop(P: NodeProps)(event: ReactDragEvent): Callback = {
@@ -212,7 +218,9 @@ object ReactTreeView {
           dispatch(NoAction)
     }
 
-    def onDoubleClick(P: NodeProps)(e: ReactEvent): Callback = {
+    def onDoubleClickTreeItem(P: NodeProps)(e: ReactEvent): Callback = {
+
+
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       val path = (if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item).split("/")
@@ -220,7 +228,7 @@ object ReactTreeView {
       P.root.item match {
         case entity: Entity =>
           if (entity.hasRelation)
-            dispatch(updateRelation(path, global.prompt("Input Entity ID").toString, precedes))
+            dispatch(updateRelation(path, global.prompt("Input Entity ID").toString, None))
           else
             dispatch(updateEntity(path, global.prompt("Input Entity ID").toString))
 
@@ -234,7 +242,6 @@ object ReactTreeView {
       }
     }
 
-
     def dragOver(P:NodeProps)(e: ReactDragEvent): Callback = {
       e.preventDefaultCB >> Callback(e.dataTransfer.dropEffect = "move")
     }
@@ -247,14 +254,12 @@ object ReactTreeView {
       dispatch(RemoveElem(path.split("/")))
     }
 
+
     def render(P: NodeProps, S: NodeState): ReactTag = {
+
       val depth = P.depth + 1
       val parent = if (P.parent.isEmpty) P.root.item.toString
       else s"${P.parent}/${P.root.item.toString}"
-
-
-
-
 
       val treeMenuToggle: TagMod =
         if (S.children.nonEmpty)
@@ -293,15 +298,17 @@ object ReactTreeView {
           ^.onDragStart ==> dragStart(P),
           ^.onDrop ==> onDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
-          ^.onDblClick ==> onDoubleClick(P),
+          ^.onDblClick ==> onDoubleClickTreeItem(P),
           S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= P.style.dragOverTreeItemContent,
           <.span(
             ^.id := P.root.item.toString,
             ^.unselectable := "true",
-            //toText(P.root),
-            P.root.item.toString,
-            <.span(getRelationType(P.root)),
+            <.label(
+              //^.onDblClick ==> ,
+              P.root.item.toString
+            ),
+            <.label(getRelationType(P.root)),
             ^.position := "absolute",
             ^.left := "7%",
             ^.top := "25%",
@@ -321,7 +328,7 @@ object ReactTreeView {
         ),
         <.ul(P.style.treeGroup)(
           S.children.map(child =>
-            ifFilterTextExist(P.filterText, child) ?=
+            (ifFilterTextExist(P.filterText, child) || ifFilterTextExist(P.filterText, P.root)) ?=
               TreeNode.withKey(s"$parent/${child.item}")(P.copy(
                 root = child,
                 open = true, //!P.filterText.trim.isEmpty,
@@ -333,6 +340,7 @@ object ReactTreeView {
       )
     }
   }
+
 
   case class NodeState(children: Seq[TreeItem] = Nil, selected: Boolean = false, draggedOver: Boolean = false)
 
@@ -347,6 +355,8 @@ object ReactTreeView {
                        filterMode: Boolean,
                        modelProxy: ModelProxy[Tree]
                       )
+
+
 
   lazy val TreeNode = ReactComponentB[NodeProps]("ReactTreeNode")
     .initialState_P(P => if (P.open) NodeState(P.root.children) else NodeState())

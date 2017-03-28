@@ -1,4 +1,5 @@
 package example
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 

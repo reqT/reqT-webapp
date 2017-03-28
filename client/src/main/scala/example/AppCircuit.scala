@@ -1,12 +1,7 @@
 package example
 
-import javax.management.relation.RelationType
-
 import diode._
 import diode.react.ReactConnector
-import diode.ActionResult.ModelUpdate
-
-import scala.annotation.tailrec
 
 object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
@@ -163,11 +158,11 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         }
 
 
-      case updateRelation(path: Seq[String], newId: String, newRelationType: RelationType) =>
+      case updateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) =>
         println(path)
 
         zoomToRelation(modelRW, path.tail) match {
-          case Some(modelRW) => updated(modelRW.updated(modelRW.value.asInstanceOf[Relation].setEntity(newId)).tree)
+          case Some(modelRW) => updated(modelRW.updated(modelRW.value.asInstanceOf[Relation].setLink(newRelationType.getOrElse(modelRW.value.asInstanceOf[Relation].link)).setEntity(newId)).tree)
 
           case None => noChange
         }

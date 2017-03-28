@@ -349,7 +349,7 @@ case class updateStringAttribute(path: Seq[String], newValue: String) extends  A
 
 case class updateIntAttribute(path: Seq[String], newValue: Int) extends  Action
 
-case class updateRelation(path: Seq[String], newId: String, newRelationType: RelationType) extends  Action
+case class updateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) extends  Action
 
 case object SetTemplate extends Action
 
