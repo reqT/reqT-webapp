@@ -18,19 +18,20 @@ import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
 
+import scala.scalajs.js.Dynamic.global
+
 
 @JSExport
 object webApp extends js.JSApp {
 
   val url = "ws://127.0.0.1:9000/socket"
-  //val entities = List("Req", "Stakeholder", "Label", "User", "Item", "Label", "Meta", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release", "Resource", "Risk", "Service", "System", "User")
   val elems = List(Item(""), Label(""), Meta(""), Section(""),Term(""), Actor(""), App(""), Component(""), Module(""), Product(""), Release(""), Resource(""),
     Risk(""), Service(""), Stakeholder(""), System(""), User(""), Class(""), Data(""), Input(""), Member(""),Output(""), Relationship(""), Design(""), Screen(""), MockUp(""), Function(""),
     Interface(""), Epic(""), Feature(""), Goal(""), Idea(""), Issue(""), Req(""), Ticket(""), WorkPackage(""), Breakpoint(""), Barrier(""), Quality(""), Target(""), Scenario(""), Task(""),
     Test(""), Story(""), UseCase(""), VariationPoint(""), Variant(""), Code(""), Comment(""), Deprecated(""), Example(""), Expectation(""), FileName(""), Gist(""), Image(""), Spec(""),
     Text(""), Title(""), Why(""), Benefit(0), Capacity(0), Cost(0), Damage(0), Frequency(0), Min(0), Max(0), Order(0), Prio(0), Probability(0), Profit(0), Value(0))
 
-  val headerButtons = List(("Export", NoAction), ("Import", NoAction), ("Release Planning", NoAction), ("Templates", SetTemplate), ("Help", NoAction))
+  val headerButtons = List("Export", "Import", "Release Planning", "Templates", "Help")
 
   case class Props(proxy: ModelProxy[Tree])
 
@@ -129,25 +130,32 @@ object webApp extends js.JSApp {
     )
     ).build
 
-  val buttonComponent = ReactComponentB[(String, Action)]("buttonComponent")
+
+  val buttonComponent = ReactComponentB[(String, Props)]("buttonComponent")
     .render($ =>
       <.button(
         ^.padding := "10px",
         $.props._1,
-        //^.onClick ==> HandleButtonPress($.props._2),
+        ^.onClick --> {
+          $.props._1 match {
+            case "Templates" => $.props._2.proxy.dispatchCB(SetTemplate)
+            case _ => Callback(global.prompt($.props._1))
+          }
+        },
         Styles.navBarButton
-      )
-    ).build
+      )).build
+
+  def handleOnClick()(event: ReactEvent): Callback = {
+    CallbackTo(global.prompt("Input Entity ID"))
+  }
 
 
-
-
-  val navigationBar = ReactComponentB[Seq[(String, Action)]]("navigationBar")
+  val navigationBar = ReactComponentB[(Seq[String], Props)]("navigationBar")
     .render($ => <.nav(
       ^.paddingLeft := "15px",
       ^.paddingRight := "15px",
       Styles.navBar,
-      $.props.map(buttonComponent(_))
+      $.props._1.map(x => buttonComponent((x, $.props._2)))
     )
     ).build
 
@@ -168,6 +176,7 @@ object webApp extends js.JSApp {
         */
 
       <.div(
+        //navigationBar(headerButtons),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -269,9 +278,9 @@ object webApp extends js.JSApp {
         case "entities" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
         case "attributes" => $.modState(_.copy(elems = elems.filter(_.isAttribute)))
         case value =>
-          if(value.toLowerCase.startsWith("entity:"))
+          if(value.startsWith("entity:"))
             $.modState(_.copy(elems = elems.filter(_.isEntity).filter(_.toString.toLowerCase.contains(value.drop(7).trim.toLowerCase))))
-          else if(value.toLowerCase.startsWith("attribute:"))
+          else if(value.startsWith("attribute:"))
             $.modState(_.copy(elems = elems.filter(_.isAttribute).filter(_.toString.toLowerCase.contains(value.drop(11).trim.toLowerCase))))
           else
             $.modState(_.copy(elems = elems.filter(_.toString.toLowerCase.contains(value.toLowerCase))))
@@ -364,7 +373,7 @@ object webApp extends js.JSApp {
 
   def main(): Unit = {
     Styles.addToDocument()
-    ReactDOM.render(navigationBar(headerButtons), document.getElementById("header"))
+    ReactDOM.render(dc(proxy => navigationBar((headerButtons, Props(proxy)))), document.getElementById("header"))
     ReactDOM.render(dc(proxy => Content(Props(proxy))), document.getElementById("content"))
   }
 }
