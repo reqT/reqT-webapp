@@ -4,7 +4,7 @@ import diode.Action
 
 case class Model(tree: Tree)
 
-case class Tree(children: Seq[Elem])
+case class Tree(children: Seq[Elem]){ override def toString: String = children.map(_.toString).toString.replace("List", "Model")}
 
 sealed trait Elem {
   var isRelation = false
@@ -20,6 +20,9 @@ sealed trait Elem {
 case class Relation(entity: Entity, var link: RelationType, submodel:Tree) extends Elem {
   isRelation = true
   entity.hasRelation = true
+
+  override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString.replaceAll("List", "")
+
 
   def setLink(newLink: RelationType): Relation = {
     link = newLink
@@ -47,6 +50,9 @@ sealed trait Entity extends Node {
     this
   }
   def getID() : String = id
+
+  override def toString: String = (getClass.getName + "(\"" + id + "\")").replace("example.", "")
+
   isEntity = true
 
 }
@@ -77,10 +83,14 @@ sealed trait VariabilityReq extends Requirement
 sealed trait StringAttribute extends Attribute[String]{
   isStringAttribute = true
   var value:String
+
   def setValue(newValue:String): StringAttribute = {
     value = newValue
     this
   }
+
+  override def toString: String = (getClass.getName + "(\"" + value + "\")").replace("example.", "")
+
 }
 
 sealed trait IntAttribute extends Attribute[Int]{

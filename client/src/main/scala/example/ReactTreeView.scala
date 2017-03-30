@@ -104,6 +104,21 @@ object ReactTreeView {
       removeCurrent >> updateThis >> setCurrent
     }
 
+    def onNodeDrop(P: Props)(draggedOver: NodeC): Callback = {
+      val removeCurrent: Callback =
+        $.state.flatMap(
+          _.dragOverNode
+            .filterNot(_ == draggedOver)
+            .filter(_.isMounted())
+            .fold(Callback.empty)(_.modState(_.copy(draggedOver = false)))
+        )
+
+      val updateThis: Callback =
+        $.modState(_.copy(dragOverNode = draggedOver, filterMode = false))
+
+      removeCurrent >> updateThis
+    }
+
     def onTextChange(text: String): Callback =
       $.modState(_.copy(filterText = text, filterMode = true))
 
@@ -115,6 +130,7 @@ object ReactTreeView {
           open = if (S.filterText.nonEmpty) true else P.open,
           onNodeSelect = onNodeSelect(P),
           onNodeDrag = onNodeDrag(P),
+          onNodeDrop = onNodeDrop(P),
           filterText = S.filterText,
           style = P.style,
           filterMode = S.filterMode,
@@ -135,6 +151,7 @@ object ReactTreeView {
         event.dataTransfer.setData("path", path)
         Callback()
     }
+
 
     def onTreeMenuToggle(P: NodeProps)(e: ReactEventH): Callback =
       childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
@@ -247,13 +264,14 @@ object ReactTreeView {
     }
 
     def removeElem(P: NodeProps): Callback = {
+      global.prompt("Do you want to delete " + P.root.item + " ?")
+
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       val path = if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item
 
       dispatch(RemoveElem(path.split("/")))
     }
-
 
     def render(P: NodeProps, S: NodeState): ReactTag = {
 
@@ -288,7 +306,6 @@ object ReactTreeView {
           ^.backgroundColor := "#e3e8ea",
           ^.padding := "5px",
           ^.width := "400px",
-          ^.height := "40px",
           treeMenuToggle,
           ^.key := "toggle",
           ^.cursor := "pointer",
@@ -301,14 +318,14 @@ object ReactTreeView {
           ^.onDblClick ==> onDoubleClickTreeItem(P),
           S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= P.style.dragOverTreeItemContent,
-          <.span(
-            ^.id := P.root.item.toString,
+          <.p(
+            ^.id := P.root.item.toString.replace("\"", ""),
             ^.unselectable := "true",
-            <.label(
+            <.span(
               //^.onDblClick ==> ,
-              P.root.item.toString
+              P.root.item.toString.replace("\"", "")
             ),
-            <.label(getRelationType(P.root)),
+            <.span(getRelationType(P.root)),
             ^.position := "absolute",
             ^.left := "7%",
             ^.top := "25%",
@@ -350,6 +367,7 @@ object ReactTreeView {
                        parent: String = "",
                        onNodeSelect: (NodeC) => Callback,
                        onNodeDrag: (NodeC) => Callback,
+                       onNodeDrop: (NodeC) => Callback,
                        filterText: String,
                        style: Style,
                        filterMode: Boolean,

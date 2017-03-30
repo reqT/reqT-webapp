@@ -11,9 +11,7 @@ import japgolly.scalajs.react._
 import scala.util.{Failure, Success}
 import diode.react.ModelProxy
 import org.scalajs.dom.ext.KeyCode
-import org.scalajs.dom.raw.{HTMLElement, HTMLStyleElement}
 
-import scala.scalajs.js.JSON
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
@@ -25,6 +23,7 @@ import scala.scalajs.js.Dynamic.global
 object webApp extends js.JSApp {
 
   val url = "ws://127.0.0.1:9000/socket"
+
   val elems = List(Item(""), Label(""), Meta(""), Section(""),Term(""), Actor(""), App(""), Component(""), Module(""), Product(""), Release(""), Resource(""),
     Risk(""), Service(""), Stakeholder(""), System(""), User(""), Class(""), Data(""), Input(""), Member(""),Output(""), Relationship(""), Design(""), Screen(""), MockUp(""), Function(""),
     Interface(""), Epic(""), Feature(""), Goal(""), Idea(""), Issue(""), Req(""), Ticket(""), WorkPackage(""), Breakpoint(""), Barrier(""), Quality(""), Target(""), Scenario(""), Task(""),
@@ -36,7 +35,7 @@ object webApp extends js.JSApp {
   case class Props(proxy: ModelProxy[Tree])
 
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], content: String) {
-    // Create a new state with a line added to the log
+
     def log(line: String): State =
       copy(logLines = logLines :+ line)
   }
@@ -60,7 +59,6 @@ object webApp extends js.JSApp {
         Callback(println("Dragged element is not valid"))
     }
   }
-
 
   def elemToTreeItem(elems: Seq[Elem]): TreeItem = {
     TreeItem("Model()", elems.map(elem => convert(elem)), None)
@@ -145,9 +143,9 @@ object webApp extends js.JSApp {
         Styles.navBarButton
       )).build
 
-  def handleOnClick()(event: ReactEvent): Callback = {
-    CallbackTo(global.prompt("Input Entity ID"))
-  }
+//  def handleOnClick()(event: ReactEvent): Callback = {
+//    CallbackTo(global.prompt("Input Entity ID"))
+//  }
 
 
   val navigationBar = ReactComponentB[(Seq[String], Props)]("navigationBar")
@@ -171,12 +169,22 @@ object webApp extends js.JSApp {
           yield sendMessage(websocket, state.message)
 
 
+      val sendVerify: Option[Callback] =
+        for (websocket <- state.websocket if props.proxy.value.toString.nonEmpty)
+          yield sendMessage(websocket, props.proxy.value.toString)
+
+      def handleNewTodoKeyDown(event: ReactKeyboardEventI): Option[Callback] = {
+        if (event.nativeEvent.keyCode == KeyCode.Enter)
+          send
+        else
+          None
+      }
+
       /**
         * Previous functionality, which will be used at a later stage (Server integration)
         */
 
       <.div(
-        //navigationBar(headerButtons),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -190,48 +198,30 @@ object webApp extends js.JSApp {
           //          searchView(state.content)
           <.pre(
             ^.height := "49%",
-            <.h4("Type a message to get it reversed:"),
             <.div(
               <.input(
                 ^.onChange ==> onChange,
-                ^.value := state.message),
-              ^.onKeyDown ==>? handleNewTodoKeyDown(dispatch),
+                ^.value := state.message,
+                ^.onKeyDown ==>? handleNewTodoKeyDown
+              ),
               <.button(
                 ^.disabled := send.isEmpty, // Disable button if unable to send
                 ^.onClick -->? send, // --> suffixed by ? because it's for Option[Callback]
-                "Reverse")),
+                "Send"),
+              <.button(
+                "Verify Model",
+                ^.onClick -->? sendVerify
+              )),
             <.h4("Connection log"),
-            log(state.logLines), // Display log
-            <.p("Write \'reqT\' to start reqT")
+            log(state.logLines)// Display log
           )
         ),
         <.div(
           ^.height := "100%",
           sc(proxy => treeView(proxy))
         )
-        //        <.button(
-        //          ^.border := "1px solid",
-        //          Styles.bootstrapButton,
-        //          ^.onClick --> dispatch(Reset),
-        //          "Reset"
-        //        ),
-        //        <.button(
-        //          ^.border := "1px solid",
-        //          Styles.bootstrapButton,
-        //          ^.onClick --> dispatch(RemoveElem(Seq())),
-        //          "Remove"
-        //        )
       )
     }
-
-
-    def handleNewTodoKeyDown(dispatch: Action => Callback)(event: ReactKeyboardEventI): Option[Callback] = {
-      if (event.nativeEvent.keyCode == KeyCode.Enter)
-        Some(dispatch(Test))
-      else
-        None
-    }
-
 
 
     val entityComponent = ReactComponentB[List[Elem]]("entityComponent")
@@ -243,17 +233,6 @@ object webApp extends js.JSApp {
               ^.placeholder := "Search..",
               ^.onChange ==> onTextChange
             )
-//            ,
-//            <.p(
-//              <.input.checkbox(
-//                ^.onClick ==> filterEntities
-//              ),
-//              "Entities",
-//              <.input.checkbox(
-//                ^.onClick ==> filterAttr
-//              ),
-//              "Attributes"
-//            )
           ),
           entityListView(elemList.props)
         )
@@ -286,22 +265,14 @@ object webApp extends js.JSApp {
             $.modState(_.copy(elems = elems.filter(_.toString.toLowerCase.contains(value.toLowerCase))))
       }
 
-//    def filterEntities(event: ReactEvent) = $.modState(_.copy(elems = elems.filter(_.isEntity)))
-//
-//    def filterAttr(event: ReactEvent) = $.modState(_.copy(elems = elems.filter(_.isAttribute)))
-
-
     def onChange(event: ReactEventI): Callback = {
       val newMessage = event.target.value
       $.modState(_.copy(message = newMessage))
     }
 
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
-      // Send a message to the WebSocket
       def send = Callback(websocket.send(msg))
-
-      // Update the log, clear the text box
-      def updateState = $.modState(s => s.log(s"Sent: ${s.message}").copy(message = ""))
+      def updateState = $.modState(s => s.log(s"Sent").copy(message = ""))
 
       send >> updateState
     }
@@ -324,7 +295,7 @@ object webApp extends js.JSApp {
 
         def onmessage(event: MessageEvent): Unit = {
           // Echo message received
-          direct.modState(_.log(s"Reversed: ${event.data.toString}"))
+          direct.modState(_.log(s" ${event.data.toString}"))
         }
 
         def onerror(event: ErrorEvent): Unit = {
