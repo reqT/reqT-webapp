@@ -34,7 +34,7 @@ object webApp extends js.JSApp {
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], content: String) {
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], content: String, isModalOpen: Boolean) {
 
     def log(line: String): State =
       copy(logLines = logLines :+ line)
@@ -108,18 +108,18 @@ object webApp extends js.JSApp {
     .build
 
 
-  val treeView = ReactComponentB[ModelProxy[Tree]]("treeView")
-    .render(proxy => <.pre(
+  val treeView = ReactComponentB[(ModelProxy[Tree], String => Callback)]("treeView")
+    .render(P => <.pre(
       Styles.treeView,
       ^.border := "1px solid #ccc",
       ^.id := "treeView",
       <.div(
         ReactTreeView(
-          root = elemToTreeItem(proxy.props.value.children),
+          root = elemToTreeItem(P.props._1.value.children),
           openByDefault = true,
-          modelProxy = proxy.props,
-          showSearchBox = true
-          //onItemSelect = onItemSelect _
+          modelProxy = P.props._1,
+          showSearchBox = true,
+          openModal = P.props._2
         ),
         <.strong(
           ^.id := "treeviewcontent"
@@ -159,6 +159,15 @@ object webApp extends js.JSApp {
 
 
   class Backend($: BackendScope[Props, State]) {
+
+    def openModal(entity: String): Callback = {
+      $.modState(_.copy(isModalOpen = true))
+    }
+
+    def closeModal(e: ReactEvent): Callback = {
+      $.modState(_.copy(isModalOpen = false))
+    }
+
     def render(props: Props, state: State) = {
       val dispatch: Action => Callback = props.proxy.dispatchCB
       val sc = AppCircuit.connect(_.tree)
@@ -185,6 +194,7 @@ object webApp extends js.JSApp {
         */
 
       <.div(
+        Modal(isOpen = state.isModalOpen, onClose = closeModal),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -218,7 +228,7 @@ object webApp extends js.JSApp {
         ),
         <.div(
           ^.height := "100%",
-          sc(proxy => treeView(proxy))
+          sc(proxy => treeView((proxy,openModal)))
         )
       )
     }
@@ -334,7 +344,7 @@ object webApp extends js.JSApp {
   }
 
   val Content = ReactComponentB[Props]("Content")
-    .initialState(State(None, Vector.empty, "", elems, ""))
+    .initialState(State(None, Vector.empty, message = "", elems, content = "", isModalOpen = false))
     .renderBackend[Backend]
     .componentDidMount(_.backend.start)
     .componentWillUnmount(_.backend.end)

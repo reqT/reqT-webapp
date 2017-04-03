@@ -123,7 +123,8 @@ object ReactTreeView {
       $.modState(_.copy(filterText = text, filterMode = true))
 
     def render(P: Props, S: State) =
-      <.div(P.style.reactTreeView)(
+      <.div(
+        P.style.reactTreeView)(
         P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
         TreeNode.withKey("root")(NodeProps(
           root = P.root,
@@ -134,7 +135,8 @@ object ReactTreeView {
           filterText = S.filterText,
           style = P.style,
           filterMode = S.filterMode,
-          modelProxy = P.modelProxy
+          modelProxy = P.modelProxy,
+          openModal = P.openModal
         ))
       )
   }
@@ -239,22 +241,22 @@ object ReactTreeView {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       val path = (if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item).split("/")
-
-      P.root.item match {
-        case entity: Entity =>
-          if (entity.hasRelation)
-            dispatch(updateRelation(path, global.prompt("Input Entity ID").toString, None))
-          else
-            dispatch(updateEntity(path, global.prompt("Input Entity ID").toString))
-
-        case _: IntAttribute =>
-          dispatch(updateIntAttribute(path, global.prompt("Input Int Attribute Value").toString.toInt))
-
-        case _: StringAttribute =>
-          dispatch(updateStringAttribute(path, global.prompt("Input String Attribute Value").toString))
-
-        case Model => dispatch(NoAction)
-      }
+      P.openModal(P.root.item.toString)
+//      P.root.item match {
+//        case entity: Entity =>
+//          if (entity.hasRelation)
+//            dispatch(updateRelation(path, global.prompt("Input Entity ID").toString, None))
+//          else
+//            dispatch(updateEntity(path, global.prompt("Input Entity ID").toString))
+//
+//        case _: IntAttribute =>
+//          dispatch(updateIntAttribute(path, global.prompt("Input Int Attribute Value").toString.toInt))
+//
+//        case _: StringAttribute =>
+//          dispatch(updateStringAttribute(path, global.prompt("Input String Attribute Value").toString))
+//
+//        case Model => dispatch(NoAction)
+//      }
     }
 
     def onDoubleClickRelation(P: NodeProps)(e: ReactEvent): Callback = {
@@ -263,7 +265,6 @@ object ReactTreeView {
       else P.parent + "/" + P.root.item).split("/")
 
       dispatch(updateRelation(path, P.root.item.asInstanceOf[Entity].id, Some(precedes)))
-
     }
 
     def dragOver(P:NodeProps)(e: ReactDragEvent): Callback = {
@@ -340,10 +341,11 @@ object ReactTreeView {
             ^.fontSize := "large"
 
           ),
-//          <.button(
-//            Styles.bootStrapContentButton
-//            //            ^.onClick --> ViewContent()
-//          ),
+          <.button(
+            ^.role := "dialog",
+            Styles.bootStrapContentButton
+            //            ^.onClick --> ViewContent()
+          ),
           <.button(
             Styles.bootStrapRemoveButton,
             ^.onClick --> removeElem(P)
@@ -379,7 +381,8 @@ object ReactTreeView {
                        filterText: String,
                        style: Style,
                        filterMode: Boolean,
-                       modelProxy: ModelProxy[Tree]
+                       modelProxy: ModelProxy[Tree],
+                       openModal: String => Callback
                       )
 
 
@@ -405,7 +408,8 @@ object ReactTreeView {
                    onItemSelect: js.UndefOr[(String, String, Int) => Callback],
                    showSearchBox: Boolean,
                    style: Style,
-                   modelProxy: ModelProxy[Tree]
+                   modelProxy: ModelProxy[Tree],
+                   openModal: String => Callback
                   )
 
   def apply(root: TreeItem,
@@ -415,8 +419,9 @@ object ReactTreeView {
             ref: js.UndefOr[String] = js.undefined,
             key: js.UndefOr[js.Any] = js.undefined,
             style: Style = new Style {},
-            modelProxy: ModelProxy[Tree]
+            modelProxy: ModelProxy[Tree],
+            openModal: String => Callback
            ) =
-    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy))
+    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, openModal))
 
 }
