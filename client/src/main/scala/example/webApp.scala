@@ -24,11 +24,11 @@ object webApp extends js.JSApp {
 
   val url = "ws://127.0.0.1:9000/socket"
 
-  val elems = List(Item(""), Label(""), Meta(""), Section(""),Term(""), Actor(""), App(""), Component(""), Module(""), Product(""), Release(""), Resource(""),
-    Risk(""), Service(""), Stakeholder(""), System(""), User(""), Class(""), Data(""), Input(""), Member(""),Output(""), Relationship(""), Design(""), Screen(""), MockUp(""), Function(""),
-    Interface(""), Epic(""), Feature(""), Goal(""), Idea(""), Issue(""), Req(""), Ticket(""), WorkPackage(""), Breakpoint(""), Barrier(""), Quality(""), Target(""), Scenario(""), Task(""),
-    Test(""), Story(""), UseCase(""), VariationPoint(""), Variant(""), Code(""), Comment(""), Deprecated(""), Example(""), Expectation(""), FileName(""), Gist(""), Image(""), Spec(""),
-    Text(""), Title(""), Why(""), Benefit(0), Capacity(0), Cost(0), Damage(0), Frequency(0), Min(0), Max(0), Order(0), Prio(0), Probability(0), Profit(0), Value(0))
+  val elems = List(Item(), Label(), Meta(), Section(),Term(), Actor(), App(), Component(), Module(), Product(), Release(), Resource(),
+    Risk(), Service(), Stakeholder(), System(), User(), Class(), Data(), Input(), Member(),Output(), Relationship(), Design(), Screen(), MockUp(), Function(),
+    Interface(), Epic(), Feature(), Goal(), Idea(), Issue(), Req(), Ticket(), WorkPackage(), Breakpoint(), Barrier(), Quality(), Target(), Scenario(), Task(),
+    Test(), Story(), UseCase(), VariationPoint(), Variant(), Code(), Comment(), Deprecated(), Example(), Expectation(), FileName(), Gist(), Image(), Spec(),
+    Text(), Title(), Why(), Benefit(), Capacity(), Cost(), Damage(), Frequency(), Min(), Max(), Order(), Prio(), Probability(), Profit(), Value())
 
   val headerButtons = List("Export", "Import", "Release Planning", "Templates", "Help")
 

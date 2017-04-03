@@ -110,185 +110,185 @@ sealed trait StatusValueAttribute extends Attribute[Enumeration]
 /**
   * General Entities
   */
-case class Item(var id: String) extends General
+case class Item(var id: String= "") extends General
 
-case class Label(var id: String) extends General
+case class Label(var id: String= "") extends General
 
-case class Meta(var id: String) extends General
+case class Meta(var id: String= "") extends General
 
-case class Section(var id: String) extends General
+case class Section(var id: String= "") extends General
 
-case class Term(var id: String) extends General
+case class Term(var id: String= "") extends General
 
 /**
   * Context Entities
   */
-case class Actor(var id: String) extends Context
+case class Actor(var id: String= "") extends Context
 
-case class App(var id: String) extends Context
+case class App(var id: String= "") extends Context
 
-case class Component(var id: String) extends Context
+case class Component(var id: String= "") extends Context
 
-case class Domain(var id: String) extends Context
+case class Domain(var id: String= "") extends Context
 
-case class Module(var id: String) extends Context
+case class Module(var id: String= "") extends Context
 
-case class Product(var id: String) extends Context
+case class Product(var id: String= "") extends Context
 
-case class Release(var id: String) extends Context
+case class Release(var id: String= "") extends Context
 
-case class Resource(var id: String) extends Context
+case class Resource(var id: String= "") extends Context
 
-case class Risk(var id: String) extends Context
+case class Risk(var id: String= "") extends Context
 
-case class Service(var id: String) extends Context
+case class Service(var id: String= "") extends Context
 
 case class Stakeholder(var id: String = "") extends Context
 
-case class System(var id: String) extends Context
+case class System(var id: String= "") extends Context
 
-case class User(var id: String) extends Context
+case class User(var id: String= "") extends Context
 
 /**
   * Data Requirements
   */
 
-case class Class(var id: String) extends DataReq
+case class Class(var id: String= "") extends DataReq
 
-case class Data(var id: String) extends DataReq
+case class Data(var id: String= "") extends DataReq
 
-case class Input(var id: String) extends DataReq
+case class Input(var id: String= "") extends DataReq
 
-case class Member(var id: String) extends DataReq
+case class Member(var id: String= "") extends DataReq
 
-case class Output(var id: String) extends DataReq
+case class Output(var id: String= "") extends DataReq
 
-case class Relationship(var id: String) extends DataReq
+case class Relationship(var id: String= "") extends DataReq
 
 /**
   * Design Requirements
   */
 
-case class Design(var id: String) extends DesignReq
+case class Design(var id: String= "") extends DesignReq
 
-case class Screen(var id: String) extends DesignReq
+case class Screen(var id: String= "") extends DesignReq
 
-case class MockUp(var id: String) extends DesignReq
+case class MockUp(var id: String= "") extends DesignReq
 
 /**
   * Functional Requirements
   */
 
-case class Function(var id: String) extends FunctionalReq
+case class Function(var id: String= "") extends FunctionalReq
 
-case class Interface(var id: String) extends FunctionalReq
+case class Interface(var id: String= "") extends FunctionalReq
 
 /**
   * General Requirements
   */
 
-case class Epic(var id: String) extends GeneralReq
+case class Epic(var id: String= "") extends GeneralReq
 
-case class Feature(var id: String) extends GeneralReq
+case class Feature(var id: String= "") extends GeneralReq
 
-case class Goal(var id: String) extends GeneralReq
+case class Goal(var id: String= "") extends GeneralReq
 
-case class Idea(var id: String) extends GeneralReq
+case class Idea(var id: String= "") extends GeneralReq
 
-case class Issue(var id: String) extends GeneralReq
+case class Issue(var id: String= "") extends GeneralReq
 
-case class Req(var id: String) extends GeneralReq
+case class Req(var id: String= "") extends GeneralReq
 
-case class Ticket(var id: String) extends GeneralReq
+case class Ticket(var id: String= "") extends GeneralReq
 
-case class WorkPackage(var id: String) extends GeneralReq
+case class WorkPackage(var id: String= "") extends GeneralReq
 
 /**
   * Quality Requirements
   */
 
-case class Breakpoint(var id: String) extends QualityReq
+case class Breakpoint(var id: String= "") extends QualityReq
 
-case class Barrier(var id: String) extends QualityReq
+case class Barrier(var id: String= "") extends QualityReq
 
-case class Quality(var id: String) extends QualityReq
+case class Quality(var id: String= "") extends QualityReq
 
-case class Target(var id: String) extends QualityReq
+case class Target(var id: String= "") extends QualityReq
 
 /**
   * Scenario Requirements
   */
-case class Scenario(var id: String) extends ScenarioReq
+case class Scenario(var id: String= "") extends ScenarioReq
 
-case class Task(var id: String) extends ScenarioReq
+case class Task(var id: String= "") extends ScenarioReq
 
-case class Test(var id: String) extends ScenarioReq
+case class Test(var id: String= "") extends ScenarioReq
 
-case class Story(var id: String) extends ScenarioReq
+case class Story(var id: String= "") extends ScenarioReq
 
-case class UseCase(var id: String) extends ScenarioReq
+case class UseCase(var id: String= "") extends ScenarioReq
 
 /**
   * Variability Requirements
   */
-case class VariationPoint(var id: String) extends VariabilityReq
+case class VariationPoint(var id: String= "") extends VariabilityReq
 
-case class Variant(var id: String) extends VariabilityReq
+case class Variant(var id: String= "") extends VariabilityReq
 
 /**
   * String Attribute Types
   */
-case class Code(var value: String) extends StringAttribute
+case class Code(var value: String= "") extends StringAttribute
 
-case class Comment(var value: String) extends StringAttribute
+case class Comment(var value: String= "") extends StringAttribute
 
-case class Deprecated(var value: String) extends StringAttribute
+case class Deprecated(var value: String= "") extends StringAttribute
 
-case class Example(var value: String) extends StringAttribute
+case class Example(var value: String= "") extends StringAttribute
 
-case class Expectation(var value: String) extends StringAttribute
+case class Expectation(var value: String= "") extends StringAttribute
 
-case class FileName(var value: String) extends StringAttribute
+case class FileName(var value: String= "") extends StringAttribute
 
-case class Gist(var value: String) extends StringAttribute
+case class Gist(var value: String= "") extends StringAttribute
 
-case class Image(var value: String) extends StringAttribute
+case class Image(var value: String= "") extends StringAttribute
 
-case class Spec(var value: String) extends StringAttribute
+case class Spec(var value: String= "") extends StringAttribute
 
-case class Text(var value: String) extends StringAttribute
+case class Text(var value: String= "") extends StringAttribute
 
-case class Title(var value: String) extends StringAttribute
+case class Title(var value: String= "") extends StringAttribute
 
-case class Why(var value: String) extends StringAttribute
+case class Why(var value: String= "") extends StringAttribute
 
 /**
   * Int Attribute Types
   */
 
-case class Benefit(var value: Int) extends IntAttribute
+case class Benefit(var value: Int=0) extends IntAttribute
 
-case class Capacity(var value: Int) extends IntAttribute
+case class Capacity(var value: Int=0) extends IntAttribute
 
-case class Cost(var value: Int) extends IntAttribute
+case class Cost(var value: Int=0) extends IntAttribute
 
-case class Damage(var value: Int) extends IntAttribute
+case class Damage(var value: Int=0) extends IntAttribute
 
-case class Frequency(var value: Int) extends IntAttribute
+case class Frequency(var value: Int=0) extends IntAttribute
 
-case class Min(var value: Int) extends IntAttribute
+case class Min(var value: Int=0) extends IntAttribute
 
-case class Max(var value: Int) extends IntAttribute
+case class Max(var value: Int=0) extends IntAttribute
 
-case class Order(var value: Int) extends IntAttribute
+case class Order(var value: Int=0) extends IntAttribute
 
-case class Prio(var value: Int) extends IntAttribute
+case class Prio(var value: Int=0) extends IntAttribute
 
-case class Probability(var value: Int) extends IntAttribute
+case class Probability(var value: Int=0) extends IntAttribute
 
-case class Profit(var value: Int) extends IntAttribute
+case class Profit(var value: Int=0) extends IntAttribute
 
-case class Value(var value: Int) extends IntAttribute
+case class Value(var value: Int=0) extends IntAttribute
 
 /**
   * StatusValue Attribute Types

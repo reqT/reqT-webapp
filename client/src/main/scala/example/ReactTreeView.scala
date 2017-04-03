@@ -236,8 +236,6 @@ object ReactTreeView {
     }
 
     def onDoubleClickTreeItem(P: NodeProps)(e: ReactEvent): Callback = {
-
-
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       val path = (if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item).split("/")
@@ -257,6 +255,15 @@ object ReactTreeView {
 
         case Model => dispatch(NoAction)
       }
+    }
+
+    def onDoubleClickRelation(P: NodeProps)(e: ReactEvent): Callback = {
+      val dispatch: Action => Callback = P.modelProxy.dispatchCB
+      val path = (if (P.parent.isEmpty) P.root.item.toString
+      else P.parent + "/" + P.root.item).split("/")
+
+      dispatch(updateRelation(path, P.root.item.asInstanceOf[Entity].id, Some(precedes)))
+
     }
 
     def dragOver(P:NodeProps)(e: ReactDragEvent): Callback = {
@@ -315,27 +322,28 @@ object ReactTreeView {
           ^.onDragStart ==> dragStart(P),
           ^.onDrop ==> onDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
-          ^.onDblClick ==> onDoubleClickTreeItem(P),
           S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= P.style.dragOverTreeItemContent,
           <.p(
             ^.id := P.root.item.toString.replace("\"", ""),
             ^.unselectable := "true",
             <.span(
-              //^.onDblClick ==> ,
+              ^.onDblClick ==> onDoubleClickTreeItem(P),
               P.root.item.toString.replace("\"", "")
             ),
-            <.span(getRelationType(P.root)),
+            <.span(
+              ^.onDblClick ==> onDoubleClickRelation(P),
+              getRelationType(P.root)),
             ^.position := "absolute",
             ^.left := "7%",
             ^.top := "25%",
             ^.fontSize := "large"
 
           ),
-          <.button(
-            Styles.bootStrapContentButton
-            //            ^.onClick --> ViewContent()
-          ),
+//          <.button(
+//            Styles.bootStrapContentButton
+//            //            ^.onClick --> ViewContent()
+//          ),
           <.button(
             Styles.bootStrapRemoveButton,
             ^.onClick --> removeElem(P)
