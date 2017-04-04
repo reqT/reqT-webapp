@@ -136,7 +136,8 @@ object ReactTreeView {
           style = P.style,
           filterMode = S.filterMode,
           modelProxy = P.modelProxy,
-          openModal = P.openModal
+          openModal = P.openModal,
+          setModalContent = P.setModalContent
         ))
       )
   }
@@ -241,7 +242,8 @@ object ReactTreeView {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       val path = (if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item).split("/")
-      P.openModal(P.root.item.toString)
+      P.setModalContent("Kom igen!")
+      //P.openModal()
 //      P.root.item match {
 //        case entity: Entity =>
 //          if (entity.hasRelation)
@@ -382,7 +384,8 @@ object ReactTreeView {
                        style: Style,
                        filterMode: Boolean,
                        modelProxy: ModelProxy[Tree],
-                       openModal: String => Callback
+                       openModal: () => Callback,
+                       setModalContent: String => Callback
                       )
 
 
@@ -409,7 +412,8 @@ object ReactTreeView {
                    showSearchBox: Boolean,
                    style: Style,
                    modelProxy: ModelProxy[Tree],
-                   openModal: String => Callback
+                   openModal: () => Callback,
+                   setModalContent: String => Callback
                   )
 
   def apply(root: TreeItem,
@@ -420,8 +424,9 @@ object ReactTreeView {
             key: js.UndefOr[js.Any] = js.undefined,
             style: Style = new Style {},
             modelProxy: ModelProxy[Tree],
-            openModal: String => Callback
+            openModal: () => Callback,
+            setModalContent: String => Callback
            ) =
-    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, openModal))
+    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, openModal, setModalContent))
 
 }

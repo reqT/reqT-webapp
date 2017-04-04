@@ -34,7 +34,7 @@ object webApp extends js.JSApp {
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], content: String, isModalOpen: Boolean) {
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalContent: String) {
 
     def log(line: String): State =
       copy(logLines = logLines :+ line)
@@ -108,7 +108,7 @@ object webApp extends js.JSApp {
     .build
 
 
-  val treeView = ReactComponentB[(ModelProxy[Tree], String => Callback)]("treeView")
+  val treeView = ReactComponentB[(ModelProxy[Tree], () => Callback, String => Callback)]("treeView")
     .render(P => <.pre(
       Styles.treeView,
       ^.border := "1px solid #ccc",
@@ -119,7 +119,8 @@ object webApp extends js.JSApp {
           openByDefault = true,
           modelProxy = P.props._1,
           showSearchBox = true,
-          openModal = P.props._2
+          openModal = P.props._2,
+          setModalContent = P.props._3
         ),
         <.strong(
           ^.id := "treeviewcontent"
@@ -143,10 +144,6 @@ object webApp extends js.JSApp {
         Styles.navBarButton
       )).build
 
-//  def handleOnClick()(event: ReactEvent): Callback = {
-//    CallbackTo(global.prompt("Input Entity ID"))
-//  }
-
 
   val navigationBar = ReactComponentB[(Seq[String], Props)]("navigationBar")
     .render($ => <.nav(
@@ -160,15 +157,19 @@ object webApp extends js.JSApp {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def openModal(entity: String): Callback = {
-      $.modState(_.copy(isModalOpen = true))
+    def openModal(): Callback = $.modState(_.copy(isModalOpen = true))
+
+    def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
+
+    def setModalContent(newContent: String): Callback = {
+      println(newContent)
+      $.modState(_.copy(isModalOpen =  true))
     }
 
-    def closeModal(e: ReactEvent): Callback = {
-      $.modState(_.copy(isModalOpen = false))
-    }
 
     def render(props: Props, state: State) = {
+      println("state content: " +  state.modalContent + "  " + state.isModalOpen.toString)
+
       val dispatch: Action => Callback = props.proxy.dispatchCB
       val sc = AppCircuit.connect(_.tree)
 
@@ -189,12 +190,8 @@ object webApp extends js.JSApp {
           None
       }
 
-      /**
-        * Previous functionality, which will be used at a later stage (Server integration)
-        */
-
       <.div(
-        Modal(isOpen = state.isModalOpen, onClose = closeModal),
+        Modal(isOpen = state.isModalOpen, onClose = closeModal, content = state.modalContent),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -228,7 +225,7 @@ object webApp extends js.JSApp {
         ),
         <.div(
           ^.height := "100%",
-          sc(proxy => treeView((proxy,openModal)))
+          sc(proxy => treeView((proxy,openModal, setModalContent)))
         )
       )
     }
@@ -262,10 +259,8 @@ object webApp extends js.JSApp {
 
     def onTextChange(event: ReactEventI) =
       event.extract(_.target.value.toLowerCase) {
-        case "entity" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
-        case "attribute" => $.modState(_.copy(elems = elems.filter(_.isAttribute)))
-        case "entities" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
-        case "attributes" => $.modState(_.copy(elems = elems.filter(_.isAttribute)))
+        case "entity" | "entities" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
+        case "attribute" | "attributes"=> $.modState(_.copy(elems = elems.filter(_.isAttribute)))
         case value =>
           if(value.startsWith("entity:"))
             $.modState(_.copy(elems = elems.filter(_.isEntity).filter(_.toString.toLowerCase.contains(value.drop(7).trim.toLowerCase))))
@@ -343,8 +338,8 @@ object webApp extends js.JSApp {
     }
   }
 
-  val Content = ReactComponentB[Props]("Content")
-    .initialState(State(None, Vector.empty, message = "", elems, content = "", isModalOpen = false))
+  val pageContent = ReactComponentB[Props]("Content")
+    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalContent = "blää"))
     .renderBackend[Backend]
     .componentDidMount(_.backend.start)
     .componentWillUnmount(_.backend.end)
@@ -355,6 +350,6 @@ object webApp extends js.JSApp {
   def main(): Unit = {
     Styles.addToDocument()
     ReactDOM.render(dc(proxy => navigationBar((headerButtons, Props(proxy)))), document.getElementById("header"))
-    ReactDOM.render(dc(proxy => Content(Props(proxy))), document.getElementById("content"))
+    ReactDOM.render(dc(proxy => pageContent(Props(proxy))), document.getElementById("content"))
   }
 }
