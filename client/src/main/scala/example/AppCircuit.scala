@@ -160,6 +160,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
       case updateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) =>
         println(path)
+        println(newRelationType.get.toString)
 
         zoomToRelation(modelRW, path.tail) match {
           case Some(modelRW) => updated(modelRW.updated(modelRW.value.asInstanceOf[Relation].setLink(newRelationType.getOrElse(modelRW.value.asInstanceOf[Relation].link)).setEntity(newId)).tree)

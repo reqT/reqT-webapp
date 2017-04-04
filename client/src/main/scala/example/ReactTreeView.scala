@@ -10,7 +10,6 @@ import scala.scalajs.js.Dynamic.global
 import scalacss.ScalaCssReact._
 import scala.scalajs.js
 
-
 case class TreeItem(var item: Any, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def apply(item: Any): TreeItem = this (item, Seq())
 }
@@ -47,7 +46,7 @@ object ReactTreeView {
   def getRelationType(treeItem: TreeItem): Option[String] = {
     treeItem.item match {
       case "Model()" => None
-      case elem : Elem  => if (elem.hasRelation) Some(" - " + treeItem.link.get.toString) else None
+      case elem : Elem  => if (elem.hasRelation) Some(treeItem.link.get.toString) else None
     }
   }
 
@@ -59,7 +58,6 @@ object ReactTreeView {
                    dragOverNode: js.UndefOr[NodeC])
 
   class Backend($: BackendScope[Props, State]) {
-
 
     def onNodeSelect(P: Props)(selected: NodeC): Callback = {
       val removeSelection: Callback =
@@ -281,11 +279,20 @@ object ReactTreeView {
       dispatch(RemoveElem(path.split("/")))
     }
 
+
     def render(P: NodeProps, S: NodeState): ReactTag = {
+      val dispatch: Action => Callback = P.modelProxy.dispatchCB
 
       val depth = P.depth + 1
+
       val parent = if (P.parent.isEmpty) P.root.item.toString
       else s"${P.parent}/${P.root.item.toString}"
+
+      val path = (if (P.parent.isEmpty) P.root.item.toString
+      else P.parent + "/" + P.root.item).split("/")
+
+
+      val updateRel = updateRelation(path, P.root.item.asInstanceOf[Entity].id, _: Option[RelationType])
 
       val treeMenuToggle: TagMod =
         if (S.children.nonEmpty)
@@ -311,7 +318,7 @@ object ReactTreeView {
           ^.position.relative,
           ^.border := "1px solid",
           ^.borderRadius := "5px",
-          ^.backgroundColor := "#e3e8ea",
+          ^.backgroundColor := { if (P.root.item.isInstanceOf[Entity]) "#CEDBE7" else "#CFEADD" },
           ^.padding := "5px",
           ^.width := "400px",
           treeMenuToggle,
@@ -328,30 +335,28 @@ object ReactTreeView {
           <.p(
             ^.id := P.root.item.toString.replace("\"", ""),
             ^.unselectable := "true",
-            <.span(
-              ^.onDblClick ==> onDoubleClickTreeItem(P),
-              P.root.item.toString.replace("\"", "")
-            ),
-            <.span(
-              ^.onDblClick ==> onDoubleClickRelation(P),
-              getRelationType(P.root)),
             ^.position := "absolute",
             ^.left := "7%",
             ^.top := "25%",
-            ^.fontSize := "large"
+            ^.fontSize := "large",
+            <.span(
+              ^.onDblClick ==> onDoubleClickTreeItem(P),
+              P.root.item.toString.replace("\"", "")
+            )
 
-          ),
-          <.button(
-            ^.role := "dialog",
-            Styles.bootStrapContentButton
-            //            ^.onClick --> ViewContent()
+
           ),
           <.button(
             Styles.bootStrapRemoveButton,
             ^.onClick --> removeElem(P)
-          )
-
-
+          ),
+          getRelationType(P.root) match {
+            case Some(relation) =>
+              println(relation)
+              RelationSelect(relation, dispatch, updateRel)
+            case None =>
+              <.div()
+          }
         ),
         <.ul(P.style.treeGroup)(
           S.children.map(child =>

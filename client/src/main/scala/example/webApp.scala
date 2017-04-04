@@ -18,6 +18,7 @@ import upickle.default._
 
 import scala.scalajs.js.Dynamic.global
 
+import chandu0101.scalajs.react.components.Implicits._
 
 @JSExport
 object webApp extends js.JSApp {

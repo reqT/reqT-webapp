@@ -1,7 +1,10 @@
 package example
 
 
+import chandu0101.scalajs.react.components.{DefaultSelect, ReactListView, ReactTable}
+
 import scalacss.Defaults._
+import scalacss.internal.mutable.GlobalRegistry
 
 
 /**
@@ -57,24 +60,34 @@ object Styles extends StyleSheet.Inline {
 
   val bootStrapRemoveButton = style(
     addClassName("btn glyphicon glyphicon-remove pull-right"),
-    border(1.px),
-//    border.solid,
     position.absolute,
-    height(100.%%),
+    width(40.px),
+    height(48.px),
+//    height(100.%%),
     left(90.%%)
   )
 
   val bootStrapContentButton = style(
     addClassName("btn glyphicon glyphicon-align-right pull-right"),
     border(1.px),
-//    border.solid,
     position.absolute,
     height(100.%%),
-    left(80.%%)
+    left(60.%%)
   )
 
   val navBar = style(
     addClassName("navbar navbar-default navbar-static-bottom")
+  )
+
+  val select = style(
+    addClassName("form-control pull-right"),
+    position.absolute,
+    width(100.px),
+    top(0.%%),
+    height(100.%%),
+    left(65.%%),
+    border(1.px),
+    border.solid
   )
 
   /**
@@ -96,6 +109,5 @@ object Styles extends StyleSheet.Inline {
     marginBottom(0.px),
     marginLeft(0.px)
   )
-
 
 }
