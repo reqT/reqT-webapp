@@ -6,9 +6,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEve
 
 object Modal {
 
-  //case class State(isOpen: Boolean)
-//
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback)
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, content: String)
 
   def modalStyle = Seq(
     ^.position := "absolute",
@@ -35,35 +33,38 @@ object Modal {
   )
 
 
-  def close(onClose:ReactEvent => Callback)(e: ReactEvent): Callback ={
+  def close(onClose:ReactEvent => Callback)(e: ReactEvent): Callback = {
     e.preventDefault()
     onClose(e)
   }
 
-
-
   class Backend(t: BackendScope[Props, _]) {
-    def render(p: Props) =
-      if (p.isOpen) {
+
+    def render(P: Props) =
+      if (P.isOpen) {
         <.div(
-          <.div(
-            modalStyle
-            //p.genContent()
-          ),
-          <.div(
-            backdropStyle,
-            ^.onClick ==> close(p.onClose)
-          )
+            <.div(
+                modalStyle,
+                <.p(
+                  P.content
+                ),
+                <.input(
+                )
+            ),
+            <.div(
+                backdropStyle,
+                ^.onClick ==> close(P.onClose)
+            )
         )
       }else { <.div()}
   }
 
   val component = ReactComponentB[Props]("Modal")
-    .stateless //initialState(State(isOpen = false))
+    .stateless  //initialState(State(content = "nocontent"))
     .renderBackend[Backend]
     .build
 
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback) = component.set()(Props(isOpen, onClose))
+  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, content: String) = component.set()(Props(isOpen, onClose, content))
 }
