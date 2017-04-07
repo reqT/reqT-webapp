@@ -17,7 +17,6 @@ case class TreeItem(var item: Any, var children: Seq[TreeItem], var link: Option
 
 object ReactTreeView {
   trait Style {
-
     def reactTreeView = Seq[TagMod]()
 
     def treeGroup = Seq(^.margin := 0, ^.padding := "0 0 0 40px")
@@ -59,7 +58,6 @@ object ReactTreeView {
                    dragOverNode: js.UndefOr[NodeC])
 
   class Backend($: BackendScope[Props, State]) {
-
 
     def onNodeSelect(P: Props)(selected: NodeC): Callback = {
       val removeSelection: Callback =
@@ -136,7 +134,6 @@ object ReactTreeView {
           style = P.style,
           filterMode = S.filterMode,
           modelProxy = P.modelProxy,
-          openModal = P.openModal,
           setModalContent = P.setModalContent
         ))
       )
@@ -238,27 +235,40 @@ object ReactTreeView {
           dispatch(NoAction)
     }
 
-    def onDoubleClickTreeItem(P: NodeProps)(e: ReactEvent): Callback = {
+
+    def onDoubleClickTreeItem(P: NodeProps, S: NodeState)(e: ReactEvent): Callback = {
+
+      def setModalOutput(newModalOutput: String) = {
+        $.modState(_.copy(modalOutPut = newModalOutput))
+      }
+
+
+
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       val path = (if (P.parent.isEmpty) P.root.item.toString
       else P.parent + "/" + P.root.item).split("/")
-      P.setModalContent("Kom igen!")
-      //P.openModal()
-//      P.root.item match {
-//        case entity: Entity =>
-//          if (entity.hasRelation)
-//            dispatch(updateRelation(path, global.prompt("Input Entity ID").toString, None))
-//          else
-//            dispatch(updateEntity(path, global.prompt("Input Entity ID").toString))
-//
-//        case _: IntAttribute =>
-//          dispatch(updateIntAttribute(path, global.prompt("Input Int Attribute Value").toString.toInt))
-//
-//        case _: StringAttribute =>
-//          dispatch(updateStringAttribute(path, global.prompt("Input String Attribute Value").toString))
-//
-//        case Model => dispatch(NoAction)
-//      }
+
+      val update = updateEntity(path, _: String)
+
+      def clickModal = Seq(<.div(P.root.item.toString.replaceAll("\"", "")))
+
+      P.root.item match {
+        case entity: Entity =>
+          if (entity.hasRelation)
+            P.setModalContent(clickModal, setModalOutput)
+          else{
+            P.setModalContent(clickModal, setModalOutput)
+            dispatch(updateRelation(path, entity.id, None))
+          }
+
+        case attr: IntAttribute =>
+          P.setModalContent(clickModal, setModalOutput)
+
+        case attr: StringAttribute =>
+          P.setModalContent(clickModal, setModalOutput)
+
+        case Model => dispatch(NoAction)
+      }
     }
 
     def onDoubleClickRelation(P: NodeProps)(e: ReactEvent): Callback = {
@@ -331,7 +341,7 @@ object ReactTreeView {
             ^.id := P.root.item.toString.replace("\"", ""),
             ^.unselectable := "true",
             <.span(
-              ^.onDblClick ==> onDoubleClickTreeItem(P),
+              ^.onDblClick ==> onDoubleClickTreeItem(P,S),
               P.root.item.toString.replace("\"", "")
             ),
             <.span(
@@ -371,7 +381,7 @@ object ReactTreeView {
   }
 
 
-  case class NodeState(children: Seq[TreeItem] = Nil, selected: Boolean = false, draggedOver: Boolean = false)
+  case class NodeState(children: Seq[TreeItem] = Nil, selected: Boolean = false, draggedOver: Boolean = false, modalOutPut: String = "")
 
   case class NodeProps(root: TreeItem,
                        open: Boolean,
@@ -384,8 +394,7 @@ object ReactTreeView {
                        style: Style,
                        filterMode: Boolean,
                        modelProxy: ModelProxy[Tree],
-                       openModal: () => Callback,
-                       setModalContent: String => Callback
+                       setModalContent: (Seq[TagMod], String => Unit ) => Callback
                       )
 
 
@@ -412,8 +421,7 @@ object ReactTreeView {
                    showSearchBox: Boolean,
                    style: Style,
                    modelProxy: ModelProxy[Tree],
-                   openModal: () => Callback,
-                   setModalContent: String => Callback
+                   setModalContent: (Seq[TagMod], String => Unit ) => Callback
                   )
 
   def apply(root: TreeItem,
@@ -424,9 +432,8 @@ object ReactTreeView {
             key: js.UndefOr[js.Any] = js.undefined,
             style: Style = new Style {},
             modelProxy: ModelProxy[Tree],
-            openModal: () => Callback,
-            setModalContent: String => Callback
+            setModalContent: (Seq[TagMod], String => Unit) => Callback
            ) =
-    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, openModal, setModalContent))
+    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, setModalContent))
 
 }

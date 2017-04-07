@@ -34,11 +34,17 @@ object webApp extends js.JSApp {
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalContent: String) {
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalContent: Seq[TagMod], setModalOutput: String => Unit) {
 
     def log(line: String): State =
       copy(logLines = logLines :+ line)
+//
+//    def addContent(newContent: Seq[TagMod]): State =
+//      copy(modalContent = modalContent ++ newContent)
   }
+
+
+
 
 
   def dragStart(elem: Elem)(event: ReactDragEvent): Callback = {
@@ -108,7 +114,7 @@ object webApp extends js.JSApp {
     .build
 
 
-  val treeView = ReactComponentB[(ModelProxy[Tree], () => Callback, String => Callback)]("treeView")
+  val treeView = ReactComponentB[(ModelProxy[Tree], (Seq[TagMod], (String => Unit) ) => Callback)]("treeView")
     .render(P => <.pre(
       Styles.treeView,
       ^.border := "1px solid #ccc",
@@ -119,8 +125,7 @@ object webApp extends js.JSApp {
           openByDefault = true,
           modelProxy = P.props._1,
           showSearchBox = true,
-          openModal = P.props._2,
-          setModalContent = P.props._3
+          setModalContent = P.props._2
         ),
         <.strong(
           ^.id := "treeviewcontent"
@@ -157,18 +162,12 @@ object webApp extends js.JSApp {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def openModal(): Callback = $.modState(_.copy(isModalOpen = true))
 
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
 
-    def setModalContent(newContent: String): Callback = {
-      println(newContent)
-      $.modState(_.copy(isModalOpen =  true))
-    }
-
+    def openModalWithContent(newContent: Seq[TagMod], setOutput: String => Unit): Callback = $.modState(_.copy(modalContent = newContent, isModalOpen = true, setModalOutput = setOutput))
 
     def render(props: Props, state: State) = {
-      println("state content: " +  state.modalContent + "  " + state.isModalOpen.toString)
 
       val dispatch: Action => Callback = props.proxy.dispatchCB
       val sc = AppCircuit.connect(_.tree)
@@ -183,7 +182,7 @@ object webApp extends js.JSApp {
         for (websocket <- state.websocket if props.proxy.value.toString.nonEmpty)
           yield sendMessage(websocket, props.proxy.value.toString)
 
-      def handleNewTodoKeyDown(event: ReactKeyboardEventI): Option[Callback] = {
+      def handleKeyDown(event: ReactKeyboardEventI): Option[Callback] = {
         if (event.nativeEvent.keyCode == KeyCode.Enter)
           send
         else
@@ -191,7 +190,7 @@ object webApp extends js.JSApp {
       }
 
       <.div(
-        Modal(isOpen = state.isModalOpen, onClose = closeModal, content = state.modalContent),
+        Modal(isOpen = state.isModalOpen, onClose = closeModal, content = state.modalContent, setOutput = state.setModalOutput),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -209,7 +208,7 @@ object webApp extends js.JSApp {
               <.input(
                 ^.onChange ==> onChange,
                 ^.value := state.message,
-                ^.onKeyDown ==>? handleNewTodoKeyDown
+                ^.onKeyDown ==>? handleKeyDown
               ),
               <.button(
                 ^.disabled := send.isEmpty, // Disable button if unable to send
@@ -225,7 +224,7 @@ object webApp extends js.JSApp {
         ),
         <.div(
           ^.height := "100%",
-          sc(proxy => treeView((proxy,openModal, setModalContent)))
+          sc(proxy => treeView((proxy, openModalWithContent)))
         )
       )
     }
@@ -339,7 +338,7 @@ object webApp extends js.JSApp {
   }
 
   val pageContent = ReactComponentB[Props]("Content")
-    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalContent = "blää"))
+    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalContent = Seq(), setModalOutput = println))
     .renderBackend[Backend]
     .componentDidMount(_.backend.start)
     .componentWillUnmount(_.backend.end)

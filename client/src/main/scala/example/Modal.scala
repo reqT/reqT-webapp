@@ -1,12 +1,19 @@
 package example
 
-import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, _}
+import japgolly.scalajs.react.vdom.prefix_<^.<
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent}
+import org.scalajs.dom.ext.KeyCode
+
+import java.lang.Class
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 
 
 object Modal {
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, content: String)
+  case class State(input: String)
+
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, content: Seq[TagMod], setOutput: String => Unit)
 
   def modalStyle = Seq(
     ^.position := "absolute",
@@ -33,38 +40,60 @@ object Modal {
   )
 
 
-  def close(onClose:ReactEvent => Callback)(e: ReactEvent): Callback = {
-    e.preventDefault()
-    onClose(e)
-  }
 
-  class Backend(t: BackendScope[Props, _]) {
-
-    def render(P: Props) =
+  class Backend($: BackendScope[Props, State]) {
+    def render(P: Props, S:State) =
       if (P.isOpen) {
         <.div(
+          ^.onKeyDown ==> handleKeyDown(P),
             <.div(
                 modalStyle,
-                <.p(
-                  P.content
-                ),
-                <.input(
-                )
+                P.content,
+              <.input(
+                ^.placeholder := "Name..",
+                ^.autoFocus := true,
+                ^.onChange ==> onChange
+              )
             ),
             <.div(
                 backdropStyle,
-                ^.onClick ==> close(P.onClose)
+                ^.onClick ==> onClick(P, S)
             )
         )
-      }else { <.div()}
+      }else
+        <.div()
+
+
+    def onClick(P: Props, S:State)(e: ReactEvent): Callback ={
+      e.preventDefault()
+      P.setOutput(S.input)
+      P.onClose(e)
+    }
+
+
+    def onChange(event: ReactEventI): Callback ={
+      val newInput = event.target.value
+      $.modState(_.copy(input = newInput))
+    }
+
+    def handleKeyDown(P: Props)(event: ReactKeyboardEventI): Callback = {
+      if (event.nativeEvent.keyCode == KeyCode.Enter || event.nativeEvent.keyCode == KeyCode.Escape){
+        event.preventDefault()
+        P.onClose(event)
+      }
+      else
+        Callback()
+    }
+
   }
 
   val component = ReactComponentB[Props]("Modal")
-    .stateless  //initialState(State(content = "nocontent"))
+    .initialState(State(input = ""))
     .renderBackend[Backend]
     .build
 
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, content: String) = component.set()(Props(isOpen, onClose, content))
+  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, content: Seq[TagMod], setOutput: String => Unit)
+      = component.set()(Props(isOpen, onClose, content, setOutput))
 }
