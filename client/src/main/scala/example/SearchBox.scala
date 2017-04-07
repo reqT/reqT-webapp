@@ -16,10 +16,10 @@ object ReactSearchBox {
     val searchBox = style(marginBottom(10 px))
 
     val input = style(
+      addClassName("form-control"),
       fontSize(13 px),
       fontWeight._300,
       padding(3 px),
-      width(100.%%),
       backgroundColor.transparent,
       borderBottom :=! "1px solid #B2ADAD"
 //      &.focus(outline.none,
@@ -34,7 +34,7 @@ object ReactSearchBox {
 
     def render(P: Props) =
       <.div(P.style.searchBox)(
-        <.input(P.style.input, ^.placeholder := "Search ..", ^.onKeyUp ==> onTextChange(P))
+        <.input(P.style.input, ^.width := "20%", ^.placeholder := "Search ..", ^.onKeyUp ==> onTextChange(P))
       )
   }
 

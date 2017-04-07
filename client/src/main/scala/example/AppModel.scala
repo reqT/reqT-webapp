@@ -58,7 +58,6 @@ sealed trait Entity extends Node {
 }
 
 sealed trait RelationType
-
 //sealed trait AttributeTypes[T]
 sealed trait General extends Entity
 
