@@ -348,13 +348,6 @@ object ReactTreeView {
           <.p(
             ^.id := P.root.item.toString.replace("\"", ""),
             ^.unselectable := "true",
-            <.span(
-              ^.onDblClick ==> onDoubleClickTreeItem(P,S),
-              P.root.item.toString.replace("\"", "")
-            ),
-            <.span(
-              ^.onDblClick ==> onDoubleClickRelation(P),
-              getRelationType(P.root)),
             ^.position := "absolute",
             ^.left := "7%",
             ^.top := "25%",
