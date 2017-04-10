@@ -10,8 +10,9 @@ import scala.scalajs.js.Dynamic.global
 import scalacss.ScalaCssReact._
 import scala.scalajs.js
 
-case class TreeItem(var item: Any, var children: Seq[TreeItem], var link: Option[RelationType]) {
-  def apply(item: Any): TreeItem = this (item, Seq())
+
+case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
+  def apply(item: Any, uuid: UUID, children: Seq[TreeItem]): TreeItem = this (item, uuid, Seq())
 }
 
 object ReactTreeView {
@@ -142,8 +143,8 @@ object ReactTreeView {
     import upickle.default.read
 
     def dragStart(P: NodeProps)(event: ReactDragEvent): Callback = {
-      val path = if (P.parent.isEmpty) P.root.item.toString
-      else P.parent + "/" + P.root.item
+      val path = if (P.parent.isEmpty) P.root.uuid.toString
+      else P.parent + "/" + P.root.uuid.toString
 
         event.dataTransfer.effectAllowed = "move"
         event.dataTransfer.setData("existing", "true")
@@ -192,8 +193,9 @@ object ReactTreeView {
       event.preventDefault()
 
       val pathFrom = event.dataTransfer.getData("path").split("/")
-      val pathTo = (if (P.parent.isEmpty) P.root.item.toString
-        else P.parent + "/" + P.root.item).split("/")
+      val pathTo = (if (P.parent.isEmpty) P.root.uuid.toString
+        else P.parent + "/" + P.root.uuid).split("/")
+
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       var isAttribute = false
 
@@ -205,6 +207,7 @@ object ReactTreeView {
           val elem = read[Entity](event.dataTransfer.getData("elem"))
           if (event.dataTransfer.getData("existing") == "false"){
             val newId = global.prompt("Input Entity ID").toString
+
             elem.setID(newId)
           }
           elem
@@ -244,8 +247,8 @@ object ReactTreeView {
 
 
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
-      val path = (if (P.parent.isEmpty) P.root.item.toString
-      else P.parent + "/" + P.root.item).split("/")
+      val path = (if (P.parent.isEmpty) P.root.uuid.toString
+      else P.parent + "/" + P.root.uuid).split("/")
 
       val update = updateEntity(path, _: String)
 
@@ -272,8 +275,8 @@ object ReactTreeView {
 
     def onDoubleClickRelation(P: NodeProps)(e: ReactEvent): Callback = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
-      val path = (if (P.parent.isEmpty) P.root.item.toString
-      else P.parent + "/" + P.root.item).split("/")
+      val path = (if (P.parent.isEmpty) P.root.uuid.toString
+      else P.parent + "/" + P.root.uuid).split("/")
 
       dispatch(updateRelation(path, P.root.item.asInstanceOf[Entity].id, Some(precedes)))
     }
@@ -286,8 +289,8 @@ object ReactTreeView {
       global.prompt("Do you want to delete " + P.root.item + " ?")
 
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
-      val path = if (P.parent.isEmpty) P.root.item.toString
-      else P.parent + "/" + P.root.item
+      val path = if (P.parent.isEmpty) P.root.uuid.toString
+      else P.parent + "/" + P.root.uuid
 
       dispatch(RemoveElem(path.split("/")))
     }
@@ -298,11 +301,11 @@ object ReactTreeView {
 
       val depth = P.depth + 1
 
-      val parent = if (P.parent.isEmpty) P.root.item.toString
-      else s"${P.parent}/${P.root.item.toString}"
+      val parent = if (P.parent.isEmpty) P.root.uuid.toString
+      else s"${P.parent}/${P.root.uuid.toString}"
 
-      val path = (if (P.parent.isEmpty) P.root.item.toString
-      else P.parent + "/" + P.root.item).split("/")
+      val path = (if (P.parent.isEmpty) P.root.uuid.toString
+      else P.parent + "/" + P.root.uuid).split("/")
 
 
       val updateRel = updateRelation(path, P.root.item.asInstanceOf[Entity].id, _: Option[RelationType])
@@ -373,7 +376,7 @@ object ReactTreeView {
         <.ul(P.style.treeGroup)(
           S.children.map(child =>
             (ifFilterTextExist(P.filterText, child) || ifFilterTextExist(P.filterText, P.root)) ?=
-              TreeNode.withKey(s"$parent/${child.item}")(P.copy(
+              TreeNode.withKey(s"$parent/${child.uuid}")(P.copy(
                 root = child,
                 open = true, //!P.filterText.trim.isEmpty,
                 depth = depth,
