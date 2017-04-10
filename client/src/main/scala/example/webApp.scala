@@ -39,10 +39,6 @@ object webApp extends js.JSApp {
       copy(logLines = logLines :+ line)
   }
 
-
-
-
-
   def dragStart(elem: Elem)(event: ReactDragEvent): Callback = {
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("existing", "false")
@@ -190,7 +186,9 @@ object webApp extends js.JSApp {
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
-        //        ^.paddingLeft := "15px",
+        //^.paddingLeft := "0px",
+        //^.paddingRight := "0px",
+        ^.paddingTop := "25px",
         <.div(
           ^.className := "col-1",
           ^.float := "left",
@@ -202,15 +200,18 @@ object webApp extends js.JSApp {
             ^.height := "49%",
             <.div(
               <.input(
+                ^.className := "form-control",
                 ^.onChange ==> onChange,
                 ^.value := state.message,
                 ^.onKeyDown ==>? handleKeyDown
               ),
               <.button(
+                ^.className := "btn btn-default",
                 ^.disabled := send.isEmpty, // Disable button if unable to send
                 ^.onClick -->? send, // --> suffixed by ? because it's for Option[Callback]
                 "Send"),
               <.button(
+                ^.className := "btn btn-default",
                 "Verify Model",
                 ^.onClick -->? sendVerify
               )),
@@ -218,10 +219,7 @@ object webApp extends js.JSApp {
             log(state.logLines)// Display log
           )
         ),
-        <.div(
-          ^.height := "100%",
-          sc(proxy => treeView((proxy, openModalWithContent)))
-        )
+        sc(proxy => treeView((proxy, openModalWithContent)))
       )
     }
 
@@ -232,6 +230,7 @@ object webApp extends js.JSApp {
           Styles.dragList,
           <.form(
             <.input.text(
+              ^.className := "form-control",
               ^.placeholder := "Search..",
               ^.onChange ==> onTextChange
             )
@@ -244,6 +243,7 @@ object webApp extends js.JSApp {
     val log = ReactComponentB[Vector[String]]("log")
       .render($ =>
         <.pre(
+          ^.className := "form-control",
           ^.width := 360.px,
           ^.height := 200.px,
           ^.border := "1px solid",

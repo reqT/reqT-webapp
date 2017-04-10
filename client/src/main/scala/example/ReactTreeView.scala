@@ -206,8 +206,8 @@ object ReactTreeView {
         case entity: Entity => s: String => AddElem(pathTo, entity.setID(s), has)
         case intAttr: IntAttribute => s: String => AddElem(pathTo, intAttr.setValue(s.toInt), has)
         case stringAttr: StringAttribute => s: String => AddElem(pathTo, stringAttr.setValue(s), has)
-
       }
+
 
       if (event.dataTransfer.getData("existing") == "false"){
         val elem = getElem(event)
