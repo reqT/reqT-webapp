@@ -1,33 +1,33 @@
 package example
 
-import japgolly.scalajs.react.vdom.prefix_<^.<
+import diode.Action
+import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent}
 import org.scalajs.dom.ext.KeyCode
-
-import java.lang.Class
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 
 
 object Modal {
 
   case class State(input: String)
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, content: Seq[TagMod], setOutput: String => Unit)
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, content: Seq[TagMod], dispatch: Action => Callback, action: String => Action)
 
   def modalStyle = Seq(
     ^.position := "absolute",
     ^.border := "1px solid",
     ^.borderRadius := "5px",
-    ^.top := "50%",
+    ^.top := "20%",
     ^.left := "50%",
     ^.transform := "translate(-50%,-50%)",
     ^.zIndex := "9999",
     ^.background := "#FFF" ,
     ^.width:= "300px",
     ^.height:= "300px",
-    ^.paddingBottom := "150px",
-    ^.paddingRight := "150px"
+    ^.paddingBottom := "15px",
+    ^.paddingRight := "15px" ,
+    ^.paddingTop := "15px",
+    ^.paddingLeft := "15px"
   )
 
   def backdropStyle = Seq(
@@ -45,7 +45,7 @@ object Modal {
     def render(P: Props, S:State) =
       if (P.isOpen) {
         <.div(
-          ^.onKeyDown ==> handleKeyDown(P),
+          ^.onKeyDown ==> handleKeyDown(P,S),
             <.div(
                 modalStyle,
                 P.content,
@@ -63,11 +63,11 @@ object Modal {
       }else
         <.div()
 
+    def resetInput = $.modState(_.copy(input = ""))
 
     def onClick(P: Props, S:State)(e: ReactEvent): Callback ={
       e.preventDefault()
-      P.setOutput(S.input)
-      P.onClose(e)
+      resetInput >> P.onClose(e)
     }
 
 
@@ -76,10 +76,13 @@ object Modal {
       $.modState(_.copy(input = newInput))
     }
 
-    def handleKeyDown(P: Props)(event: ReactKeyboardEventI): Callback = {
-      if (event.nativeEvent.keyCode == KeyCode.Enter || event.nativeEvent.keyCode == KeyCode.Escape){
+    def handleKeyDown(P: Props, S: State)(event: ReactKeyboardEventI): Callback = {
+      if (event.nativeEvent.keyCode == KeyCode.Enter ){
         event.preventDefault()
-        P.onClose(event)
+        P.dispatch(P.action(S.input)) >> resetInput >> P.onClose(event)
+      } else if ( event.nativeEvent.keyCode == KeyCode.Escape){
+        event.preventDefault()
+        resetInput >> P.onClose(event)
       }
       else
         Callback()
@@ -94,6 +97,6 @@ object Modal {
 
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, content: Seq[TagMod], setOutput: String => Unit)
-      = component.set()(Props(isOpen, onClose, content, setOutput))
+  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, content: Seq[TagMod], dispatch: Action => Callback, action: String => Action)
+      = component.set()(Props(isOpen, onClose, content, dispatch, action))
 }

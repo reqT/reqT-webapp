@@ -61,6 +61,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
       case Reset => updated(Tree(Seq()))
 
       case AddElem(path: Seq[String], newElem: Elem, relationType: RelationType) =>
+        println(path)
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) =>
             modelRW.value.find(_.toString == path.last) match {

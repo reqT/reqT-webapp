@@ -18,8 +18,6 @@ import upickle.default._
 
 import scala.scalajs.js.Dynamic.global
 
-import chandu0101.scalajs.react.components.Implicits._
-
 @JSExport
 object webApp extends js.JSApp {
 
@@ -35,13 +33,10 @@ object webApp extends js.JSApp {
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalContent: Seq[TagMod], setModalOutput: String => Unit) {
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalContent: Seq[TagMod], dispatch: (Action => Callback) = null, action: (String => Action) = null) {
 
     def log(line: String): State =
       copy(logLines = logLines :+ line)
-//
-//    def addContent(newContent: Seq[TagMod]): State =
-//      copy(modalContent = modalContent ++ newContent)
   }
 
 
@@ -96,7 +91,7 @@ object webApp extends js.JSApp {
       Styles.listElem,
       ^.id := $.props.toString,
       ^.classID := $.props.toString,
-      ^.background := (if ($.props.isEntity) "#eee" else "#ddd"),
+      ^.background := (if ($.props.isEntity) "#CEDBE7" else "#CFEADD"),
       ^.padding := 5.px,
       ^.draggable := "true",
       ^.onDragStart ==> dragStart($.props)
@@ -115,7 +110,7 @@ object webApp extends js.JSApp {
     .build
 
 
-  val treeView = ReactComponentB[(ModelProxy[Tree], (Seq[TagMod], (String => Unit) ) => Callback)]("treeView")
+  val treeView = ReactComponentB[(ModelProxy[Tree], (Seq[TagMod], (Action => Callback), (String => Action)) => Callback)]("treeView")
     .render(P => <.pre(
       Styles.treeView,
       ^.border := "1px solid #ccc",
@@ -166,7 +161,7 @@ object webApp extends js.JSApp {
 
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
 
-    def openModalWithContent(newContent: Seq[TagMod], setOutput: String => Unit): Callback = $.modState(_.copy(modalContent = newContent, isModalOpen = true, setModalOutput = setOutput))
+    def openModalWithContent(newContent: Seq[TagMod], newDispatch: (Action => Callback), newAction: (String => Action)): Callback = $.modState(_.copy(modalContent = newContent, isModalOpen = true, dispatch = newDispatch, action = newAction))
 
     def render(props: Props, state: State) = {
 
@@ -191,7 +186,7 @@ object webApp extends js.JSApp {
       }
 
       <.div(
-        Modal(isOpen = state.isModalOpen, onClose = closeModal, content = state.modalContent, setOutput = state.setModalOutput),
+        Modal(isOpen = state.isModalOpen, onClose = closeModal, content = state.modalContent, dispatch = state.dispatch, action = state.action),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -339,7 +334,7 @@ object webApp extends js.JSApp {
   }
 
   val pageContent = ReactComponentB[Props]("Content")
-    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalContent = Seq(), setModalOutput = println))
+    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalContent = Seq()))
     .renderBackend[Backend]
     .componentDidMount(_.backend.start)
     .componentWillUnmount(_.backend.end)
