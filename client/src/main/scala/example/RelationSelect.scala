@@ -44,9 +44,21 @@ object RelationSelect {
         ^.value := P.value,
         ^.onChange ==> onChange(P)
       )(
+        <.option("binds"),
+        <.option("deprecates"),
+        <.option("excludes"),
         <.option("has"),
+        <.option("helps"),
+        <.option("hurts"),
+        <.option("impacts"),
+        <.option("implements"),
+        <.option("interactsWith"),
+        <.option("is"),
+        <.option("precedes"),
         <.option("requires"),
-        <.option("precedes")
+        <.option("relatesTo"),
+        <.option("superOf"),
+        <.option(" verifies")
       )
 
   }

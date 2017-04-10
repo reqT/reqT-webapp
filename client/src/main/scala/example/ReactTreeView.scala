@@ -365,7 +365,6 @@ object ReactTreeView {
           ),
           getRelationType(P.root) match {
             case Some(relation) =>
-              println(relation)
               RelationSelect(relation, dispatch, updateRel)
             case None =>
               <.div()
