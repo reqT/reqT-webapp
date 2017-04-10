@@ -11,6 +11,8 @@ case class Tree(children: Seq[Elem]){ override def toString: String = children.m
 case class UUID(x1: Int, x2: Int, x3: Int, x4: Int)
 
 object UUID {
+  var modeluuid = random()
+
   def random(): UUID = {
     import scala.util.Random.nextInt
     new UUID(
@@ -20,8 +22,7 @@ object UUID {
       nextInt())
   }
 
-  def model(): UUID = new UUID(1416613065,816664229,-1459617792,-2131399629)
-
+  def model(): UUID = modeluuid
 }
 
 sealed trait Elem {

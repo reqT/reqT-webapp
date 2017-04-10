@@ -29,6 +29,7 @@ object webApp extends js.JSApp {
     Test(), Story(), UseCase(), VariationPoint(), Variant(), Code(), Comment(), Deprecated(), Example(), Expectation(), FileName(), Gist(), Image(), Spec(),
     Text(), Title(), Why(), Benefit(), Capacity(), Cost(), Damage(), Frequency(), Min(), Max(), Order(), Prio(), Probability(), Profit(), Value())
 
+
   val headerButtons = List("Export", "Import", "Release Planning", "Templates", "Help")
 
   case class Props(proxy: ModelProxy[Tree])
@@ -46,6 +47,7 @@ object webApp extends js.JSApp {
   def dragStart(elem: Elem)(event: ReactDragEvent): Callback = {
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("existing", "false")
+    elem.setUUID()
     elem match {
       case entity: Entity =>
         event.dataTransfer.setData("type", "entity")
