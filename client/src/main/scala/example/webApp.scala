@@ -63,13 +63,13 @@ object webApp extends js.JSApp {
   }
 
   def elemToTreeItem(elems: Seq[Elem]): TreeItem = {
-    TreeItem("Model()", elems.map(elem => convert(elem)), None)
+    TreeItem("Model()", UUID.model(), elems.map(elem => convert(elem)), None)
 
   }
 
   def convert(elem: Elem): TreeItem = elem match {
-    case relation: Relation => TreeItem(relation.entity, relation.submodel.children.map(convert), Some(relation.link))
-    case node: Node => TreeItem(node, Seq(), None)
+    case relation: Relation => TreeItem(relation.entity, relation.entity.uuid, relation.submodel.children.map(convert), Some(relation.link))
+    case node: Node => TreeItem(node, node.uuid, Seq(), None)
   }
 
   val searchView = ReactComponentB[Unit]("searchView")

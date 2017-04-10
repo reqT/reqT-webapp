@@ -2,9 +2,27 @@ package example
 
 import diode.Action
 
+import scala.util.Random.nextInt
+
 case class Model(tree: Tree)
 
 case class Tree(children: Seq[Elem]){ override def toString: String = children.map(_.toString).toString.replace("List", "Model")}
+
+case class UUID(x1: Int, x2: Int, x3: Int, x4: Int)
+
+object UUID {
+  def random(): UUID = {
+    import scala.util.Random.nextInt
+    new UUID(
+      nextInt(),
+      nextInt() & 0xffff0fff | 0x00004000,
+      nextInt() & 0x3f000000 | 0x80000000,
+      nextInt())
+  }
+
+  def model(): UUID = new UUID(1416613065,816664229,-1459617792,-2131399629)
+
+}
 
 sealed trait Elem {
   var isRelation = false
@@ -14,12 +32,18 @@ sealed trait Elem {
   var isStringAttribute = false
   var isIntAttribute = false
 
+  var uuid: UUID
+
+  def setUUID() = {
+    uuid = UUID.random()
+  }
 }
 
 
 case class Relation(entity: Entity, var link: RelationType, submodel:Tree) extends Elem {
   isRelation = true
   entity.hasRelation = true
+  var uuid : UUID = UUID.random()
 
   override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString.replaceAll("List", "")
 
@@ -36,12 +60,17 @@ case class Relation(entity: Entity, var link: RelationType, submodel:Tree) exten
 
 }
 
-sealed trait Node extends Elem
+sealed trait Node extends Elem {
+
+}
+
 
 sealed trait Attribute[T] extends Node {
   def value: T
   isAttribute = true
 }
+
+
 
 sealed trait Entity extends Node {
   var id: String
@@ -99,6 +128,9 @@ sealed trait IntAttribute extends Attribute[Int]{
     value = newValue
     this
   }
+
+  override def toString: String = (getClass.getName + "(" + value + ")").replace("example.", "")
+
 }
 
 sealed trait VectorAttribute[T] extends Attribute[Vector[T]]
@@ -109,185 +141,188 @@ sealed trait StatusValueAttribute extends Attribute[Enumeration]
 /**
   * General Entities
   */
-case class Item(var id: String= "") extends General
+case class Item(var id: String= "", var uuid: UUID = UUID.random()) extends General {
+}
 
-case class Label(var id: String= "") extends General
+case class Label(var id: String= "", var uuid: UUID = UUID.random()) extends General {
+}
 
-case class Meta(var id: String= "") extends General
+case class Meta(var id: String= "", var uuid: UUID = UUID.random()) extends General {
+}
 
-case class Section(var id: String= "") extends General
+case class Section(var id: String= "", var uuid: UUID = UUID.random()) extends General
 
-case class Term(var id: String= "") extends General
+case class Term(var id: String= "", var uuid: UUID = UUID.random()) extends General
 
 /**
   * Context Entities
   */
-case class Actor(var id: String= "") extends Context
+case class Actor(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class App(var id: String= "") extends Context
+case class App(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class Component(var id: String= "") extends Context
+case class Component(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class Domain(var id: String= "") extends Context
+case class Domain(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class Module(var id: String= "") extends Context
+case class Module(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class Product(var id: String= "") extends Context
+case class Product(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class Release(var id: String= "") extends Context
+case class Release(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class Resource(var id: String= "") extends Context
+case class Resource(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class Risk(var id: String= "") extends Context
+case class Risk(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class Service(var id: String= "") extends Context
+case class Service(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class Stakeholder(var id: String = "") extends Context
+case class Stakeholder(var id: String = "", var uuid: UUID = UUID.random()) extends Context
 
-case class System(var id: String= "") extends Context
+case class System(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
-case class User(var id: String= "") extends Context
+case class User(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
 /**
   * Data Requirements
   */
 
-case class Class(var id: String= "") extends DataReq
+case class Class(var id: String= "", var uuid: UUID = UUID.random()) extends DataReq
 
-case class Data(var id: String= "") extends DataReq
+case class Data(var id: String= "", var uuid: UUID = UUID.random()) extends DataReq
 
-case class Input(var id: String= "") extends DataReq
+case class Input(var id: String= "", var uuid: UUID = UUID.random()) extends DataReq
 
-case class Member(var id: String= "") extends DataReq
+case class Member(var id: String= "", var uuid: UUID = UUID.random()) extends DataReq
 
-case class Output(var id: String= "") extends DataReq
+case class Output(var id: String= "", var uuid: UUID = UUID.random()) extends DataReq
 
-case class Relationship(var id: String= "") extends DataReq
+case class Relationship(var id: String= "", var uuid: UUID = UUID.random()) extends DataReq
 
 /**
   * Design Requirements
   */
 
-case class Design(var id: String= "") extends DesignReq
+case class Design(var id: String= "", var uuid: UUID = UUID.random()) extends DesignReq
 
-case class Screen(var id: String= "") extends DesignReq
+case class Screen(var id: String= "", var uuid: UUID = UUID.random()) extends DesignReq
 
-case class MockUp(var id: String= "") extends DesignReq
+case class MockUp(var id: String= "", var uuid: UUID = UUID.random()) extends DesignReq
 
 /**
   * Functional Requirements
   */
 
-case class Function(var id: String= "") extends FunctionalReq
+case class Function(var id: String= "", var uuid: UUID = UUID.random()) extends FunctionalReq
 
-case class Interface(var id: String= "") extends FunctionalReq
+case class Interface(var id: String= "", var uuid: UUID = UUID.random()) extends FunctionalReq
 
 /**
   * General Requirements
   */
 
-case class Epic(var id: String= "") extends GeneralReq
+case class Epic(var id: String= "", var uuid: UUID = UUID.random()) extends GeneralReq
 
-case class Feature(var id: String= "") extends GeneralReq
+case class Feature(var id: String= "", var uuid: UUID = UUID.random()) extends GeneralReq
 
-case class Goal(var id: String= "") extends GeneralReq
+case class Goal(var id: String= "", var uuid: UUID = UUID.random()) extends GeneralReq
 
-case class Idea(var id: String= "") extends GeneralReq
+case class Idea(var id: String= "", var uuid: UUID = UUID.random()) extends GeneralReq
 
-case class Issue(var id: String= "") extends GeneralReq
+case class Issue(var id: String= "", var uuid: UUID = UUID.random()) extends GeneralReq
 
-case class Req(var id: String= "") extends GeneralReq
+case class Req(var id: String= "", var uuid: UUID = UUID.random()) extends GeneralReq
 
-case class Ticket(var id: String= "") extends GeneralReq
+case class Ticket(var id: String= "", var uuid: UUID = UUID.random()) extends GeneralReq
 
-case class WorkPackage(var id: String= "") extends GeneralReq
+case class WorkPackage(var id: String= "", var uuid: UUID = UUID.random()) extends GeneralReq
 
 /**
   * Quality Requirements
   */
 
-case class Breakpoint(var id: String= "") extends QualityReq
+case class Breakpoint(var id: String= "", var uuid: UUID = UUID.random()) extends QualityReq
 
-case class Barrier(var id: String= "") extends QualityReq
+case class Barrier(var id: String= "", var uuid: UUID = UUID.random()) extends QualityReq
 
-case class Quality(var id: String= "") extends QualityReq
+case class Quality(var id: String= "", var uuid: UUID = UUID.random()) extends QualityReq
 
-case class Target(var id: String= "") extends QualityReq
+case class Target(var id: String= "", var uuid: UUID = UUID.random()) extends QualityReq
 
 /**
   * Scenario Requirements
   */
-case class Scenario(var id: String= "") extends ScenarioReq
+case class Scenario(var id: String= "", var uuid: UUID = UUID.random()) extends ScenarioReq
 
-case class Task(var id: String= "") extends ScenarioReq
+case class Task(var id: String= "", var uuid: UUID = UUID.random()) extends ScenarioReq
 
-case class Test(var id: String= "") extends ScenarioReq
+case class Test(var id: String= "", var uuid: UUID = UUID.random()) extends ScenarioReq
 
-case class Story(var id: String= "") extends ScenarioReq
+case class Story(var id: String= "", var uuid: UUID = UUID.random()) extends ScenarioReq
 
-case class UseCase(var id: String= "") extends ScenarioReq
+case class UseCase(var id: String= "", var uuid: UUID = UUID.random()) extends ScenarioReq
 
 /**
   * Variability Requirements
   */
-case class VariationPoint(var id: String= "") extends VariabilityReq
+case class VariationPoint(var id: String= "", var uuid: UUID = UUID.random()) extends VariabilityReq
 
-case class Variant(var id: String= "") extends VariabilityReq
+case class Variant(var id: String= "", var uuid: UUID = UUID.random()) extends VariabilityReq
 
 /**
   * String Attribute Types
   */
-case class Code(var value: String= "") extends StringAttribute
+case class Code(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class Comment(var value: String= "") extends StringAttribute
+case class Comment(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class Deprecated(var value: String= "") extends StringAttribute
+case class Deprecated(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class Example(var value: String= "") extends StringAttribute
+case class Example(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class Expectation(var value: String= "") extends StringAttribute
+case class Expectation(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class FileName(var value: String= "") extends StringAttribute
+case class FileName(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class Gist(var value: String= "") extends StringAttribute
+case class Gist(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class Image(var value: String= "") extends StringAttribute
+case class Image(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class Spec(var value: String= "") extends StringAttribute
+case class Spec(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class Text(var value: String= "") extends StringAttribute
+case class Text(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class Title(var value: String= "") extends StringAttribute
+case class Title(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
-case class Why(var value: String= "") extends StringAttribute
+case class Why(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
 /**
   * Int Attribute Types
   */
 
-case class Benefit(var value: Int=0) extends IntAttribute
+case class Benefit(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Capacity(var value: Int=0) extends IntAttribute
+case class Capacity(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Cost(var value: Int=0) extends IntAttribute
+case class Cost(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Damage(var value: Int=0) extends IntAttribute
+case class Damage(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Frequency(var value: Int=0) extends IntAttribute
+case class Frequency(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Min(var value: Int=0) extends IntAttribute
+case class Min(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Max(var value: Int=0) extends IntAttribute
+case class Max(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Order(var value: Int=0) extends IntAttribute
+case class Order(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Prio(var value: Int=0) extends IntAttribute
+case class Prio(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Probability(var value: Int=0) extends IntAttribute
+case class Probability(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Profit(var value: Int=0) extends IntAttribute
+case class Profit(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
-case class Value(var value: Int=0) extends IntAttribute
+case class Value(var value: Int=0, var uuid: UUID = UUID.random()) extends IntAttribute
 
 /**
   * StatusValue Attribute Types
@@ -302,7 +337,7 @@ object Status extends Enumeration {
   * Vector Attribute Types
   */
 
-case class Constraints[T](value: Vector[T]) extends VectorAttribute[T]
+case class Constraints[T](value: Vector[T], var uuid: UUID = UUID.random()) extends VectorAttribute[T]
 
 /**
   * Relation Types - case objects or case class? objects because singleton seems ok

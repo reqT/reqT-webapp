@@ -10,10 +10,10 @@ import scala.scalajs.js.Dynamic.global
 import scalacss.ScalaCssReact._
 import scala.scalajs.js
 
-case class TreeItem(var item: Any, var children: Seq[TreeItem], var link: Option[RelationType]) {
-  def apply(item: Any): TreeItem = this (item, Seq())
+case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def linkToString: String = link.getOrElse("").toString
   def itemToString: String = item.toString.replaceAll("\"", "")
+  def apply(item: Any, uuid: UUID, children: Seq[TreeItem]): TreeItem = this (item, uuid, Seq())
 }
 
 object ReactTreeView {
@@ -137,8 +137,8 @@ object ReactTreeView {
     import upickle.default.read
 
     def dragStart(P: NodeProps)(event: ReactDragEvent): Callback = {
-      val path = if (P.parent.isEmpty) P.root.item.toString
-      else P.parent + "/" + P.root.item
+      val path = if (P.parent.isEmpty) P.root.uuid.toString
+      else P.parent + "/" + P.root.uuid.toString
 
         event.dataTransfer.effectAllowed = "move"
         event.dataTransfer.setData("existing", "true")
@@ -187,8 +187,9 @@ object ReactTreeView {
       event.preventDefault()
 
       val pathFrom = event.dataTransfer.getData("path").split("/")
-      val pathTo = (if (P.parent.isEmpty) P.root.item.toString
-        else P.parent + "/" + P.root.item).split("/")
+      val pathTo = (if (P.parent.isEmpty) P.root.uuid.toString
+        else P.parent + "/" + P.root.uuid).split("/")
+
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       var isAttribute = false
 
@@ -231,8 +232,8 @@ object ReactTreeView {
 
     def onDoubleClickTreeItem(P: NodeProps, S: NodeState)(e: ReactEvent): Callback = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
-      val path = (if (P.parent.isEmpty) P.root.item.toString
-      else P.parent + "/" + P.root.item).split("/")
+      val path = (if (P.parent.isEmpty) P.root.uuid.toString
+      else P.parent + "/" + P.root.uuid).split("/")
 
       def updateIntAttr(s : String): Action = updateIntAttribute(path, s.toInt: Int)
 
@@ -269,7 +270,7 @@ object ReactTreeView {
         case Model => dispatch(NoAction)
       }
     }
-
+    
     def dragOver(P:NodeProps)(e: ReactDragEvent): Callback = {
       e.preventDefaultCB >> Callback(e.dataTransfer.dropEffect = "move")
     }
@@ -278,8 +279,8 @@ object ReactTreeView {
       global.prompt("Do you want to delete " + P.root.item + " ?")
 
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
-      val path = if (P.parent.isEmpty) P.root.item.toString
-      else P.parent + "/" + P.root.item
+      val path = if (P.parent.isEmpty) P.root.uuid.toString
+      else P.parent + "/" + P.root.uuid
 
       dispatch(RemoveElem(path.split("/")))
     }
@@ -290,11 +291,11 @@ object ReactTreeView {
 
       val depth = P.depth + 1
 
-      val parent = if (P.parent.isEmpty) P.root.item.toString
-      else s"${P.parent}/${P.root.item.toString}"
+      val parent = if (P.parent.isEmpty) P.root.uuid.toString
+      else s"${P.parent}/${P.root.uuid.toString}"
 
-      val path = (if (P.parent.isEmpty) P.root.item.toString
-      else P.parent + "/" + P.root.item).split("/")
+      val path = (if (P.parent.isEmpty) P.root.uuid.toString
+      else P.parent + "/" + P.root.uuid).split("/")
 
 
       val updateRel = updateRelation(path, P.root.item.asInstanceOf[Entity].id, _: Option[RelationType])
@@ -363,7 +364,7 @@ object ReactTreeView {
         <.ul(P.style.treeGroup)(
           S.children.map(child =>
             (ifFilterTextExist(P.filterText, child) || ifFilterTextExist(P.filterText, P.root)) ?=
-              TreeNode.withKey(s"$parent/${child.item}")(P.copy(
+              TreeNode.withKey(s"$parent/${child.uuid}")(P.copy(
                 root = child,
                 open = true, //!P.filterText.trim.isEmpty,
                 depth = depth,
