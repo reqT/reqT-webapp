@@ -63,7 +63,7 @@ object webApp extends js.JSApp {
   }
 
   def elemToTreeItem(elems: Seq[Elem]): TreeItem = {
-    TreeItem("Model()", UUID.model(), elems.map(elem => convert(elem)), None)
+    TreeItem("Model", UUID.model(), elems.map(elem => convert(elem)), None)
 
   }
 
