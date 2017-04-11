@@ -125,6 +125,11 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         ))
         updated(model)
 
+      case SetTemplate1 =>
+        val model = Tree(Seq(Req("R1"), Req("R2"), Stakeholder("BOSS"),
+          Relation(Req("R3"), has, Tree(Seq(Relation(Req("R3.1"), has, Tree(Seq(Prio(1))))))), Relation(Req("R4"), has, Tree(Seq(Prio(2))))))
+        updated(model)
+
 
       case updateEntity(path: Seq[String], newId: String) =>
         val elemID = path.last

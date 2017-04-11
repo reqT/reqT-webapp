@@ -1,8 +1,5 @@
 package example
 
-
-import chandu0101.scalajs.react.components.{DefaultSelect, ReactListView, ReactTable}
-
 import scalacss.Defaults._
 import scalacss.internal.mutable.GlobalRegistry
 
@@ -45,12 +42,14 @@ object Styles extends StyleSheet.Inline {
 
   )
   val navBarButton = style(
-    addClassName("btn btn-default navbar-btn")
+    addClassName("btn btn-default navbar-btn"),
+    margin(5.px),
+    padding(10.px)
   )
 
   val navBarDropdown = style(
-    addClassName("btn btn-default dropdown-toggle")
-
+    addClassName("btn btn-default dropdown-toggle"),
+    padding(10.px)
   )
 
   val bootStrapRemoveButton = style(
