@@ -218,6 +218,7 @@ object webApp extends js.JSApp {
                 ^.onClick -->? send, // --> suffixed by ? because it's for Option[Callback]
                 "Send"),
               <.button(
+                ^.disabled := sendVerify.isEmpty,
                 ^.className := "btn btn-default",
                 "Verify Model",
                 ^.onClick -->? sendVerify
