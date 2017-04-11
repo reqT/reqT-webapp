@@ -14,9 +14,9 @@ case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], 
   def linkToString: String = link.getOrElse("").toString
   def itemToString: String = item.toString.replaceAll("\"", "")
 
-//  def entityToString: String =
+  def entityToString: String = item.toString.split('(').head
 
-//  def contentToString: String =
+  def contentToString: String = item.toString.split('(').tail.mkString.init.replaceAll("\"", "")
   
   def apply(item: Any, uuid: UUID, children: Seq[TreeItem]): TreeItem = this (item, uuid, Seq())
 }
@@ -249,23 +249,36 @@ object ReactTreeView {
           ^.className := "dl-horizontal",
           <.dt(
             ^.color := { if (P.root.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
-            P.root.itemToString)
+            P.root.entityToString),
           <.dd(
+            P.root.contentToString
+          ),
+          <.br,
+          <.dt(
+            ^.color := "#FF3636",
+            P.root.linkToString
+          ),
+          <.dl(
 
-          )
-        )
-        <.div(
-          ^.color := "#FF3636",
-          P.root.linkToString),
-        <.div(
+          ),
+          <.br,
           P.root.children.map(x => {
             Seq(
-              <.div(
-                x.itemToString.replaceAll("TreeItem", ""),
-                ^.color := { if (x.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" }
-              )
+
+                <.dt(
+                  x.entityToString.replaceAll("TreeItem", ""),
+                  ^.color := { if (x.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" }
+                ),
+                <.dd(
+                  x.contentToString
+                )
+
+
             )
-          }))
+          })
+
+        )
+
       )
 
       P.root.item match {
@@ -334,13 +347,14 @@ object ReactTreeView {
       <.li(
         P.style.treeItem,
         <.div(
-          ^.boxShadow := "0px 8px 16px 0px rgba(0,0,0,0.2)",
+          ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
           ^.overflow.hidden,
           ^.position.relative,
           //          ^.border := "1px solid",
           ^.borderRadius := "5px",
           ^.backgroundColor := { if (P.root.item.isInstanceOf[Entity]) "#CEDBE7" else "#CFEADD" },
           ^.padding := "5px",
+          ^.marginBottom := "10px",
           ^.width := "400px",
           treeMenuToggle,
           ^.key := "toggle",
