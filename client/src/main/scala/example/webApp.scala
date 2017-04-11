@@ -87,6 +87,7 @@ object webApp extends js.JSApp {
     .render($ => <.ul(
       $.props.toString.takeWhile(_!='('),
       Styles.listElem,
+      ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
       ^.id := $.props.toString,
       ^.classID := $.props.toString,
       ^.background := (if ($.props.isEntity) "#CEDBE7" else "#CFEADD"),
@@ -131,17 +132,12 @@ object webApp extends js.JSApp {
 
   val buttonComponent = ReactComponentB[(String, Props)]("buttonComponent")
     .render($ =>
-      <.button(
-        ^.padding := "10px",
-        $.props._1,
-        ^.onClick --> {
-          $.props._1 match {
-            case "Templates" => $.props._2.proxy.dispatchCB(SetTemplate)
-            case _ => Callback(global.prompt($.props._1))
-          }
-        },
-        Styles.navBarButton
-      )).build
+      $.props._1 match {
+        case "Templates" => TemplateSelect($.props._2.proxy.dispatchCB)
+        case _ => <.button(
+          $.props._1,
+          Styles.navBarButton)
+      }).build
 
 
   val navigationBar = ReactComponentB[(Seq[String], Props)]("navigationBar")
@@ -191,6 +187,7 @@ object webApp extends js.JSApp {
         //^.paddingLeft := "0px",
         //^.paddingRight := "0px",
         ^.paddingTop := "25px",
+        ^.overflow := "hidden",
         <.div(
           ^.className := "col-1",
           ^.float := "left",
@@ -254,7 +251,7 @@ object webApp extends js.JSApp {
       )
       .build
 
-    def onTextChange(event: ReactEventI) =
+    def onTextChange(event: ReactEventI): Callback =
       event.extract(_.target.value.toLowerCase) {
         case "entity" | "entities" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
         case "attribute" | "attributes"=> $.modState(_.copy(elems = elems.filter(_.isAttribute)))

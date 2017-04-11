@@ -320,6 +320,7 @@ object ReactTreeView {
       <.li(
         P.style.treeItem,
         <.div(
+          ^.boxShadow := "0px 8px 16px 0px rgba(0,0,0,0.2)",
           ^.overflow.hidden,
           ^.position.relative,
           ^.border := "1px solid",

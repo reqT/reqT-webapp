@@ -29,9 +29,6 @@ object RelationSelect {
 
   def onChange(props: Props)(e: ReactEventI): Callback ={
     e.preventDefault()
-
-    var link = "example." ++ props.value
-//    println(fromString(e.target.value))
     props.dispatch(props.updateRel(fromString(e.target.value)))
   }
 
@@ -63,8 +60,8 @@ object RelationSelect {
 
   }
 
-  val component = ReactComponentB[Props]("Modal")
-    .stateless //initialState(State(isOpen = false))
+  val component = ReactComponentB[Props]("RelationSelect")
+    .stateless
     .renderBackend[Backend]
     .build
 

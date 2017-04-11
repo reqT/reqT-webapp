@@ -398,6 +398,8 @@ case class updateRelation(path: Seq[String], newId: String, newRelationType: Opt
 
 case object SetTemplate extends Action
 
+case object SetTemplate1 extends Action
+
 case class Select() extends Action
 
 case object Reset extends Action
