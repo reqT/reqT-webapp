@@ -20,7 +20,7 @@ object ReactTreeView {
   trait Style {
     def reactTreeView = Seq[TagMod]()
 
-    def treeGroup = Seq(^.margin := 0, ^.padding := "0 0 0 40px")
+    def treeGroup = Seq(^.margin := "5px", ^.padding := "0 0 0 40px")
 
     def treeItem = Seq(^.listStyleType := "none")
 
@@ -108,7 +108,10 @@ object ReactTreeView {
       val updateThis: Callback =
         $.modState(_.copy(dragOverNode = draggedOver, filterMode = false))
 
-      removeCurrent >> updateThis
+      val setRemove: Callback =
+        draggedOver.modState(_.copy(draggedOver = false))
+
+      removeCurrent >> setRemove
     }
 
     def onTextChange(text: String): Callback =
@@ -156,6 +159,9 @@ object ReactTreeView {
     def onItemDragOver(P: NodeProps)(e: ReactEventH): Callback =
       P.onNodeDrag($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
 
+    def onItemDrop(P: NodeProps)(e: ReactDragEvent): Callback =
+      P.onNodeDrop($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
+
     def childrenFromProps(P: NodeProps): CallbackTo[Option[Unit]] =
       $.modState(S => S.copy(children = if (S.children.isEmpty) P.root.children else Nil))
         .conditionally(P.root.children.nonEmpty)
@@ -184,8 +190,7 @@ object ReactTreeView {
     }
 
     def onDrop(P: NodeProps)(event: ReactDragEvent): Callback = {
-      event.preventDefault()
-
+//      event.preventDefault()
       val pathFrom = event.dataTransfer.getData("path").split("/")
       val pathTo = (if (P.parent.isEmpty) P.root.uuid.toString
         else P.parent + "/" + P.root.uuid).split("/")
@@ -208,18 +213,13 @@ object ReactTreeView {
         case stringAttr: StringAttribute => s: String => AddElem(pathTo, stringAttr.setValue(s), has)
       }
 
-
       if (event.dataTransfer.getData("existing") == "false"){
         val elem = getElem(event)
         val modalContent = Seq(
-          ^.width:= "215px",
-          ^.height:= "150px",
           elem.isEntity ?= <.p("Entity name:"),
           elem.isIntAttribute ?= <.p("Number:"),
           elem.isStringAttribute ?= <.p("Text:")
         )
-
-
         P.setModalContent(modalContent, dispatch, getAction(elem))
       }else if (isAttribute || pathFrom.diff(pathTo).isEmpty)
           dispatch(NoAction)
@@ -241,7 +241,7 @@ object ReactTreeView {
       def clickModal = Seq(
         ^.padding := "5px",
         <.div(
-          ^.color := { if (P.root.item.isInstanceOf[Entity]) "#047BEA" else "#03EE7D" },
+          ^.color := { if (P.root.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
           P.root.itemToString),
         <.div(
           ^.color := "#FF3636",
@@ -249,8 +249,11 @@ object ReactTreeView {
         <.div(
           P.root.children.map(x => {
             Seq(
-            <.div(x.itemToString.replaceAll("TreeItem", "")),
-            ^.color := { if (x.item.isInstanceOf[Entity]) "#047BEA" else "#03EE7D" })
+              <.div(
+                x.itemToString.replaceAll("TreeItem", ""),
+                ^.color := { if (x.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" }
+              )
+            )
           }))
       )
 
@@ -323,7 +326,7 @@ object ReactTreeView {
           ^.boxShadow := "0px 8px 16px 0px rgba(0,0,0,0.2)",
           ^.overflow.hidden,
           ^.position.relative,
-          ^.border := "1px solid",
+          //          ^.border := "1px solid",
           ^.borderRadius := "5px",
           ^.backgroundColor := { if (P.root.item.isInstanceOf[Entity]) "#CEDBE7" else "#CFEADD" },
           ^.padding := "5px",
@@ -333,9 +336,10 @@ object ReactTreeView {
           ^.cursor := "pointer",
           ^.className := "container",
           ^.onClick ==> onItemSelect(P),
+          ^.onDrop ==> onDrop(P),
           ^.draggable := true,
           ^.onDragStart ==> dragStart(P),
-          ^.onDrop ==> onDrop(P),
+          ^.onDragEnd ==> onItemDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
           S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= P.style.dragOverTreeItemContent,
