@@ -15,6 +15,7 @@ object RelationSelect {
     ^.className := "form-control pull-right",
     ^.position := "absolute",
     ^.width := "100px",
+    ^.color := "black",
     ^.top := "0%",
     ^.height := "100%",
     ^.left := "65%",

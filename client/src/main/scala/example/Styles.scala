@@ -18,21 +18,16 @@ object Styles extends StyleSheet.Inline {
     overflow.auto,
     width(100.%%),
     height(49.%%)
-//    float.left
-
   )
 
   val dragList = style(
-    overflow.auto,
+    overflow.hidden,
     width(100.%%),
     height(50.%%)
-//    float.left
-
-
   )
   val treeView = style(
     overflow.auto,
-    width(80.%%),
+    width(71.%%),
     height(100.%%),
     float.left
   )
@@ -63,7 +58,7 @@ object Styles extends StyleSheet.Inline {
     position.absolute,
     width(40.px),
     height(48.px),
-//    height(100.%%),
+    top(0.px),
     left(90.%%)
   )
 
@@ -89,6 +84,11 @@ object Styles extends StyleSheet.Inline {
     border(1.px),
     border.solid
   )
+
+  /**
+    * Dropdown
+    */
+
 
   /**
     * Styles not in use yet, not validated

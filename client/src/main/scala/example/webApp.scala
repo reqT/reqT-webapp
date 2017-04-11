@@ -91,6 +91,7 @@ object webApp extends js.JSApp {
       ^.classID := $.props.toString,
       ^.background := (if ($.props.isEntity) "#CEDBE7" else "#CFEADD"),
       ^.padding := 5.px,
+      ^.borderRadius := "5px",
       ^.draggable := "true",
       ^.onDragStart ==> dragStart($.props)
     ))
@@ -99,9 +100,10 @@ object webApp extends js.JSApp {
 
   val entityListView = ReactComponentB[List[Elem]]("entityList")
     .render(elems => <.pre(
+      ^.className := "form-control",
       ^.id := "dragList",
-      ^.height := "80%",
-      ^.border := "1px solid #ccc",
+      ^.height := "89%",
+      ^.marginTop := "5px",
       ^.overflow := "auto",
       elems.props.sortWith((a,b) => a.toString < b.toString).map(listElem(_))
     ))
@@ -194,15 +196,18 @@ object webApp extends js.JSApp {
         <.div(
           ^.className := "col-1",
           ^.float := "left",
-          ^.width := "20%",
+          ^.width := "29%",
           ^.height := "100%",
+          ^.paddingRight := "9px",
           entityComponent(state.elems),
           //          searchView(state.content)
           <.pre(
             ^.height := "49%",
+            ^.overflow.hidden,
             <.div(
               <.input(
                 ^.className := "form-control",
+                ^.marginBottom := "5px",
                 ^.onChange ==> onChange,
                 ^.value := state.message,
                 ^.onKeyDown ==>? handleKeyDown
@@ -217,7 +222,6 @@ object webApp extends js.JSApp {
                 "Verify Model",
                 ^.onClick -->? sendVerify
               )),
-            <.h4("Connection log"),
             log(state.logLines)// Display log
           )
         ),
@@ -246,9 +250,10 @@ object webApp extends js.JSApp {
       .render($ =>
         <.pre(
           ^.className := "form-control",
-          ^.width := 360.px,
-          ^.height := 200.px,
-          ^.border := "1px solid",
+          ^.width := "auto",
+          ^.height := "80%",
+          ^.marginTop := "5px",
+//          ^.border := "1px solid",
           ^.overflow := "auto",
           $.props.map(<.p(_)))
       )
