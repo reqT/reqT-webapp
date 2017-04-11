@@ -57,7 +57,7 @@ object Modal {
                 ^.position.absolute,
                 ^.bottom := 0,
                 ^.width := "95%",
-                ^.marginBottom := "5px",
+                ^.marginBottom := "10px",
                 ^.marginLeft := "5px",
                 ^.marginRight := "5px",
                 ^.autoFocus := true,

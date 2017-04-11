@@ -13,6 +13,11 @@ import scala.scalajs.js
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def linkToString: String = link.getOrElse("").toString
   def itemToString: String = item.toString.replaceAll("\"", "")
+
+//  def entityToString: String =
+
+//  def contentToString: String =
+  
   def apply(item: Any, uuid: UUID, children: Seq[TreeItem]): TreeItem = this (item, uuid, Seq())
 }
 
@@ -240,9 +245,15 @@ object ReactTreeView {
 
       def clickModal = Seq(
         ^.padding := "5px",
-        <.div(
-          ^.color := { if (P.root.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
-          P.root.itemToString),
+        <.dl(
+          ^.className := "dl-horizontal",
+          <.dt(
+            ^.color := { if (P.root.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
+            P.root.itemToString)
+          <.dd(
+
+          )
+        )
         <.div(
           ^.color := "#FF3636",
           P.root.linkToString),
