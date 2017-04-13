@@ -378,9 +378,6 @@ case object verifies extends RelationType
 /**
   * Actions
   */
-case object Init extends Action
-
-case object AddE extends Action
 
 case class AddElem(path: Seq[String], elem: Elem, relationType: RelationType) extends Action
 
@@ -396,15 +393,11 @@ case class updateIntAttribute(path: Seq[String], newValue: Int) extends  Action
 
 case class updateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) extends  Action
 
+case class SetTemplate(tree : Tree) extends  Action
+
 case object SetTemplate extends Action
 
 case object SetTemplate1 extends Action
-
-case class Select() extends Action
-
-case object Reset extends Action
-
-case object Test extends Action
 
 case object NoAction extends Action
 

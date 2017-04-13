@@ -31,8 +31,6 @@ object ReactTreeView {
 
     def selectedTreeItemContent = Seq(^.color := "darkblue")
 
-    def dragOverTreeItemContent = Seq(^.opacity := 0.5)
-
     def treeItemBefore = Seq(
       ^.position := "absolute",
       ^.height := "100.%%",
@@ -216,6 +214,7 @@ object ReactTreeView {
         case entity: Entity => s: String => AddElem(pathTo, entity.setID(s), has)
         case intAttr: IntAttribute => s: String => AddElem(pathTo, intAttr.setValue(s.toInt), has)
         case stringAttr: StringAttribute => s: String => AddElem(pathTo, stringAttr.setValue(s), has)
+        case default => _: String => NoAction
       }
 
       if (event.dataTransfer.getData("existing") == "false"){
@@ -312,6 +311,15 @@ object ReactTreeView {
       dispatch(RemoveElem(path.split("/")))
     }
 
+    def dragOverStyle(P: NodeProps): Seq[TagMod] ={
+      Seq(^.opacity := 0.5,
+        P.root.item.isInstanceOf[Attribute[Any]] ?= Seq(
+          ^.color := "#FF3636",
+          ^.border := "1px solid",
+          ^.borderColor := "#FF3636"
+        )
+      )
+    }
 
     def render(P: NodeProps, S: NodeState): ReactTag = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
@@ -367,7 +375,7 @@ object ReactTreeView {
           ^.onDragEnd ==> onItemDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
           S.selected ?= P.style.selectedTreeItemContent,
-          S.draggedOver ?= P.style.dragOverTreeItemContent,
+          S.draggedOver ?= dragOverStyle(P),
           <.p(
             ^.id := P.root.itemToString,
             ^.unselectable := "true",

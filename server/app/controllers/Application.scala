@@ -19,7 +19,4 @@ class Application @Inject() (implicit system: ActorSystem, materializer: Materia
   def socket = WebSocket.accept[String, String] { request =>
     ActorFlow.actorRef(out => MyWebSocketActor.props(out))
   }
-
-
-
 }

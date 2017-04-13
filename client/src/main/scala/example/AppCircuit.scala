@@ -59,7 +59,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
   class TreeHandler[M](modelRW: ModelRW[Model, Tree]) extends ActionHandler(modelRW) {
     override def handle = {
-      case Reset => updated(Tree(Seq()))
+      //case Reset => updated(Tree(Seq()))
 
       case AddElem(path: Seq[String], newElem: Elem, relationType: RelationType) =>
         println(path)
@@ -116,6 +116,8 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
             case None => noChange
           }
 
+      //case SetTemplate(tree) => updated(tree)
+
       case SetTemplate =>
         val model = Tree(Seq(
           Relation(Goal("accuracy"), has, Tree(Seq(Spec("Our pre-calculations shall hit within 5%")))),
@@ -128,6 +130,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
       case SetTemplate1 =>
         val model = Tree(Seq(Req("R1"), Req("R2"), Stakeholder("BOSS"),
           Relation(Req("R3"), has, Tree(Seq(Relation(Req("R3.1"), has, Tree(Seq(Prio(1))))))), Relation(Req("R4"), has, Tree(Seq(Prio(2))))))
+
         updated(model)
 
 

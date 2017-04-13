@@ -99,17 +99,9 @@ object TemplateSelect {
         P.dispatch(SetTemplate1) >> closeDropdown
       else if(text == "Template 2")
         P.dispatch(SetTemplate) >> closeDropdown
-      else
+      else{
         P.dispatch(NoAction) >> closeDropdown
-
-//      text match {
-//        case "Template 1" => println(e.target.value)
-//          P.dispatch(SetTemplate1) >> closeDropdown
-//        case "Template 2" => println(e.target.value)
-//          P.dispatch(SetTemplate) >> closeDropdown
-//        case s: String => println(s)
-//          Callback()
-//      }
+      }
     }
   }
 

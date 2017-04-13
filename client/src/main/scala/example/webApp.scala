@@ -16,7 +16,6 @@ import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
 
-import scala.scalajs.js.Dynamic.global
 
 @JSExport
 object webApp extends js.JSApp {
@@ -28,7 +27,6 @@ object webApp extends js.JSApp {
     Interface(), Epic(), Feature(), Goal(), Idea(), Issue(), Req(), Ticket(), WorkPackage(), Breakpoint(), Barrier(), Quality(), Target(), Scenario(), Task(),
     Test(), Story(), UseCase(), VariationPoint(), Variant(), Code(), Comment(), Deprecated(), Example(), Expectation(), FileName(), Gist(), Image(), Spec(),
     Text(), Title(), Why(), Benefit(), Capacity(), Cost(), Damage(), Frequency(), Min(), Max(), Order(), Prio(), Probability(), Profit(), Value())
-
 
   val headerButtons = List("Export", "Import", "Release Planning", "Templates", "Help")
 
@@ -154,14 +152,11 @@ object webApp extends js.JSApp {
 
   class Backend($: BackendScope[Props, State]) {
 
-
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
 
     def openModalWithContent(newContent: Seq[TagMod], newDispatch: (Action => Callback), newAction: (String => Action)): Callback = $.modState(_.copy(modalContent = newContent, isModalOpen = true, dispatch = newDispatch, action = newAction))
 
     def render(props: Props, state: State) = {
-
-      val dispatch: Action => Callback = props.proxy.dispatchCB
       val sc = AppCircuit.connect(_.tree)
 
       // Can only send if WebSocket is connected and user has entered text
@@ -169,10 +164,15 @@ object webApp extends js.JSApp {
         for (websocket <- state.websocket if state.message.nonEmpty)
           yield sendMessage(websocket, state.message)
 
-
       val sendVerify: Option[Callback] =
         for (websocket <- state.websocket if props.proxy.value.toString.nonEmpty)
           yield sendMessage(websocket, props.proxy.value.toString)
+
+      def sendGetTemplate(templateNbr: Int): Option[Callback] =
+        for (websocket <- state.websocket if state.message.nonEmpty)
+          yield sendMessage(websocket, "Template" + templateNbr)
+
+
 
       def handleKeyDown(event: ReactKeyboardEventI): Option[Callback] = {
         if (event.nativeEvent.keyCode == KeyCode.Enter)

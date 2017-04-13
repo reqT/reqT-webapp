@@ -12,6 +12,7 @@ lazy val server = (project in file("server")).settings(
   libraryDependencies ++= Seq(
     "com.vmunier" %% "scalajs-scripts" % "1.0.0",
     "com.typesafe.akka" %% "akka-actor" % "2.4.12",
+    "com.lihaoyi" %%% "upickle" % "0.4.3",
     ws
 
   ),
