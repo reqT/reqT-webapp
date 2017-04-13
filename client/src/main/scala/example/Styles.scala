@@ -58,7 +58,7 @@ object Styles extends StyleSheet.Inline {
     width(40.px),
     height(48.px),
     top(0.px),
-    left(90.%%)
+    left(92.%%)
   )
 
   val bootStrapContentButton = style(

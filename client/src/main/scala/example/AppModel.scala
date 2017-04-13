@@ -38,6 +38,11 @@ sealed trait Elem {
   def setUUID() = {
     uuid = UUID.random()
   }
+
+  def getWithRelation(boolean: Boolean) : Elem= {
+    hasRelation = boolean
+    this
+  }
 }
 
 
@@ -79,11 +84,12 @@ sealed trait Entity extends Node {
     id = newID
     this
   }
-  def getID() : String = id
+  def getID: String = id
 
   override def toString: String = (getClass.getName + "(\"" + id + "\")").replace("example.", "")
 
   isEntity = true
+
 
 }
 
@@ -385,6 +391,8 @@ case object AddE extends Action
 case class AddElem(path: Seq[String], elem: Elem, relationType: RelationType) extends Action
 
 case class RemoveElem(path: Seq[String]) extends Action
+
+case class RemoveEmptyRelation(path: Seq[String]) extends Action
 
 case class MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) extends Action
 
