@@ -29,7 +29,8 @@ object ReactTreeView {
 
     def treeItem = Seq(
       ^.listStyleType := "none",
-      ^.marginTop := "10px"
+      ^.marginTop := "10px",
+      ^.paddingLeft := "20px"
     )
 
     def selectedTreeItemContent = Seq(^.color := "darkblue")
@@ -324,7 +325,6 @@ object ReactTreeView {
       Seq()
     }
 
-
     def render(P: NodeProps, S: NodeState): ReactTag = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
 
@@ -359,11 +359,13 @@ object ReactTreeView {
       <.li(
         P.style.treeItem,
         <.div(
-          ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
-          ^.overflow.hidden,
+          ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
+          ^.overflow.visible,
           ^.position.relative,
           //          ^.border := "1px solid",
           ^.borderRadius := "5px",
+          ^.borderBottomRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
+          ^.borderTopRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
           ^.backgroundColor := { if (P.root.item.isInstanceOf[Entity]) "#CEDBE7" else "#CFEADD" },
           ^.padding := "5px",
           ^.marginBottom := "10px",
@@ -383,16 +385,82 @@ object ReactTreeView {
           ^.onDblClick ==> onDoubleClickTreeItem(P,S),
           S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= P.style.dragOverTreeItemContent,
-          <.p(
+          <.div(
             ^.id := P.root.itemToString,
+            ^.className := "row",
             ^.unselectable := "true",
             ^.position := "absolute",
             ^.left := "7%",
-            ^.top := "25%",
-            ^.fontSize := "large",
-            <.span(
-              if (P.root.item.isInstanceOf[Elem]) P.root.entityToString + " - " + P.root.contentToString else P.root.entityToString
-            )
+            ^.top := "0px",
+            ^.bottom := "0px",
+            ^.width := "440px",
+            ^.paddingLeft := "0px",
+            ^.paddingRight := "0px",
+            ^.fontSize := "medium",
+            if (P.root.item.isInstanceOf[Elem]) {
+              Seq(
+                <.div(
+                  ^.fontStyle.oblique,
+                  ^.className := "col",
+                  ^.height := "100%",
+                  ^.width := "30%",
+                  ^.top := "0px",
+                  ^.bottom := "0px",
+                  ^.position := "absolute",
+                  ^.left := "0%",
+                  ^.paddingTop := "3%",
+                  ^.paddingLeft := "3%",
+                  <.span(
+                    P.root.entityToString
+                  )
+                ),
+                <.div(
+                  ^.width := "0px",
+                  ^.height := "100%",
+                  ^.float.left,
+                  ^.border := "1px inset",
+                  ^.left := "30%",
+                  ^.position := "absolute",
+                  ^.top := "0px",
+                  ^.bottom := "0px",
+                  ^.opacity := "0.5"
+                ),
+                <.div(
+                  ^.className := "col",
+                  ^.height := "100%",
+                  ^.width := "70%",
+                  ^.top := "0px",
+                  ^.bottom := "0px",
+                  ^.paddingTop := "3%",
+                  ^.paddingLeft := "1%",
+                  ^.position := "absolute",
+                  ^.left := "30%",
+                  <.span(
+                    P.root.contentToString
+                  )
+                )
+              )
+
+            } else{
+              <.div(
+                ^.className := "col",
+                ^.height := "100%",
+                ^.width := "40%",
+                ^.top := "0px",
+                ^.bottom := "0px",
+                ^.position := "absolute",
+                ^.left := "0%",
+                ^.paddingTop := "3%",
+                ^.paddingLeft := "3%",
+                <.span(
+                  P.root.entityToString
+                )
+              )
+            }
+
+//            <.span(
+//              if (P.root.item.isInstanceOf[Elem]) P.root.entityToString + " - " + P.root.contentToString else P.root.entityToString
+//            )
           ),
           <.button(
             Styles.bootStrapRemoveButton,
@@ -410,7 +478,7 @@ object ReactTreeView {
             (ifFilterTextExist(P.filterText, child) || ifFilterTextExist(P.filterText, P.root)) ?=
               TreeNode.withKey(s"$parent/${child.uuid}")(P.copy(
                 root = child,
-                open = true, //!P.filterText.trim.isEmpty,
+                open = true,
                 depth = depth,
                 parent = parent,
                 filterText = P.filterText

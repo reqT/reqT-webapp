@@ -54,9 +54,11 @@ object Styles extends StyleSheet.Inline {
 
   val bootStrapRemoveButton = style(
     addClassName("btn glyphicon glyphicon-remove pull-right"),
+//    borderBottomRightRadius(0.px),
+//    borderTopRightRadius(0.px),
     position.absolute,
     width(40.px),
-    height(48.px),
+    height(100.%%),
     top(0.px),
     left(92.%%)
   )
