@@ -312,13 +312,15 @@ object ReactTreeView {
     }
 
     def removeElem(P: NodeProps): Callback = {
-      global.prompt("Do you want to delete " + P.root.item + " ?")
+      if(global.confirm("Do you want to delete " + P.root.item + " ?").asInstanceOf[Boolean]) {
+        val dispatch: Action => Callback = P.modelProxy.dispatchCB
+        val path = if (P.parent.isEmpty) P.root.uuid.toString
+        else P.parent + "/" + P.root.uuid
 
-      val dispatch: Action => Callback = P.modelProxy.dispatchCB
-      val path = if (P.parent.isEmpty) P.root.uuid.toString
-      else P.parent + "/" + P.root.uuid
-
-      dispatch(RemoveElem(path.split("/")))
+        dispatch(RemoveElem(path.split("/"))) >> dispatch(RemoveEmptyRelation(path.split("/").init))
+      } else {
+        Callback()
+      }
     }
 
     def setContentDivSize(content: String): Seq[TagMod] = {
