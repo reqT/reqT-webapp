@@ -470,6 +470,7 @@ object ReactTreeView {
               )
 
             } else{
+              
               <.div(
                 ^.className := "col",
                 ^.height := "100%",
