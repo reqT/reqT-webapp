@@ -321,8 +321,21 @@ object ReactTreeView {
       dispatch(RemoveElem(path.split("/")))
     }
 
-    def setFontSize(content: String): Seq[TagMod] = {
-      Seq()
+    def setContentDivSize(content: String): Seq[TagMod] = {
+      var cont : String = content
+      val nbrInserts = content.length / 37
+
+      for(i <- 1 to nbrInserts) {
+        if(i == 1){
+          cont = cont.substring(0, i*37) + "\n" + cont.substring(i*37, cont.length)
+        } else {
+          cont = cont.substring(0,i*36) + "...\n\n" + cont.substring(i*36, cont.length)
+        }
+      }
+      Seq(
+        cont,
+        ^.whiteSpace := "pre-line"
+      )
     }
 
     def render(P: NodeProps, S: NodeState): ReactTag = {
@@ -388,6 +401,7 @@ object ReactTreeView {
           <.div(
             ^.id := P.root.itemToString,
             ^.className := "row",
+            ^.overflow.hidden,
             ^.unselectable := "true",
             ^.position := "absolute",
             ^.left := "7%",
@@ -410,9 +424,9 @@ object ReactTreeView {
                   ^.left := "0%",
                   ^.paddingTop := "3%",
                   ^.paddingLeft := "3%",
-                  <.span(
-                    P.root.entityToString
-                  )
+                  ^.fontSize := { if(P.root.entityToString.length > 12) "small" else "medium" },
+                  P.root.entityToString
+
                 ),
                 <.div(
                   ^.width := "0px",
@@ -431,13 +445,15 @@ object ReactTreeView {
                   ^.width := "70%",
                   ^.top := "0px",
                   ^.bottom := "0px",
-                  ^.paddingTop := "3%",
-                  ^.paddingLeft := "1%",
+                  ^.paddingTop := { if(P.root.contentToString.length < 38) "3%" else "1%" },
+                  ^.paddingLeft := "3%",
                   ^.position := "absolute",
                   ^.left := "30%",
-                  <.span(
-                    P.root.contentToString
-                  )
+                  ^.overflow.hidden,
+                  ^.textAlign.justify,
+                  ^.wordWrap.`break-word`,
+                  ^.fontSize.small,
+                  setContentDivSize(P.root.contentToString)
                 )
               )
 
