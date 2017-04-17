@@ -20,6 +20,7 @@ import upickle.default._
 @JSExport
 object webApp extends js.JSApp {
 
+  //Måste ändras till hostname
   val url = "ws://127.0.0.1:9000/socket"
 
   val elems = List(Item(), Label(), Meta(), Section(),Term(), Actor(), App(), Component(), Module(), Product(), Release(), Resource(),

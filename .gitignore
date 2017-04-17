@@ -81,14 +81,12 @@ fabric.properties
 ### Intellij+iml Patch ###
 # Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-249601023
 
-*.iml
 modules.xml
 .idea/misc.xml
 *.ipr
 
 ### PlayFramework ###
 # Ignore Play! working directory #
-bin/
 /db
 .eclipse
 /lib/
@@ -101,14 +99,11 @@ test-result
 server.pid
 *.eml
 /dist/
-.cache
-
 ### Scala ###
 *.class
 *.log
 
 # sbt specific
-.history
 .lib/
 dist/*
 target/
@@ -118,7 +113,6 @@ project/boot/
 project/plugins/project/
 
 # Scala-IDE specific
-.scala_dependencies
 .worksheet
 
 # ENSIME specific
