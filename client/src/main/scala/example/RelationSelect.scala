@@ -18,7 +18,7 @@ object RelationSelect {
     ^.color := "black",
     ^.top := "0%",
     ^.height := "100%",
-    ^.left := "65%",
+    ^.left := "72%",
     ^.background := "#FFC2C2"
   )
 

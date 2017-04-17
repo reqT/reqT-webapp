@@ -31,7 +31,6 @@ lazy val client = (project in file("client")).settings(
     "org.scala-js" %%% "scalajs-dom" % "0.9.1",
     "com.github.japgolly.scalajs-react" %%% "core" % "0.11.3",
     "com.github.japgolly.scalajs-react" %%% "extra" % "0.11.3",
-    "com.olvind" %%% "scalajs-react-components" % "0.6.0",
     "org.scalaz" %% "scalaz-core" % "7.2.8",
     "io.suzaku" %%% "diode" % "1.1.1",
     "io.suzaku" % "diode-react_sjs0.6_2.11" % "1.1.1",

@@ -27,7 +27,10 @@ object ReactTreeView {
 
     def treeGroup = Seq(^.margin := "5px", ^.padding := "0 0 0 40px")
 
-    def treeItem = Seq(^.listStyleType := "none")
+    def treeItem = Seq(
+      ^.listStyleType := "none",
+      ^.marginTop := "10px"
+    )
 
     def selectedTreeItemContent = Seq(^.color := "darkblue")
 
@@ -159,7 +162,7 @@ object ReactTreeView {
       childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
 
     def onItemSelect(P: NodeProps)(e: ReactEventH): Callback =
-      P.onNodeSelect($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
+      Callback(println(P.root.item.asInstanceOf[Elem].hasRelation)) >> P.onNodeSelect($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
 
     def onItemDragOver(P: NodeProps)(e: ReactEventH): Callback =
       P.onNodeDrag($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
@@ -229,7 +232,7 @@ object ReactTreeView {
       }else if (isAttribute || pathFrom.diff(pathTo).isEmpty)
           dispatch(NoAction)
         else if(!pathFrom.init.corresponds(pathTo)(_ == _ ))
-          dispatch(MoveElem(pathFrom, pathTo, has)) >> dispatch(RemoveElem(pathFrom))  // has is placeholder
+          dispatch(MoveElem(pathFrom, pathTo, has)) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))  // has is placeholder
         else
           dispatch(NoAction)
     }
@@ -248,13 +251,16 @@ object ReactTreeView {
         <.dl(
           ^.className := "dl-horizontal",
           <.dt(
+            ^.textAlign := "center",
             ^.color := { if (P.root.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
             P.root.entityToString),
           <.dd(
+            ^.marginTop := "10px",
             P.root.contentToString
           ),
-          <.br,
+          <.hr,
           <.dt(
+            ^.textAlign := "center",
             ^.color := "#FF3636",
             P.root.linkToString
           ),
@@ -262,11 +268,13 @@ object ReactTreeView {
 
           ),
           <.br,
+          <.hr,
           P.root.children.map(x => {
             Seq(
 
                 <.dt(
                   x.entityToString.replaceAll("TreeItem", ""),
+                  ^.textAlign := "center",
                   ^.color := { if (x.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" }
                 ),
                 <.dd(
@@ -312,6 +320,10 @@ object ReactTreeView {
       dispatch(RemoveElem(path.split("/")))
     }
 
+    def setFontSize(content: String): Seq[TagMod] = {
+      Seq()
+    }
+
 
     def render(P: NodeProps, S: NodeState): ReactTag = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
@@ -355,7 +367,9 @@ object ReactTreeView {
           ^.backgroundColor := { if (P.root.item.isInstanceOf[Entity]) "#CEDBE7" else "#CFEADD" },
           ^.padding := "5px",
           ^.marginBottom := "10px",
-          ^.width := "400px",
+          ^.marginRight := "0",
+          ^.marginLeft := "0",
+          ^.width := "500px",
           treeMenuToggle,
           ^.key := "toggle",
           ^.cursor := "pointer",
@@ -366,6 +380,7 @@ object ReactTreeView {
           ^.onDragStart ==> dragStart(P),
           ^.onDragEnd ==> onItemDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
+          ^.onDblClick ==> onDoubleClickTreeItem(P,S),
           S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= P.style.dragOverTreeItemContent,
           <.p(
@@ -376,8 +391,7 @@ object ReactTreeView {
             ^.top := "25%",
             ^.fontSize := "large",
             <.span(
-              ^.onDblClick ==> onDoubleClickTreeItem(P,S),
-              P.root.itemToString
+              if (P.root.item.isInstanceOf[Elem]) P.root.entityToString + " - " + P.root.contentToString else P.root.entityToString
             )
           ),
           <.button(
