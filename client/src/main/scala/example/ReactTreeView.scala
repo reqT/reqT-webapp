@@ -404,7 +404,7 @@ object ReactTreeView {
             (matchesFilterText(P.filterText, child) || matchesFilterText(P.filterText, P.root)) ?=
               TreeNode.withKey(s"$parent/${child.uuid}")(P.copy(
                 root = child,
-                open = !P.filterText.trim.isEmpty,
+                open = P.open, //!P.filterText.trim.isEmpty,
                 depth = depth,
                 parent = parent,
                 filterText = P.filterText
