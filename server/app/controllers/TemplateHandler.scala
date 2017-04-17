@@ -7,10 +7,10 @@ import scala.io.Source
   */
 class TemplateHandler {
   val filePathTemplates = "server/app/controllers/templates.txt"
+  val nbrOfTemplates = getAmountOfTemplates
 
-  def getTemplate(message: String): String = {
+  def getTemplate(templateNbr: Int): Option[String] = {
     val contentIterator = Source.fromFile(filePathTemplates).getLines
-    val templateNbr = message.drop(8).toInt
 
     val template = "Template" + templateNbr + "="
     var wanted = false
@@ -23,13 +23,16 @@ class TemplateHandler {
       wanted
     }
 
-    contentIterator.filter(take).mkString("\n")
+    if(templateNbr > getAmountOfTemplates)
+      None
+    else
+      Some(contentIterator.filter(take).mkString("\n"))
   }
 
 
   def getAmountOfTemplates: Int = {
     var amount = 0
-    Source.fromFile(filePathTemplates).getLines.foreach(line => if(line.startsWith("Template")) amount+=1)
+    Source.fromFile(filePathTemplates).getLines.foreach(line => if(line.replace(" ", "").startsWith("Template=")) amount+=1)
     amount
   }
 

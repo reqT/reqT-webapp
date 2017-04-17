@@ -3,16 +3,17 @@ package controllers
 import java.io.ByteArrayInputStream
 import akka.actor._
 import scala.sys.process._
+import scala.io.Source
 
-object MyWebSocketActor {
-  def props(out: ActorRef) = Props(new MyWebSocketActor(out))
+object WebSocketActor {
+  def props(out: ActorRef) = Props(new WebSocketActor(out))
 }
 
 
 
-class MyWebSocketActor(out: ActorRef) extends Actor {
+class WebSocketActor(out: ActorRef) extends Actor {
   val reqT = stringToProcess("java -jar reqT.jar")
-  val templateHandler = new TemplateHandler
+  //val templateHandler = new TemplateHandler
 
   def trim(text: String): String = text.drop(text.indexOf("reqT>"))
 

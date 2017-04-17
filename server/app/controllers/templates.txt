@@ -273,4 +273,4 @@ Template15 = Model(
     Feature("releasePlanning") has Benefit(4),    
     Feature("autoCompletion") has Benefit(7),    
     Feature("autoSave") has Benefit(9)))
-    
+

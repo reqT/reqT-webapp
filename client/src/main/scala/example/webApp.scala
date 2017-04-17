@@ -299,8 +299,7 @@ object webApp extends js.JSApp {
         }
 
         def onmessage(event: MessageEvent): Unit = {
-          // Echo message received
-          direct.modState(_.log(s" ${event.data.toString}"))
+          direct.modState(_.log(s" ${event.data.toString}1"))
         }
 
         def onerror(event: ErrorEvent): Unit = {

@@ -152,6 +152,7 @@ object ReactTreeView {
         Callback()
     }
 
+    //def toggleOpen(P: NodeProps): NodeProps = P.copy(open = !P.open)
 
     def onTreeMenuToggle(P: NodeProps)(e: ReactEventH): Callback =
       childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
@@ -170,7 +171,7 @@ object ReactTreeView {
         .conditionally(P.root.children.nonEmpty)
 
 
-    def ifFilterTextExist(filterText: String, data: TreeItem): Boolean = {
+    def matchesFilterText(filterText: String, data: TreeItem): Boolean = {
 
         def matchesType(treeItem: TreeItem): Boolean =
           treeItem.item match {
@@ -271,8 +272,6 @@ object ReactTreeView {
                 <.dd(
                   x.contentToString
                 )
-
-
             )
           })
 
@@ -296,7 +295,7 @@ object ReactTreeView {
         case Model => dispatch(NoAction)
       }
     }
-    
+
     def dragOver(P:NodeProps)(e: ReactDragEvent): Callback = {
       e.preventDefaultCB >> Callback(e.dataTransfer.dropEffect = "move")
     }
@@ -332,25 +331,26 @@ object ReactTreeView {
       val path = (if (P.parent.isEmpty) P.root.uuid.toString
       else P.parent + "/" + P.root.uuid).split("/")
 
-
       val updateRel = updateRelation(path, P.root.item.asInstanceOf[Entity].id, _: Option[RelationType])
 
       val treeMenuToggle: TagMod =
         if (S.children.nonEmpty)
-          <.span(
+        <.span(
             ^.onClick ==> onTreeMenuToggle(P),
             ^.key := "arrow",
             P.style.treeItemBefore,
-            "▼"
-          )
+        "▼"
+        )
         else if (P.root.children.nonEmpty && S.children.isEmpty)
-          <.span(
+        <.span(
             ^.onClick ==> onTreeMenuToggle(P),
             ^.key := "arrow",
             P.style.treeItemBefore,
-            "▶"
-          )
+        "▶"
+        )
         else ""
+
+
 
       <.li(
         P.style.treeItem,
@@ -401,10 +401,10 @@ object ReactTreeView {
         ),
         <.ul(P.style.treeGroup)(
           S.children.map(child =>
-            (ifFilterTextExist(P.filterText, child) || ifFilterTextExist(P.filterText, P.root)) ?=
+            (matchesFilterText(P.filterText, child) || matchesFilterText(P.filterText, P.root)) ?=
               TreeNode.withKey(s"$parent/${child.uuid}")(P.copy(
                 root = child,
-                open = true, //!P.filterText.trim.isEmpty,
+                open = !P.filterText.trim.isEmpty,
                 depth = depth,
                 parent = parent,
                 filterText = P.filterText
@@ -459,7 +459,7 @@ object ReactTreeView {
                   )
 
   def apply(root: TreeItem,
-            openByDefault: Boolean = false,
+            openByDefault: Boolean = true,
             onItemSelect: js.UndefOr[(String, String, Int) => Callback] = js.undefined,
             showSearchBox: Boolean = false,
             ref: js.UndefOr[String] = js.undefined,

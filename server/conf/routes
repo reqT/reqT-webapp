@@ -7,6 +7,8 @@ GET     /                           controllers.Application.index
 
 GET     /socket                     controllers.Application.socket
 
+#GET     /template/:templateNbr      controllers.Application.template(templateNbr: Int)
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
