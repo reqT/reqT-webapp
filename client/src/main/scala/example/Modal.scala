@@ -145,16 +145,97 @@ object Modal {
           )
         )
       })
+    ),
+    <.input(
+      ^.className := "form-control",
+      ^.autoFocus := "true"
+      //^.onChange :=
+    ),
+    <.div(
+      ^.padding := "5px",
+      ^.display.flex,
+      ^.justifyContent.center,
+      <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> P.onClose),
+      <.button("Ok", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> onAddEntity(P))
+    )
+  )
+
+  //TODO
+  def addStringAttrModalStyle(P : Props) = Seq(
+    ^.width:= "400px",
+    //    ^.height:= "500px",
+    <.dl(
+      ^.className := "dl-horizontal",
+      <.dt(
+        ^.textAlign := "center",
+        ^.color := { if (P.treeItem.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
+        P.treeItem.entityToString),
+      <.dd(
+        P.treeItem.contentToString
+      ),
+      <.hr,
+      <.dt(
+        ^.textAlign := "center",
+        ^.color := "#FF3636",
+        P.treeItem.linkToString
+      ),
+      <.dd(
+
+      ),
+      <.hr,
+      P.treeItem.children.map(x => {
+        Seq(
+          <.dt(
+            x.entityToString.replaceAll("TreeItem", ""),
+            ^.textAlign := "center",
+            ^.color := { if (x.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" }
+          ),
+          <.dd(
+            x.contentToString
+          )
+        )
+      })
 
     )
   )
 
-  def addStringAttrModalStyle(P : Props) = Seq(
-
-  )
-
+  //TODO
   def addIntAttrModalStyle(P : Props) = Seq(
+    ^.width:= "400px",
+    //    ^.height:= "500px",
+    <.dl(
+      ^.className := "dl-horizontal",
+      <.dt(
+        ^.textAlign := "center",
+        ^.color := { if (P.treeItem.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
+        P.treeItem.entityToString),
+      <.dd(
+        P.treeItem.contentToString
+      ),
+      <.hr,
+      <.dt(
+        ^.textAlign := "center",
+        ^.color := "#FF3636",
+        P.treeItem.linkToString
+      ),
+      <.dd(
 
+      ),
+      <.hr,
+      P.treeItem.children.map(x => {
+        Seq(
+          <.dt(
+            x.entityToString.replaceAll("TreeItem", ""),
+            ^.textAlign := "center",
+            ^.color := { if (x.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" }
+          ),
+          <.dd(
+            x.contentToString
+          )
+        )
+      })
+
+    )
   )
 
   def deleteElemModalStyle(P : Props) = Seq(
@@ -216,6 +297,20 @@ object Modal {
 
   def onSave(P: Props)(event: ReactEvent): Callback = {
     Callback()
+  }
+
+  def onAddEntity(P: Props)(event: ReactEvent): Callback = {
+    P.dispatch(AddElem(P.path, Req(), has)) >> P.onClose(event)
+  }
+
+  //TODO
+  def onAddIntAttr(P: Props)(event: ReactEvent): Callback = {
+    P.dispatch(NoAction)
+  }
+
+  //TODO
+  def onAddStringAttr(P: Props)(event: ReactEvent): Callback = {
+    P.dispatch(NoAction)
   }
 
   def getModalStyle(P: Props, rerender: () => Callback) : Seq[TagMod] = {
