@@ -393,13 +393,13 @@ case class RemoveEmptyRelation(path: Seq[String]) extends Action
 
 case class MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) extends Action
 
-case class updateEntity(path: Seq[String], newId: String) extends  Action
+case class UpdateEntity(path: Seq[String], newId: String) extends  Action
 
-case class updateStringAttribute(path: Seq[String], newValue: String) extends  Action
+case class UpdateStringAttribute(path: Seq[String], newValue: String) extends  Action
 
-case class updateIntAttribute(path: Seq[String], newValue: Int) extends  Action
+case class UpdateIntAttribute(path: Seq[String], newValue: Int) extends  Action
 
-case class updateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) extends  Action
+case class UpdateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) extends  Action
 
 case class SetTemplate(tree : Tree) extends  Action
 

@@ -10,6 +10,7 @@ import japgolly.scalajs.react._
 
 import scala.util.{Failure, Success}
 import diode.react.ModelProxy
+import example.Modal.ModalType
 import org.scalajs.dom.ext.KeyCode
 
 import scalacss.ScalaCssReact._
@@ -33,7 +34,7 @@ object webApp extends js.JSApp {
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalContent: Seq[TagMod], dispatch: (Action => Callback) = null, action: (String => Action) = null) {
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalType: ModalType, treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq()) {
 
     def log(line: String): State =
       copy(logLines = logLines :+ line)
@@ -110,7 +111,7 @@ object webApp extends js.JSApp {
     .build
 
 
-  val treeView = ReactComponentB[(ModelProxy[Tree], (Seq[TagMod], (Action => Callback), (String => Action)) => Callback)]("treeView")
+  val treeView = ReactComponentB[(ModelProxy[Tree], (ModalType, TreeItem, (Action => Callback), Seq[String]) => Callback)]("treeView")
     .render(P => <.pre(
       Styles.treeView,
       ^.border := "1px solid #ccc",
@@ -155,7 +156,7 @@ object webApp extends js.JSApp {
 
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
 
-    def openModalWithContent(newContent: Seq[TagMod], newDispatch: (Action => Callback), newAction: (String => Action)): Callback = $.modState(_.copy(modalContent = newContent, isModalOpen = true, dispatch = newDispatch, action = newAction))
+    def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String] ): Callback = $.modState(_.copy(modalType = modalType, treeItem = treeItem, isModalOpen = true, dispatch = newDispatch, path = newPath))
 
     def render(props: Props, state: State) = {
       val sc = AppCircuit.connect(_.tree)
@@ -183,7 +184,7 @@ object webApp extends js.JSApp {
       }
 
       <.div(
-        Modal(isOpen = state.isModalOpen, onClose = closeModal, content = state.modalContent, dispatch = state.dispatch, action = state.action),
+        Modal(isOpen = state.isModalOpen, onClose = closeModal, treeItem = state.treeItem, modalType = state.modalType, dispatch = state.dispatch, path = state.path),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -339,7 +340,7 @@ object webApp extends js.JSApp {
   }
 
   val pageContent = ReactComponentB[Props]("Content")
-    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalContent = Seq()))
+    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalType = Modal.EMPTY_MODAL, treeItem = null))
     .renderBackend[Backend]
     .componentDidMount(_.backend.start)
     .componentWillUnmount(_.backend.end)

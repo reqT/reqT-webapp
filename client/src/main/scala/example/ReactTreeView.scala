@@ -2,16 +2,17 @@ package example
 
 import diode.Action
 import diode.react.ModelProxy
+import example.Modal.ModalType
 import japgolly.scalajs.react.CompScope._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 
-import scala.scalajs.js.Dynamic.global
 import scalacss.ScalaCssReact._
 import scala.scalajs.js
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def linkToString: String = link.getOrElse("").toString
+
   def itemToString: String = item.toString.replaceAll("\"", "")
 
   def entityToString: String = item.toString.split('(').head
@@ -19,6 +20,7 @@ case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], 
   def contentToString: String = item.toString.split('(').tail.mkString.init.replaceAll("\"", "")
   
   def apply(item: Any, uuid: UUID, children: Seq[TreeItem]): TreeItem = this (item, uuid, Seq())
+
 }
 
 object ReactTreeView {
@@ -223,13 +225,12 @@ object ReactTreeView {
       }
 
       if (event.dataTransfer.getData("existing") == "false"){
-        val elem = getElem(event)
-        val modalContent = Seq(
-          elem.isEntity ?= <.p("Entity name:"),
-          elem.isIntAttribute ?= <.p("Number:"),
-          elem.isStringAttribute ?= <.p("Text:")
-        )
-        P.setModalContent(modalContent, dispatch, getAction(elem))
+         getElem(event) match {
+          case entity: Entity => P.setModalContent(Modal.ADD_ENTITY_MODAL, P.root, dispatch, pathTo)
+          case intAttr: IntAttribute => P.setModalContent(Modal.ADD_INTATTR_MODAL, P.root, dispatch, pathTo)
+          case stringAttr: StringAttribute => P.setModalContent(Modal.ADD_STRINGATTR_MODAL, P.root, dispatch, pathTo)
+        }
+
       }else if (isAttribute || pathFrom.diff(pathTo).isEmpty)
           dispatch(NoAction)
         else if(!pathFrom.init.corresponds(pathTo)(_ == _ ))
@@ -241,65 +242,26 @@ object ReactTreeView {
 
     def onDoubleClickTreeItem(P: NodeProps, S: NodeState)(e: ReactEvent): Callback = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
+
       val path = (if (P.parent.isEmpty) P.root.uuid.toString
       else P.parent + "/" + P.root.uuid).split("/")
 
-      def updateIntAttr(s : String): Action = updateIntAttribute(path, s.toInt: Int)
+      def updateIntAttr(s : String): Action = UpdateIntAttribute(path, s.toInt: Int)
+      val updateRel = UpdateRelation(path, P.root.item.asInstanceOf[Entity].id, _: Option[RelationType])
 
-
-      def clickModal = Seq(
-        ^.padding := "5px",
-        <.dl(
-          ^.className := "dl-horizontal",
-          <.dt(
-            ^.textAlign := "center",
-            ^.color := { if (P.root.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
-            P.root.entityToString),
-          <.dd(
-            ^.marginTop := "10px",
-            P.root.contentToString
-          ),
-          <.hr,
-          <.dt(
-            ^.textAlign := "center",
-            ^.color := "#FF3636",
-            P.root.linkToString
-          ),
-          <.dl(
-
-          ),
-          <.br,
-          <.hr,
-          P.root.children.map(x => {
-            Seq(
-
-                <.dt(
-                  x.entityToString.replaceAll("TreeItem", ""),
-                  ^.textAlign := "center",
-                  ^.color := { if (x.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" }
-                ),
-                <.dd(
-                  x.contentToString
-                )
-            )
-          })
-
-        )
-
-      )
 
       P.root.item match {
         case entity: Entity =>
           if (entity.hasRelation)
-            P.setModalContent(clickModal, dispatch, updateRelation(path, _, None))
+            P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path)
           else{
-            P.setModalContent(clickModal, dispatch, updateEntity(path, _))
+            P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path)
           }
         case _: IntAttribute =>
-          P.setModalContent(clickModal, dispatch, updateIntAttr)
+          P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path)
 
         case _: StringAttribute =>
-          P.setModalContent(clickModal, dispatch, updateStringAttribute(path, _))
+          P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path)
 
         case Model => dispatch(NoAction)
       }
@@ -310,19 +272,14 @@ object ReactTreeView {
     }
 
     def removeElem(P: NodeProps): Callback = {
-      if(global.confirm("Do you want to delete " + P.root.item + " ?").asInstanceOf[Boolean]) {
-        val dispatch: Action => Callback = P.modelProxy.dispatchCB
-        val path = if (P.parent.isEmpty) P.root.uuid.toString
-        else P.parent + "/" + P.root.uuid
+      val path = if (P.parent.isEmpty) P.root.uuid.toString else P.parent + "/" + P.root.uuid
+      val dispatch: Action => Callback = P.modelProxy.dispatchCB
 
-        dispatch(RemoveElem(path.split("/"))) >> dispatch(RemoveEmptyRelation(path.split("/").init))
-      } else {
-        Callback()
-      }
+      P.setModalContent(Modal.DELETE_MODAL, P.root, dispatch, path.split("/"))
     }
 
 
-    def dragOverStyle(P: NodeProps): Seq[TagMod] ={
+    def dragOverStyle(P: NodeProps): Seq[TagMod] = {
       Seq(^.opacity := 0.5,
         P.root.item.isInstanceOf[Attribute[Any]] ?= Seq(
           ^.color := "#FF3636",
@@ -360,7 +317,7 @@ object ReactTreeView {
       val path = (if (P.parent.isEmpty) P.root.uuid.toString
       else P.parent + "/" + P.root.uuid).split("/")
 
-      val updateRel = updateRelation(path, P.root.item.asInstanceOf[Entity].id, _: Option[RelationType])
+      val updateRel = UpdateRelation(path, P.root.item.asInstanceOf[Entity].id, _: Option[RelationType])
 
       val treeMenuToggle: TagMod =
         if (S.children.nonEmpty)
@@ -470,7 +427,7 @@ object ReactTreeView {
               )
 
             } else{
-              
+
               <.div(
                 ^.className := "col",
                 ^.height := "100%",
@@ -497,7 +454,14 @@ object ReactTreeView {
           ),
           getRelationType(P.root) match {
             case Some(relation) =>
-              RelationSelect(relation, dispatch, updateRel)
+              <.div(
+                ^.position.absolute,
+                ^.top := "0%",
+                ^.height := "100%",
+                ^.left := "100%",
+
+                RelationSelect(relation, dispatch, updateRel, None)
+              )
             case None =>
               <.div()
           }
@@ -518,7 +482,7 @@ object ReactTreeView {
   }
 
 
-  case class NodeState(children: Seq[TreeItem] = Nil, selected: Boolean = false, draggedOver: Boolean = false, modalOutPut: String = "")
+  case class NodeState(children: Seq[TreeItem] = Nil, selected: Boolean = false, draggedOver: Boolean = false)
 
   case class NodeProps(root: TreeItem,
                        open: Boolean,
@@ -531,7 +495,7 @@ object ReactTreeView {
                        style: Style,
                        filterMode: Boolean,
                        modelProxy: ModelProxy[Tree],
-                       setModalContent: (Seq[TagMod], (Action => Callback), (String => Action) ) => Callback
+                       setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String]  ) => Callback
                       )
 
 
@@ -558,7 +522,7 @@ object ReactTreeView {
                    showSearchBox: Boolean,
                    style: Style,
                    modelProxy: ModelProxy[Tree],
-                   setModalContent: (Seq[TagMod], (Action => Callback), (String => Action)) => Callback
+                   setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String] ) => Callback
                   )
 
   def apply(root: TreeItem,
@@ -569,7 +533,7 @@ object ReactTreeView {
             key: js.UndefOr[js.Any] = js.undefined,
             style: Style = new Style {},
             modelProxy: ModelProxy[Tree],
-            setModalContent: (Seq[TagMod], (Action => Callback), (String => Action)) => Callback
+            setModalContent: (ModalType, TreeItem, (Action => Callback), Seq[String]) => Callback
            ) =
     component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, setModalContent))
 

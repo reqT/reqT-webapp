@@ -158,7 +158,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         updated(model)
 
 
-      case updateEntity(path: Seq[String], newId: String) =>
+      case UpdateEntity(path: Seq[String], newId: String) =>
         val elemID = path.last
 
         zoomToChildren(modelRW, path.tail) match {
@@ -170,7 +170,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         }
 
 
-      case updateIntAttribute(path: Seq[String], newValue: Int) =>
+      case UpdateIntAttribute(path: Seq[String], newValue: Int) =>
         val elemID = path.last
 
         zoomToChildren(modelRW, path.tail) match {
@@ -182,7 +182,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         }
 
 
-      case updateStringAttribute(path: Seq[String], newValue: String) =>
+      case UpdateStringAttribute(path: Seq[String], newValue: String) =>
         val elemID = path.last
 
         zoomToChildren(modelRW, path.tail) match {
@@ -194,7 +194,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         }
 
 
-      case updateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) =>
+      case UpdateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) =>
         zoomToRelation(modelRW, path.tail) match {
           case Some(modelRW) => updated(modelRW.updated(modelRW.value.asInstanceOf[Relation].setLink(newRelationType.getOrElse(modelRW.value.asInstanceOf[Relation].link)).setEntity(newId)).tree)
 

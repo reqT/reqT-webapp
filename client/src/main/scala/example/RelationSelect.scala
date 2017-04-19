@@ -11,14 +11,13 @@ import diode.Action
 
 
 object RelationSelect {
+
   def selectStyle = Seq(
     ^.className := "form-control pull-right",
-    ^.position := "absolute",
+//    ^.position := "inherit",
     ^.width := "155px",
-    ^.color := "black",
-    ^.top := "0%",
     ^.height := "100%",
-    ^.left := "100%",
+    ^.color := "black",
     ^.borderBottomLeftRadius := "0px",
     ^.borderTopLeftRadius := "0px",
     ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
@@ -26,25 +25,21 @@ object RelationSelect {
     ^.border := "0px"
   )
 
-  case class Props(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action)
+  case class Props(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action, rerender: Option[() => Callback])
+
+  case class State(value: String)
 
   def fromString(value: String): Option[RelationType] = {
     Vector(binds, deprecates, excludes, has, helps, hurts, impacts, implements, interactsWith, is, precedes, requires, relatesTo, superOf, verifies).find(_.toString == value)
   }
 
-  def onChange(props: Props)(e: ReactEventI): Callback ={
-    e.preventDefault()
-    props.dispatch(props.updateRel(fromString(e.target.value)))
-  }
 
-
-
-  class Backend(t: BackendScope[Props, _]) {
-    def render(P: Props) =
+  class Backend($: BackendScope[Props, State]) {
+    def render(P: Props, S: State) =
       <.select(
         selectStyle,
         ^.value := P.value,
-        ^.onChange ==> onChange(P)
+        ^.onChange ==> onChange(P, S)
       )(
         <.option("binds"),
         <.option("deprecates"),
@@ -60,18 +55,30 @@ object RelationSelect {
         <.option("requires"),
         <.option("relatesTo"),
         <.option("superOf"),
-        <.option(" verifies")
+        <.option("verifies")
       )
+
+
+    def onChange(props: Props, state: State)(e: ReactEventI): Callback = {
+      e.preventDefault()
+      props.rerender match {
+        case Some(rerend) => props.dispatch(props.updateRel(fromString(e.target.value))) >> rerend()
+        case None => props.dispatch(props.updateRel(fromString(e.target.value)))
+      }
+
+    }
+
 
   }
 
+
   val component = ReactComponentB[Props]("RelationSelect")
-    .stateless
+    .initialState(State(value = ""))
     .renderBackend[Backend]
     .build
 
 
 
-  def apply(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action) = component.set()(Props(value, dispatch, updateRel))
+  def apply(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action, rerender: Option[() => Callback]) = component.set()(Props(value, dispatch, updateRel, rerender))
 
 }
