@@ -11,6 +11,8 @@ case class Tree(children: Seq[Elem]){ override def toString: String = children.m
 case class UUID(x1: Int, x2: Int, x3: Int, x4: Int)
 
 object UUID {
+  var modeluuid = random()
+
   def random(): UUID = {
     import scala.util.Random.nextInt
     new UUID(
@@ -20,8 +22,7 @@ object UUID {
       nextInt())
   }
 
-  def model(): UUID = new UUID(1416613065,816664229,-1459617792,-2131399629)
-
+  def model(): UUID = modeluuid
 }
 
 sealed trait Elem {
@@ -36,6 +37,11 @@ sealed trait Elem {
 
   def setUUID() = {
     uuid = UUID.random()
+  }
+
+  def getWithRelation(boolean: Boolean) : Elem= {
+    hasRelation = boolean
+    this
   }
 }
 
@@ -78,11 +84,12 @@ sealed trait Entity extends Node {
     id = newID
     this
   }
-  def getID() : String = id
+  def getID: String = id
 
   override def toString: String = (getClass.getName + "(\"" + id + "\")").replace("example.", "")
 
   isEntity = true
+
 
 }
 
@@ -377,13 +384,12 @@ case object verifies extends RelationType
 /**
   * Actions
   */
-case object Init extends Action
-
-case object AddE extends Action
 
 case class AddElem(path: Seq[String], elem: Elem, relationType: RelationType) extends Action
 
 case class RemoveElem(path: Seq[String]) extends Action
+
+case class RemoveEmptyRelation(path: Seq[String]) extends Action
 
 case class MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) extends Action
 
@@ -395,13 +401,11 @@ case class updateIntAttribute(path: Seq[String], newValue: Int) extends  Action
 
 case class updateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) extends  Action
 
+case class SetTemplate(tree : Tree) extends  Action
+
 case object SetTemplate extends Action
 
-case class Select() extends Action
-
-case object Reset extends Action
-
-case object Test extends Action
+case object SetTemplate1 extends Action
 
 case object NoAction extends Action
 

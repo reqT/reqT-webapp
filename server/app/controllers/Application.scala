@@ -11,15 +11,19 @@ import play.api.mvc._
 
 
 class Application @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller{
+  val templateHandler = new TemplateHandler
 
   def index = Action {
     Ok(views.html.index("hej"))
   }
 
   def socket = WebSocket.accept[String, String] { request =>
-    ActorFlow.actorRef(out => MyWebSocketActor.props(out))
+    ActorFlow.actorRef(out => WebSocketActor.props(out))
   }
 
+//  def template(templateNbr: Int) = Action {
+//    Ok(templateHandler.getTemplate(templateNbr).getOrElse(NotFound))
+//  }
 
 
 }

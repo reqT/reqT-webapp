@@ -15,15 +15,15 @@ object Modal {
 
   def modalStyle = Seq(
     ^.position := "absolute",
-    ^.border := "1px solid",
+    ^.border := "1px solid #CCC",
     ^.borderRadius := "5px",
-    ^.top := "20%",
+    ^.top := "40%",
     ^.left := "50%",
     ^.transform := "translate(-50%,-50%)",
     ^.zIndex := "9999",
     ^.background := "#FFF" ,
-    ^.width:= "300px",
-    ^.height:= "300px",
+    ^.width:= "400px",
+    ^.height:= "500px",
     ^.paddingBottom := "15px",
     ^.paddingRight := "15px" ,
     ^.paddingTop := "15px",
@@ -36,7 +36,9 @@ object Modal {
     ^.height := "100%",
     ^.top := "0px",
     ^.left := "0px",
-    ^.zIndex := "9998"
+    ^.zIndex := "9998",
+    ^.background := "#CCC",
+    ^.opacity := "0.5"
   )
 
 
@@ -50,7 +52,14 @@ object Modal {
                 modalStyle,
                 P.content,
               <.input(
+                ^.className := "form-control",
                 ^.placeholder := "Name..",
+                ^.position.absolute,
+                ^.bottom := 0,
+                ^.width := "95%",
+                ^.marginBottom := "10px",
+                ^.marginLeft := "5px",
+                ^.marginRight := "5px",
                 ^.autoFocus := true,
                 ^.onChange ==> onChange
               )

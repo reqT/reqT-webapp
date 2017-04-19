@@ -13,6 +13,11 @@ import scala.scalajs.js
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def linkToString: String = link.getOrElse("").toString
   def itemToString: String = item.toString.replaceAll("\"", "")
+
+  def entityToString: String = item.toString.split('(').head
+
+  def contentToString: String = item.toString.split('(').tail.mkString.init.replaceAll("\"", "")
+  
   def apply(item: Any, uuid: UUID, children: Seq[TreeItem]): TreeItem = this (item, uuid, Seq())
 }
 
@@ -20,13 +25,15 @@ object ReactTreeView {
   trait Style {
     def reactTreeView = Seq[TagMod]()
 
-    def treeGroup = Seq(^.margin := 0, ^.padding := "0 0 0 40px")
+    def treeGroup = Seq(^.margin := "5px", ^.padding := "0 0 0 40px")
 
-    def treeItem = Seq(^.listStyleType := "none")
+    def treeItem = Seq(
+      ^.listStyleType := "none",
+      ^.marginTop := "10px",
+      ^.paddingLeft := "20px"
+    )
 
     def selectedTreeItemContent = Seq(^.color := "darkblue")
-
-    def dragOverTreeItemContent = Seq(^.opacity := 0.5)
 
     def treeItemBefore = Seq(
       ^.position := "absolute",
@@ -108,7 +115,10 @@ object ReactTreeView {
       val updateThis: Callback =
         $.modState(_.copy(dragOverNode = draggedOver, filterMode = false))
 
-      removeCurrent >> updateThis
+      val setRemove: Callback =
+        draggedOver.modState(_.copy(draggedOver = false))
+
+      removeCurrent >> setRemove
     }
 
     def onTextChange(text: String): Callback =
@@ -146,6 +156,7 @@ object ReactTreeView {
         Callback()
     }
 
+    //def toggleOpen(P: NodeProps): NodeProps = P.copy(open = !P.open)
 
     def onTreeMenuToggle(P: NodeProps)(e: ReactEventH): Callback =
       childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
@@ -156,12 +167,15 @@ object ReactTreeView {
     def onItemDragOver(P: NodeProps)(e: ReactEventH): Callback =
       P.onNodeDrag($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
 
+    def onItemDrop(P: NodeProps)(e: ReactDragEvent): Callback =
+      P.onNodeDrop($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
+
     def childrenFromProps(P: NodeProps): CallbackTo[Option[Unit]] =
       $.modState(S => S.copy(children = if (S.children.isEmpty) P.root.children else Nil))
         .conditionally(P.root.children.nonEmpty)
 
 
-    def ifFilterTextExist(filterText: String, data: TreeItem): Boolean = {
+    def matchesFilterText(filterText: String, data: TreeItem): Boolean = {
 
         def matchesType(treeItem: TreeItem): Boolean =
           treeItem.item match {
@@ -184,8 +198,7 @@ object ReactTreeView {
     }
 
     def onDrop(P: NodeProps)(event: ReactDragEvent): Callback = {
-      event.preventDefault()
-
+//      event.preventDefault()
       val pathFrom = event.dataTransfer.getData("path").split("/")
       val pathTo = (if (P.parent.isEmpty) P.root.uuid.toString
         else P.parent + "/" + P.root.uuid).split("/")
@@ -206,25 +219,21 @@ object ReactTreeView {
         case entity: Entity => s: String => AddElem(pathTo, entity.setID(s), has)
         case intAttr: IntAttribute => s: String => AddElem(pathTo, intAttr.setValue(s.toInt), has)
         case stringAttr: StringAttribute => s: String => AddElem(pathTo, stringAttr.setValue(s), has)
-
+        case default => _: String => NoAction
       }
 
       if (event.dataTransfer.getData("existing") == "false"){
         val elem = getElem(event)
         val modalContent = Seq(
-          ^.width:= "215px",
-          ^.height:= "150px",
           elem.isEntity ?= <.p("Entity name:"),
           elem.isIntAttribute ?= <.p("Number:"),
           elem.isStringAttribute ?= <.p("Text:")
         )
-
-
         P.setModalContent(modalContent, dispatch, getAction(elem))
       }else if (isAttribute || pathFrom.diff(pathTo).isEmpty)
           dispatch(NoAction)
         else if(!pathFrom.init.corresponds(pathTo)(_ == _ ))
-          dispatch(MoveElem(pathFrom, pathTo, has)) >> dispatch(RemoveElem(pathFrom))  // has is placeholder
+          dispatch(MoveElem(pathFrom, pathTo, has)) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))  // has is placeholder
         else
           dispatch(NoAction)
     }
@@ -240,18 +249,43 @@ object ReactTreeView {
 
       def clickModal = Seq(
         ^.padding := "5px",
-        <.div(
-          ^.color := { if (P.root.item.isInstanceOf[Entity]) "#047BEA" else "#03EE7D" },
-          P.root.itemToString),
-        <.div(
-          ^.color := "#FF3636",
-          P.root.linkToString),
-        <.div(
+        <.dl(
+          ^.className := "dl-horizontal",
+          <.dt(
+            ^.textAlign := "center",
+            ^.color := { if (P.root.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
+            P.root.entityToString),
+          <.dd(
+            ^.marginTop := "10px",
+            P.root.contentToString
+          ),
+          <.hr,
+          <.dt(
+            ^.textAlign := "center",
+            ^.color := "#FF3636",
+            P.root.linkToString
+          ),
+          <.dl(
+
+          ),
+          <.br,
+          <.hr,
           P.root.children.map(x => {
             Seq(
-            <.div(x.itemToString.replaceAll("TreeItem", "")),
-            ^.color := { if (x.item.isInstanceOf[Entity]) "#047BEA" else "#03EE7D" })
-          }))
+
+                <.dt(
+                  x.entityToString.replaceAll("TreeItem", ""),
+                  ^.textAlign := "center",
+                  ^.color := { if (x.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" }
+                ),
+                <.dd(
+                  x.contentToString
+                )
+            )
+          })
+
+        )
+
       )
 
       P.root.item match {
@@ -270,21 +304,50 @@ object ReactTreeView {
         case Model => dispatch(NoAction)
       }
     }
-    
+
     def dragOver(P:NodeProps)(e: ReactDragEvent): Callback = {
       e.preventDefaultCB >> Callback(e.dataTransfer.dropEffect = "move")
     }
 
     def removeElem(P: NodeProps): Callback = {
-      global.prompt("Do you want to delete " + P.root.item + " ?")
+      if(global.confirm("Do you want to delete " + P.root.item + " ?").asInstanceOf[Boolean]) {
+        val dispatch: Action => Callback = P.modelProxy.dispatchCB
+        val path = if (P.parent.isEmpty) P.root.uuid.toString
+        else P.parent + "/" + P.root.uuid
 
-      val dispatch: Action => Callback = P.modelProxy.dispatchCB
-      val path = if (P.parent.isEmpty) P.root.uuid.toString
-      else P.parent + "/" + P.root.uuid
-
-      dispatch(RemoveElem(path.split("/")))
+        dispatch(RemoveElem(path.split("/"))) >> dispatch(RemoveEmptyRelation(path.split("/").init))
+      } else {
+        Callback()
+      }
     }
 
+
+    def dragOverStyle(P: NodeProps): Seq[TagMod] ={
+      Seq(^.opacity := 0.5,
+        P.root.item.isInstanceOf[Attribute[Any]] ?= Seq(
+          ^.color := "#FF3636",
+          ^.border := "1px solid",
+          ^.borderColor := "#FF3636"
+        )
+      )
+    }
+
+    def setContentDivSize(content: String): Seq[TagMod] = {
+      var cont : String = content
+      val nbrInserts = content.length / 37
+
+      for(i <- 1 to nbrInserts) {
+        if(i == 1){
+          cont = cont.substring(0, i*37) + "\n" + cont.substring(i*37, cont.length)
+        } else {
+          cont = cont.substring(0,i*36) + "...\n\n" + cont.substring(i*36, cont.length)
+        }
+      }
+      Seq(
+        cont,
+        ^.whiteSpace := "pre-line"
+      )
+    }
 
     def render(P: NodeProps, S: NodeState): ReactTag = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
@@ -297,58 +360,136 @@ object ReactTreeView {
       val path = (if (P.parent.isEmpty) P.root.uuid.toString
       else P.parent + "/" + P.root.uuid).split("/")
 
-
       val updateRel = updateRelation(path, P.root.item.asInstanceOf[Entity].id, _: Option[RelationType])
 
       val treeMenuToggle: TagMod =
         if (S.children.nonEmpty)
-          <.span(
+        <.span(
             ^.onClick ==> onTreeMenuToggle(P),
             ^.key := "arrow",
             P.style.treeItemBefore,
-            "▼"
-          )
+        "▼"
+        )
         else if (P.root.children.nonEmpty && S.children.isEmpty)
-          <.span(
+        <.span(
             ^.onClick ==> onTreeMenuToggle(P),
             ^.key := "arrow",
             P.style.treeItemBefore,
-            "▶"
-          )
+        "▶"
+        )
         else ""
+
+
 
       <.li(
         P.style.treeItem,
         <.div(
-          ^.overflow.hidden,
+          ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
+          ^.overflow.visible,
           ^.position.relative,
-          ^.border := "1px solid",
+          //          ^.border := "1px solid",
           ^.borderRadius := "5px",
+          ^.borderBottomRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
+          ^.borderTopRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
           ^.backgroundColor := { if (P.root.item.isInstanceOf[Entity]) "#CEDBE7" else "#CFEADD" },
           ^.padding := "5px",
-          ^.width := "400px",
+          ^.marginBottom := "10px",
+          ^.marginRight := "0",
+          ^.marginLeft := "0",
+          ^.width := "500px",
           treeMenuToggle,
           ^.key := "toggle",
           ^.cursor := "pointer",
           ^.className := "container",
           ^.onClick ==> onItemSelect(P),
+          ^.onDrop ==> onDrop(P),
           ^.draggable := true,
           ^.onDragStart ==> dragStart(P),
-          ^.onDrop ==> onDrop(P),
+          ^.onDragEnd ==> onItemDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
+          ^.onDblClick ==> onDoubleClickTreeItem(P,S),
           S.selected ?= P.style.selectedTreeItemContent,
-          S.draggedOver ?= P.style.dragOverTreeItemContent,
-          <.p(
+          S.draggedOver ?= dragOverStyle(P),
+          <.div(
             ^.id := P.root.itemToString,
+            ^.className := "row",
+            ^.overflow.hidden,
             ^.unselectable := "true",
             ^.position := "absolute",
             ^.left := "7%",
-            ^.top := "25%",
-            ^.fontSize := "large",
-            <.span(
-              ^.onDblClick ==> onDoubleClickTreeItem(P,S),
-              P.root.itemToString
-            )
+            ^.top := "0px",
+            ^.bottom := "0px",
+            ^.width := "440px",
+            ^.paddingLeft := "0px",
+            ^.paddingRight := "0px",
+            ^.fontSize := "medium",
+            if (P.root.item.isInstanceOf[Elem]) {
+              Seq(
+                <.div(
+                  ^.fontStyle.oblique,
+                  ^.className := "col",
+                  ^.height := "100%",
+                  ^.width := "30%",
+                  ^.top := "0px",
+                  ^.bottom := "0px",
+                  ^.position := "absolute",
+                  ^.left := "0%",
+                  ^.paddingTop := "3%",
+                  ^.paddingLeft := "3%",
+                  ^.fontSize := { if(P.root.entityToString.length > 12) "small" else "medium" },
+                  P.root.entityToString
+
+                ),
+                <.div(
+                  ^.width := "0px",
+                  ^.height := "100%",
+                  ^.float.left,
+                  ^.border := "1px inset",
+                  ^.left := "30%",
+                  ^.position := "absolute",
+                  ^.top := "0px",
+                  ^.bottom := "0px",
+                  ^.opacity := "0.5"
+                ),
+                <.div(
+                  ^.className := "col",
+                  ^.height := "100%",
+                  ^.width := "70%",
+                  ^.top := "0px",
+                  ^.bottom := "0px",
+                  ^.paddingTop := { if(P.root.contentToString.length < 38) "3%" else "1%" },
+                  ^.paddingLeft := "3%",
+                  ^.position := "absolute",
+                  ^.left := "30%",
+                  ^.overflow.hidden,
+                  ^.textAlign.justify,
+                  ^.wordWrap.`break-word`,
+                  ^.fontSize.small,
+                  setContentDivSize(P.root.contentToString)
+                )
+              )
+
+            } else{
+              
+              <.div(
+                ^.className := "col",
+                ^.height := "100%",
+                ^.width := "40%",
+                ^.top := "0px",
+                ^.bottom := "0px",
+                ^.position := "absolute",
+                ^.left := "0%",
+                ^.paddingTop := "3%",
+                ^.paddingLeft := "3%",
+                <.span(
+                  P.root.entityToString
+                )
+              )
+            }
+
+//            <.span(
+//              if (P.root.item.isInstanceOf[Elem]) P.root.entityToString + " - " + P.root.contentToString else P.root.entityToString
+//            )
           ),
           <.button(
             Styles.bootStrapRemoveButton,
@@ -363,10 +504,10 @@ object ReactTreeView {
         ),
         <.ul(P.style.treeGroup)(
           S.children.map(child =>
-            (ifFilterTextExist(P.filterText, child) || ifFilterTextExist(P.filterText, P.root)) ?=
+            (matchesFilterText(P.filterText, child) || matchesFilterText(P.filterText, P.root)) ?=
               TreeNode.withKey(s"$parent/${child.uuid}")(P.copy(
                 root = child,
-                open = true, //!P.filterText.trim.isEmpty,
+                open = P.open, //!P.filterText.trim.isEmpty,
                 depth = depth,
                 parent = parent,
                 filterText = P.filterText
@@ -421,7 +562,7 @@ object ReactTreeView {
                   )
 
   def apply(root: TreeItem,
-            openByDefault: Boolean = false,
+            openByDefault: Boolean = true,
             onItemSelect: js.UndefOr[(String, String, Int) => Callback] = js.undefined,
             showSearchBox: Boolean = false,
             ref: js.UndefOr[String] = js.undefined,

@@ -16,11 +16,11 @@ import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
 
-import scala.scalajs.js.Dynamic.global
 
 @JSExport
 object webApp extends js.JSApp {
 
+  //Måste ändras till hostname
   val url = "ws://127.0.0.1:9000/socket"
 
   val elems = List(Item(), Label(), Meta(), Section(),Term(), Actor(), App(), Component(), Module(), Product(), Release(), Resource(),
@@ -39,13 +39,10 @@ object webApp extends js.JSApp {
       copy(logLines = logLines :+ line)
   }
 
-
-
-
-
   def dragStart(elem: Elem)(event: ReactDragEvent): Callback = {
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("existing", "false")
+    elem.setUUID()
     elem match {
       case entity: Entity =>
         event.dataTransfer.setData("type", "entity")
@@ -89,10 +86,12 @@ object webApp extends js.JSApp {
     .render($ => <.ul(
       $.props.toString.takeWhile(_!='('),
       Styles.listElem,
+      ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
       ^.id := $.props.toString,
       ^.classID := $.props.toString,
       ^.background := (if ($.props.isEntity) "#CEDBE7" else "#CFEADD"),
       ^.padding := 5.px,
+      ^.borderRadius := "5px",
       ^.draggable := "true",
       ^.onDragStart ==> dragStart($.props)
     ))
@@ -101,9 +100,10 @@ object webApp extends js.JSApp {
 
   val entityListView = ReactComponentB[List[Elem]]("entityList")
     .render(elems => <.pre(
+      ^.className := "form-control",
       ^.id := "dragList",
-      ^.height := "80%",
-      ^.border := "1px solid #ccc",
+      ^.height := "89%",
+      ^.marginTop := "5px",
       ^.overflow := "auto",
       elems.props.sortWith((a,b) => a.toString < b.toString).map(listElem(_))
     ))
@@ -133,17 +133,12 @@ object webApp extends js.JSApp {
 
   val buttonComponent = ReactComponentB[(String, Props)]("buttonComponent")
     .render($ =>
-      <.button(
-        ^.padding := "10px",
-        $.props._1,
-        ^.onClick --> {
-          $.props._1 match {
-            case "Templates" => $.props._2.proxy.dispatchCB(SetTemplate)
-            case _ => Callback(global.prompt($.props._1))
-          }
-        },
-        Styles.navBarButton
-      )).build
+      $.props._1 match {
+        case "Templates" => TemplateSelect($.props._2.proxy.dispatchCB)
+        case _ => <.button(
+          $.props._1,
+          Styles.navBarButton)
+      }).build
 
 
   val navigationBar = ReactComponentB[(Seq[String], Props)]("navigationBar")
@@ -158,14 +153,11 @@ object webApp extends js.JSApp {
 
   class Backend($: BackendScope[Props, State]) {
 
-
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
 
     def openModalWithContent(newContent: Seq[TagMod], newDispatch: (Action => Callback), newAction: (String => Action)): Callback = $.modState(_.copy(modalContent = newContent, isModalOpen = true, dispatch = newDispatch, action = newAction))
 
     def render(props: Props, state: State) = {
-
-      val dispatch: Action => Callback = props.proxy.dispatchCB
       val sc = AppCircuit.connect(_.tree)
 
       // Can only send if WebSocket is connected and user has entered text
@@ -173,10 +165,15 @@ object webApp extends js.JSApp {
         for (websocket <- state.websocket if state.message.nonEmpty)
           yield sendMessage(websocket, state.message)
 
-
       val sendVerify: Option[Callback] =
         for (websocket <- state.websocket if props.proxy.value.toString.nonEmpty)
           yield sendMessage(websocket, props.proxy.value.toString)
+
+      def sendGetTemplate(templateNbr: Int): Option[Callback] =
+        for (websocket <- state.websocket if state.message.nonEmpty)
+          yield sendMessage(websocket, "Template" + templateNbr)
+
+
 
       def handleKeyDown(event: ReactKeyboardEventI): Option[Callback] = {
         if (event.nativeEvent.keyCode == KeyCode.Enter)
@@ -190,38 +187,44 @@ object webApp extends js.JSApp {
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
-        //        ^.paddingLeft := "15px",
+        //^.paddingLeft := "0px",
+        //^.paddingRight := "0px",
+        ^.paddingTop := "25px",
+        ^.overflow := "hidden",
         <.div(
           ^.className := "col-1",
           ^.float := "left",
-          ^.width := "20%",
+          ^.width := "29%",
           ^.height := "100%",
+          ^.paddingRight := "9px",
           entityComponent(state.elems),
           //          searchView(state.content)
           <.pre(
             ^.height := "49%",
+            ^.overflow.hidden,
             <.div(
               <.input(
+                ^.className := "form-control",
+                ^.marginBottom := "5px",
                 ^.onChange ==> onChange,
                 ^.value := state.message,
                 ^.onKeyDown ==>? handleKeyDown
               ),
               <.button(
+                ^.className := "btn btn-default",
                 ^.disabled := send.isEmpty, // Disable button if unable to send
                 ^.onClick -->? send, // --> suffixed by ? because it's for Option[Callback]
                 "Send"),
               <.button(
+                ^.disabled := sendVerify.isEmpty,
+                ^.className := "btn btn-default",
                 "Verify Model",
                 ^.onClick -->? sendVerify
               )),
-            <.h4("Connection log"),
             log(state.logLines)// Display log
           )
         ),
-        <.div(
-          ^.height := "100%",
-          sc(proxy => treeView((proxy, openModalWithContent)))
-        )
+        sc(proxy => treeView((proxy, openModalWithContent)))
       )
     }
 
@@ -232,6 +235,7 @@ object webApp extends js.JSApp {
           Styles.dragList,
           <.form(
             <.input.text(
+              ^.className := "form-control",
               ^.placeholder := "Search..",
               ^.onChange ==> onTextChange
             )
@@ -244,15 +248,17 @@ object webApp extends js.JSApp {
     val log = ReactComponentB[Vector[String]]("log")
       .render($ =>
         <.pre(
-          ^.width := 360.px,
-          ^.height := 200.px,
-          ^.border := "1px solid",
+          ^.className := "form-control",
+          ^.width := "auto",
+          ^.height := "80%",
+          ^.marginTop := "5px",
+//          ^.border := "1px solid",
           ^.overflow := "auto",
           $.props.map(<.p(_)))
       )
       .build
 
-    def onTextChange(event: ReactEventI) =
+    def onTextChange(event: ReactEventI): Callback =
       event.extract(_.target.value.toLowerCase) {
         case "entity" | "entities" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
         case "attribute" | "attributes"=> $.modState(_.copy(elems = elems.filter(_.isAttribute)))
@@ -294,8 +300,7 @@ object webApp extends js.JSApp {
         }
 
         def onmessage(event: MessageEvent): Unit = {
-          // Echo message received
-          direct.modState(_.log(s" ${event.data.toString}"))
+          direct.modState(_.log(s" ${event.data.toString}1"))
         }
 
         def onerror(event: ErrorEvent): Unit = {

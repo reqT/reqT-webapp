@@ -14,11 +14,16 @@ object RelationSelect {
   def selectStyle = Seq(
     ^.className := "form-control pull-right",
     ^.position := "absolute",
-    ^.width := "100px",
+    ^.width := "155px",
+    ^.color := "black",
     ^.top := "0%",
     ^.height := "100%",
-    ^.left := "65%",
-    ^.background := "#FFC2C2"
+    ^.left := "100%",
+    ^.borderBottomLeftRadius := "0px",
+    ^.borderTopLeftRadius := "0px",
+    ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
+    ^.background := "#FFC2C2",
+    ^.border := "0px"
   )
 
   case class Props(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action)
@@ -29,9 +34,6 @@ object RelationSelect {
 
   def onChange(props: Props)(e: ReactEventI): Callback ={
     e.preventDefault()
-
-    var link = "example." ++ props.value
-//    println(fromString(e.target.value))
     props.dispatch(props.updateRel(fromString(e.target.value)))
   }
 
@@ -63,8 +65,8 @@ object RelationSelect {
 
   }
 
-  val component = ReactComponentB[Props]("Modal")
-    .stateless //initialState(State(isOpen = false))
+  val component = ReactComponentB[Props]("RelationSelect")
+    .stateless
     .renderBackend[Backend]
     .build
 

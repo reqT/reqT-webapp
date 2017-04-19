@@ -1,8 +1,5 @@
 package example
 
-
-import chandu0101.scalajs.react.components.{DefaultSelect, ReactListView, ReactTable}
-
 import scalacss.Defaults._
 import scalacss.internal.mutable.GlobalRegistry
 
@@ -18,21 +15,16 @@ object Styles extends StyleSheet.Inline {
     overflow.auto,
     width(100.%%),
     height(49.%%)
-//    float.left
-
   )
 
   val dragList = style(
-    overflow.auto,
+    overflow.hidden,
     width(100.%%),
     height(50.%%)
-//    float.left
-
-
   )
   val treeView = style(
     overflow.auto,
-    width(80.%%),
+    width(71.%%),
     height(100.%%),
     float.left
   )
@@ -50,21 +42,25 @@ object Styles extends StyleSheet.Inline {
 
   )
   val navBarButton = style(
-    addClassName("btn btn-default navbar-btn")
+    addClassName("btn btn-default navbar-btn"),
+    margin(5.px),
+    padding(10.px)
   )
 
   val navBarDropdown = style(
-    addClassName("btn btn-default dropdown-toggle")
-
+    addClassName("btn btn-default dropdown-toggle"),
+    padding(10.px)
   )
 
   val bootStrapRemoveButton = style(
     addClassName("btn glyphicon glyphicon-remove pull-right"),
+//    borderBottomRightRadius(0.px),
+//    borderTopRightRadius(0.px),
     position.absolute,
     width(40.px),
-    height(48.px),
-//    height(100.%%),
-    left(90.%%)
+    height(100.%%),
+    top(0.px),
+    left(92.%%)
   )
 
   val bootStrapContentButton = style(
@@ -89,6 +85,11 @@ object Styles extends StyleSheet.Inline {
     border(1.px),
     border.solid
   )
+
+  /**
+    * Dropdown
+    */
+
 
   /**
     * Styles not in use yet, not validated

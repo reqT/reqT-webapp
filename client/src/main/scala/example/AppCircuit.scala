@@ -15,13 +15,12 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
       val currentElem = path.head
       val index = modelRW.value.children.indexWhere(retrieveEntity(_).uuid.toString == currentElem)
       val elemFound = retrieveEntity(modelRW.value.children(index))
-
       if (elemFound.hasRelation) {
         val elemRW = modelRW.zoomRW(_.children.apply(index))((tree, newElem)
-          => tree.copy(children = (tree.children.take(index) :+ newElem) ++ tree.children.drop(index + 1)))
+        => tree.copy(children = (tree.children.take(index) :+ newElem) ++ tree.children.drop(index + 1)))
 
         zoomToChildren(elemRW.zoomRW(_.asInstanceOf[Relation].submodel)((relation, newSubmodel)
-          => relation.asInstanceOf[Relation].copy(submodel = newSubmodel)), path.tail)
+        => relation.asInstanceOf[Relation].copy(submodel = newSubmodel)), path.tail)
 
       } else if (elemFound.isEntity) {
         zoomToChildren(modelRW, path.tail)
@@ -32,7 +31,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
   }
 
   def zoomToRelation(modelRW: ModelRW[Model, Tree], path: Seq[String]): Option[ModelRW[Model, Elem]] = {
-      println(path.head)
       val index = modelRW.value.children.indexWhere(retrieveEntity(_).uuid.toString == path.head)
       val elemFound = retrieveEntity(modelRW.value.children(index))
 
@@ -59,10 +57,9 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
   class TreeHandler[M](modelRW: ModelRW[Model, Tree]) extends ActionHandler(modelRW) {
     override def handle = {
-      case Reset => updated(Tree(Seq()))
+      //case Reset => updated(Tree(Seq()))
 
       case AddElem(path: Seq[String], newElem: Elem, relationType: RelationType) =>
-        println(path)
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) =>
             modelRW.value.find(_.uuid.toString == path.last) match {
@@ -72,12 +69,40 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
               case None => updated(modelRW.updated(modelRW.value :+ newElem).tree)
             }
-          case None => {
+          case None =>
             noChange
-          }
         }
 
+      case RemoveEmptyRelation(path: Seq[String]) => {
+        if(path.size == 2) {
+            updated(Tree(modelRW.value.children collect {
+              case relation: Relation =>
+                if (retrieveEntity(relation).uuid.toString == path.last && relation.submodel.children.isEmpty)
+                  retrieveEntity(relation).getWithRelation(false)
+                else relation
+              case elem: Elem => elem
+            }))
+
+        } else if (path.size > 2) {
+          zoomToChildren(modelRW, path.tail.init) match {
+            case Some(rw) =>
+              updated(rw.updated(rw.value collect {
+                case relation: Relation =>
+                  if (retrieveEntity(relation).uuid.toString == path.last && relation.submodel.children.isEmpty)
+                    retrieveEntity(relation).getWithRelation(false)
+                  else relation
+                case elem: Elem => elem
+              }).tree)
+
+            case None => noChange
+          }
+        } else {
+          noChange
+        }
+      }
+
       case RemoveElem(path: Seq[String]) =>
+        println(path)
         if (path.isEmpty)
           noChange
         else if (path.size == 1)
@@ -93,12 +118,12 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         }
 
       case MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) =>
-          var element: Elem = Req("")
+          var element: Elem = Req()
           val elemToRemove = oldPath.last
 
           zoomToChildren(modelRW, oldPath.init.tail) match {
             case Some(modelRW) =>
-              element = modelRW.value.find(retrieveEntity(_).uuid.toString == elemToRemove).getOrElse(Req(""))
+              element = modelRW.value.find(retrieveEntity(_).uuid.toString == elemToRemove).get
             case None => noChange
           }
 
@@ -116,6 +141,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
             case None => noChange
           }
 
+
       case SetTemplate =>
         val model = Tree(Seq(
           Relation(Goal("accuracy"), has, Tree(Seq(Spec("Our pre-calculations shall hit within 5%")))),
@@ -123,6 +149,12 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
           Relation(Function("experienceData"), has, Tree(Seq(Spec("Product shall have recording and retrieval functions for experience data")))),
           Relation(Design("screenX"), has, Tree(Seq(Spec("System shall have screen pictures as shown in Fig. X"))))
         ))
+        updated(model)
+
+      case SetTemplate1 =>
+        val model = Tree(Seq(Req("R1"), Req("R2"), Stakeholder("BOSS"),
+          Relation(Req("R3"), has, Tree(Seq(Relation(Req("R3.1"), has, Tree(Seq(Prio(1))))))), Relation(Req("R4"), has, Tree(Seq(Prio(2))))))
+
         updated(model)
 
 
