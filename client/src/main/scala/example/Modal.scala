@@ -19,7 +19,7 @@ object Modal {
 
   case class State(input: String)
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String])
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String], elemToAdd: Option[Elem])
 
   def modalStyle = Seq(
     ^.padding := "5px",
@@ -123,7 +123,7 @@ object Modal {
       <.dd(
         P.treeItem.contentToString
       ),
-      <.hr,
+      P.treeItem.children.nonEmpty ?= <.hr,
       <.dt(
         ^.textAlign := "center",
         ^.color := "#FF3636",
@@ -132,7 +132,7 @@ object Modal {
       <.dd(
 
       ),
-      <.hr,
+      P.treeItem.children.nonEmpty ?= <.hr,
       P.treeItem.children.map(x => {
         Seq(
           <.dt(
@@ -156,7 +156,7 @@ object Modal {
       ^.display.flex,
       ^.justifyContent.center,
       <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> P.onClose),
-      <.button("Ok", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> onAddEntity(P))
+      <.button("Add", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> onAddEntity(P))
     )
   )
 
@@ -257,7 +257,7 @@ object Modal {
       <.dd(
         P.treeItem.contentToString
       ),
-      <.hr,
+      P.treeItem.children.nonEmpty ?= <.hr,
       <.dt(
         ^.textAlign := "center",
         ^.color := "#FF3636",
@@ -266,8 +266,8 @@ object Modal {
       <.dl(
 
       ),
-      <.br,
-      <.hr,
+      P.treeItem.children.nonEmpty ?= <.br,
+      P.treeItem.children.nonEmpty ?= <.hr,
       P.treeItem.children.map(x => {
         Seq(
           <.dt(
@@ -280,7 +280,7 @@ object Modal {
           )
         )
       }),
-      <.br
+      P.treeItem.children.nonEmpty ?= <.br
     ),
     <.div(
       ^.padding := "5px",
@@ -300,7 +300,7 @@ object Modal {
   }
 
   def onAddEntity(P: Props)(event: ReactEvent): Callback = {
-    P.dispatch(AddElem(P.path, Req(), has)) >> P.onClose(event)
+    P.dispatch(NoAction) >> P.onClose(event)
   }
 
   //TODO
@@ -333,18 +333,6 @@ object Modal {
             <.div(
               modalStyle,
               getModalStyle(P, rerender)
-//              <.input(
-//                ^.className := "form-control",
-//                ^.placeholder := "Name..",
-//                ^.position.absolute,
-//                ^.bottom := 0,
-//                ^.width := "95%",
-//                ^.marginBottom := "10px",
-//                ^.marginLeft := "5px",
-//                ^.marginRight := "5px",
-//                ^.autoFocus := true,
-//                ^.onChange ==> onChange
-//              )
             ),
             <.div(
                 backdropStyle,
@@ -400,6 +388,6 @@ object Modal {
 
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String] )
-      = component.set()(Props(isOpen, onClose, modalType, treeItem, dispatch,  path ))
+  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String], elemToAdd: Option[Elem])
+      = component.set()(Props(isOpen, onClose, modalType, treeItem, dispatch, path, elemToAdd))
 }
