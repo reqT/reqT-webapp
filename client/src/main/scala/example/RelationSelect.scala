@@ -12,21 +12,20 @@ import diode.Action
 
 object RelationSelect {
 
-  def selectStyle = Seq(
+  def selectStyle(P: Props) = Seq(
     ^.className := "form-control pull-right",
     ^.width := "155px",
-    ^.height := "100%",
-    ^.color := "black",
-    ^.borderBottomLeftRadius := "0px",
-    ^.borderTopLeftRadius := "0px",
+    ^.height := {if(P.isModelValue) "100%" else ""},
+    ^.color := {if(P.isModelValue) "black" else "#FF3636"},
+    ^.borderBottomLeftRadius := {if(P.isModelValue) "0px" else "5px"},
+    ^.borderTopLeftRadius := {if(P.isModelValue) "0px" else "5px"},
     ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
-    ^.background := "#FFC2C2",
-    ^.border := "0px",
+    ^.background := {if(P.isModelValue) "#FFC2C2" else "white"},
     ^.textAlign.center,
     ^.textAlignLast.center
   )
 
-  case class Props(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action, isModelValue: Boolean)
+  case class Props(value: String, dispatch: Action => Callback, updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback])
 
   case class State(value: String)
 
@@ -41,7 +40,7 @@ object RelationSelect {
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
       <.select(
-        selectStyle,
+        selectStyle(P),
         ^.value := { if(S.value.isEmpty) P.value else S.value },
         ^.onChange ==> onChange(P, S)
       )(
@@ -51,10 +50,15 @@ object RelationSelect {
 
     def onChange(P: Props, S: State)(e: ReactEventI): Callback = {
       e.preventDefault()
+
+
       if(P.isModelValue)
-        P.dispatch(P.updateRel(fromString(e.target.value)))
+        P.dispatch(P.updateRel.get(fromString(e.target.value)))
       else
-        $.setState(s = S.copy(value = e.target.value))
+        P.setNewRelation match {
+          case Some(setRelation) => setRelation(fromString(e.target.value)) >> $.setState(s = S.copy(value = e.target.value))
+          case None => Callback(println("Set to unknown relation type"))
+        }
     }
 
 
@@ -68,6 +72,7 @@ object RelationSelect {
 
 
 
-  def apply(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action, isModelValue: Boolean) = component.set()(Props(value, dispatch, updateRel, isModelValue))
+  def apply(value: String, dispatch: Action => Callback, updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback])
+  = component.set()(Props(value, dispatch, updateRel, isModelValue, setNewRelation))
 
 }

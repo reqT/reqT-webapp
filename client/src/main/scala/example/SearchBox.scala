@@ -1,7 +1,7 @@
 package example
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 
 import scala.scalajs.js
 import scalacss.Defaults._
@@ -33,9 +33,15 @@ object ReactSearchBox {
       e.preventDefaultCB >> P.onTextChange(e.target.value)
 
     def render(P: Props) =
-      <.div(P.style.searchBox)(
-        <.input(P.style.input, ^.width := "20%", ^.placeholder := "Search ..", ^.onKeyUp ==> onTextChange(P))
-      )
+        <.div(P.style.searchBox)(
+          <.input(
+            P.style.input,
+            ^.width := "20%",
+            ^.maxWidth := "200px",
+            ^.placeholder :=  "Search",
+            ^.onKeyUp ==> onTextChange(P)
+          )
+        )
   }
 
   object DefaultStyle extends Style
