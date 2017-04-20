@@ -217,18 +217,11 @@ object ReactTreeView {
         case "intAttr" => read[IntAttribute](event.dataTransfer.getData("elem"))
       }
 
-      def getAction(elem: Elem): (String => Action) = elem match {
-        case entity: Entity => s: String => AddElem(pathTo, entity.setID(s), has)
-        case intAttr: IntAttribute => s: String => AddElem(pathTo, intAttr.setValue(s.toInt), has)
-        case stringAttr: StringAttribute => s: String => AddElem(pathTo, stringAttr.setValue(s), has)
-        case default => _: String => NoAction
-      }
-
-      if (event.dataTransfer.getData("existing") == "false"){
+      if (event.dataTransfer.getData("existing") == "false" && !isAttribute){
          getElem(event) match {
-          case entity: Entity => P.setModalContent(Modal.ADD_ENTITY_MODAL, P.root, dispatch, pathTo, None)
-          case intAttr: IntAttribute => P.setModalContent(Modal.ADD_INTATTR_MODAL, P.root, dispatch, pathTo, None)
-          case stringAttr: StringAttribute => P.setModalContent(Modal.ADD_STRINGATTR_MODAL, P.root, dispatch, pathTo, None)
+          case entity: Entity => P.setModalContent(Modal.ADD_ENTITY_MODAL, P.root, dispatch, pathTo, Some(entity))
+          case intAttr: IntAttribute => P.setModalContent(Modal.ADD_ENTITY_MODAL, P.root, dispatch, pathTo, Some(intAttr))
+          case stringAttr: StringAttribute => P.setModalContent(Modal.ADD_ENTITY_MODAL, P.root, dispatch, pathTo, Some(stringAttr))
         }
 
       }else if (isAttribute || pathFrom.diff(pathTo).isEmpty)

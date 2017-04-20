@@ -237,7 +237,7 @@ object webApp extends js.JSApp {
           <.form(
             <.input.text(
               ^.className := "form-control",
-              ^.placeholder := "Search..",
+              ^.placeholder := "Search",
               ^.onChange ==> onTextChange
             )
           ),
