@@ -460,7 +460,7 @@ object ReactTreeView {
                 ^.height := "100%",
                 ^.left := "100%",
 
-                RelationSelect(relation, dispatch, updateRel, None)
+                RelationSelect(relation, dispatch, updateRel)
               )
             case None =>
               <.div()

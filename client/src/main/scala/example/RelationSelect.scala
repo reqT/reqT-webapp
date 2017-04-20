@@ -14,7 +14,6 @@ object RelationSelect {
 
   def selectStyle = Seq(
     ^.className := "form-control pull-right",
-//    ^.position := "inherit",
     ^.width := "155px",
     ^.height := "100%",
     ^.color := "black",
@@ -25,7 +24,7 @@ object RelationSelect {
     ^.border := "0px"
   )
 
-  case class Props(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action, rerender: Option[() => Callback])
+  case class Props(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action, isModelValue: Boolean)
 
   case class State(value: String)
 
@@ -61,10 +60,8 @@ object RelationSelect {
 
     def onChange(props: Props, state: State)(e: ReactEventI): Callback = {
       e.preventDefault()
-      props.rerender match {
-        case Some(rerend) => props.dispatch(props.updateRel(fromString(e.target.value))) >> rerend()
-        case None => props.dispatch(props.updateRel(fromString(e.target.value)))
-      }
+      props.dispatch(props.updateRel(fromString(e.target.value)))
+
 
     }
 
@@ -79,6 +76,6 @@ object RelationSelect {
 
 
 
-  def apply(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action, rerender: Option[() => Callback]) = component.set()(Props(value, dispatch, updateRel, rerender))
+  def apply(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action, isModelValue: Boolean) = component.set()(Props(value, dispatch, updateRel, isModelValue))
 
 }

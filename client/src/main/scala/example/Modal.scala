@@ -49,7 +49,7 @@ object Modal {
   )
 
 
-  def editModalStyle(P: Props, rerender: () => Callback) = Seq(
+  def editModalStyle(P: Props) = Seq(
     ^.width:= "400px",
     <.h4(
       "Edit element",
@@ -78,7 +78,7 @@ object Modal {
         ^.textAlign := "center",
         ^.color := "#FF3636",
         ^.position.relative,
-        RelationSelect(P.treeItem.linkToString,P.dispatch, UpdateRelation(P.path, P.treeItem.item.asInstanceOf[Entity].id, _: Option[RelationType]), Some(rerender))
+        RelationSelect(P.treeItem.linkToString,P.dispatch, UpdateRelation(P.path, P.treeItem.item.asInstanceOf[Entity].id, _: Option[RelationType]))
       ),
       <.dd(
 
@@ -313,9 +313,9 @@ object Modal {
     P.dispatch(NoAction)
   }
 
-  def getModalStyle(P: Props, rerender: () => Callback) : Seq[TagMod] = {
+  def getModalStyle(P: Props) : Seq[TagMod] = {
     P.modalType match{
-      case EDIT_MODAL => editModalStyle(P, rerender)
+      case EDIT_MODAL => editModalStyle(P)
       case ADD_ENTITY_MODAL => addEntityModalStyle(P)
       case ADD_STRINGATTR_MODAL => addStringAttrModalStyle(P)
       case ADD_INTATTR_MODAL => addIntAttrModalStyle(P)
@@ -332,7 +332,7 @@ object Modal {
           ^.onKeyDown ==> handleKeyDown(P,S),
             <.div(
               modalStyle,
-              getModalStyle(P, rerender)
+              getModalStyle(P)
 //              <.input(
 //                ^.className := "form-control",
 //                ^.placeholder := "Name..",
@@ -382,11 +382,6 @@ object Modal {
       }
       else
         Callback()
-    }
-
-    def rerender() = {
-      println("Hej")
-      $.setState(s = State(""))
     }
 
 
