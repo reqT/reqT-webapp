@@ -21,12 +21,17 @@ object RelationSelect {
     ^.borderTopLeftRadius := "0px",
     ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
     ^.background := "#FFC2C2",
-    ^.border := "0px"
+    ^.border := "0px",
+    ^.textAlign.center,
+    ^.textAlignLast.center
   )
 
   case class Props(value: String, dispatch: Action => Callback, updateRel: Option[RelationType] => Action, isModelValue: Boolean)
 
   case class State(value: String)
+
+  val relationList = List("binds", "deprecates", "excludes", "has", "helps", "hurts", "impacts", "implements", "interactsWith", "is",
+  "precedes", "requires", "relatesTo", "superOf", "verifies")
 
   def fromString(value: String): Option[RelationType] = {
     Vector(binds, deprecates, excludes, has, helps, hurts, impacts, implements, interactsWith, is, precedes, requires, relatesTo, superOf, verifies).find(_.toString == value)
@@ -37,32 +42,19 @@ object RelationSelect {
     def render(P: Props, S: State) =
       <.select(
         selectStyle,
-        ^.value := P.value,
+        ^.value := { if(S.value.isEmpty) P.value else S.value },
         ^.onChange ==> onChange(P, S)
       )(
-        <.option("binds"),
-        <.option("deprecates"),
-        <.option("excludes"),
-        <.option("has"),
-        <.option("helps"),
-        <.option("hurts"),
-        <.option("impacts"),
-        <.option("implements"),
-        <.option("interactsWith"),
-        <.option("is"),
-        <.option("precedes"),
-        <.option("requires"),
-        <.option("relatesTo"),
-        <.option("superOf"),
-        <.option("verifies")
+        relationList.map(x => <.option(x))
       )
 
 
-    def onChange(props: Props, state: State)(e: ReactEventI): Callback = {
+    def onChange(P: Props, S: State)(e: ReactEventI): Callback = {
       e.preventDefault()
-      props.dispatch(props.updateRel(fromString(e.target.value)))
-
-
+      if(P.isModelValue)
+        P.dispatch(P.updateRel(fromString(e.target.value)))
+      else
+        $.setState(s = S.copy(value = e.target.value))
     }
 
 

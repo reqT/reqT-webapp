@@ -226,9 +226,9 @@ object ReactTreeView {
 
       if (event.dataTransfer.getData("existing") == "false"){
          getElem(event) match {
-          case entity: Entity => P.setModalContent(Modal.ADD_ENTITY_MODAL, P.root, dispatch, pathTo)
-          case intAttr: IntAttribute => P.setModalContent(Modal.ADD_INTATTR_MODAL, P.root, dispatch, pathTo)
-          case stringAttr: StringAttribute => P.setModalContent(Modal.ADD_STRINGATTR_MODAL, P.root, dispatch, pathTo)
+          case entity: Entity => P.setModalContent(Modal.ADD_ENTITY_MODAL, P.root, dispatch, pathTo, None)
+          case intAttr: IntAttribute => P.setModalContent(Modal.ADD_INTATTR_MODAL, P.root, dispatch, pathTo, None)
+          case stringAttr: StringAttribute => P.setModalContent(Modal.ADD_STRINGATTR_MODAL, P.root, dispatch, pathTo, None)
         }
 
       }else if (isAttribute || pathFrom.diff(pathTo).isEmpty)
@@ -253,15 +253,15 @@ object ReactTreeView {
       P.root.item match {
         case entity: Entity =>
           if (entity.hasRelation)
-            P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path)
+            P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
           else{
-            P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path)
+            P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
           }
         case _: IntAttribute =>
-          P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path)
+          P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
 
         case _: StringAttribute =>
-          P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path)
+          P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
 
         case Model => dispatch(NoAction)
       }
@@ -275,7 +275,7 @@ object ReactTreeView {
       val path = if (P.parent.isEmpty) P.root.uuid.toString else P.parent + "/" + P.root.uuid
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
 
-      P.setModalContent(Modal.DELETE_MODAL, P.root, dispatch, path.split("/"))
+      P.setModalContent(Modal.DELETE_MODAL, P.root, dispatch, path.split("/"), None)
     }
 
 
@@ -460,7 +460,7 @@ object ReactTreeView {
                 ^.height := "100%",
                 ^.left := "100%",
 
-                RelationSelect(relation, dispatch, updateRel)
+                RelationSelect(relation, dispatch, updateRel, isModelValue = true)
               )
             case None =>
               <.div()
@@ -495,7 +495,7 @@ object ReactTreeView {
                        style: Style,
                        filterMode: Boolean,
                        modelProxy: ModelProxy[Tree],
-                       setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String]  ) => Callback
+                       setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback
                       )
 
 
@@ -522,7 +522,7 @@ object ReactTreeView {
                    showSearchBox: Boolean,
                    style: Style,
                    modelProxy: ModelProxy[Tree],
-                   setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String] ) => Callback
+                   setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback
                   )
 
   def apply(root: TreeItem,
@@ -533,7 +533,7 @@ object ReactTreeView {
             key: js.UndefOr[js.Any] = js.undefined,
             style: Style = new Style {},
             modelProxy: ModelProxy[Tree],
-            setModalContent: (ModalType, TreeItem, (Action => Callback), Seq[String]) => Callback
+            setModalContent: (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback
            ) =
     component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, setModalContent))
 

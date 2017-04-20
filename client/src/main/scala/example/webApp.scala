@@ -34,7 +34,7 @@ object webApp extends js.JSApp {
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalType: ModalType, treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq()) {
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalType: ModalType, treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None) {
 
     def log(line: String): State =
       copy(logLines = logLines :+ line)
@@ -111,7 +111,7 @@ object webApp extends js.JSApp {
     .build
 
 
-  val treeView = ReactComponentB[(ModelProxy[Tree], (ModalType, TreeItem, (Action => Callback), Seq[String]) => Callback)]("treeView")
+  val treeView = ReactComponentB[(ModelProxy[Tree], (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback)]("treeView")
     .render(P => <.pre(
       Styles.treeView,
       ^.border := "1px solid #ccc",
@@ -156,7 +156,7 @@ object webApp extends js.JSApp {
 
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
 
-    def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String] ): Callback = $.modState(_.copy(modalType = modalType, treeItem = treeItem, isModalOpen = true, dispatch = newDispatch, path = newPath))
+    def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem] ): Callback = $.modState(_.copy(modalType = modalType, treeItem = treeItem, isModalOpen = true, dispatch = newDispatch, path = newPath, elemToModal = newElemToAdd))
 
     def render(props: Props, state: State) = {
       val sc = AppCircuit.connect(_.tree)
@@ -184,7 +184,7 @@ object webApp extends js.JSApp {
       }
 
       <.div(
-        Modal(isOpen = state.isModalOpen, onClose = closeModal, treeItem = state.treeItem, modalType = state.modalType, dispatch = state.dispatch, path = state.path),
+        Modal(isOpen = state.isModalOpen, onClose = closeModal, treeItem = state.treeItem, modalType = state.modalType, dispatch = state.dispatch, path = state.path, elemToAdd = state.elemToModal),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
