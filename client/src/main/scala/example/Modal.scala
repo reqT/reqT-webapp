@@ -68,6 +68,7 @@ object Modal {
       }else
         <.div()
 
+
     def resetInput: Callback = $.modState(_.copy(input = ""))
 
     def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetInput
@@ -78,7 +79,9 @@ object Modal {
         case entity: Entity => if(entity.hasRelation){
           P.dispatch(UpdateRelation(path = P.path, S.input ,S.newRelation)) >> onClose(P)(e)
         }else{
-          P.dispatch(UpdateEntity(path = P.path, S.input)) >> onClose(P)(e) >> onClose(P)(e)
+          println(S.input)
+          S.newEntity.get.setID(S.input)
+          P.dispatch(UpdateEntity(path = P.path, newEntity = S.newEntity.get)) >> onClose(P)(e)
         }
         case _: IntAttribute => P.dispatch(UpdateIntAttribute(path = P.path, S.input.replace(" ", "").toInt)) >> onClose(P)(e)
         case _: StringAttribute => P.dispatch(UpdateStringAttribute(path = P.path, S.input)) >> onClose(P)(e)
@@ -88,6 +91,14 @@ object Modal {
     def inputChanged(e : ReactEventI): Callback = {
       val newInput = e.target.value
       $.modState(_.copy(input = newInput))
+    }
+
+    def setInputValue(P: Props, S: State): String ={
+      if (S.input.isEmpty) {
+        $.modState(_.copy(input = P.treeItem.contentToString)).runNow()
+        P.treeItem.contentToString
+      }else
+      S.input
     }
 
     def getModalStyle(P: Props, S:State) : Seq[TagMod] = {
@@ -182,7 +193,10 @@ object Modal {
       )
     )
 
-    def setNewEntity(entity: Option[Entity]): Callback = $.modState(_.copy(newEntity = entity))
+    def setNewEntity(entity: Option[Entity]): Callback = {
+      println(entity.toString)
+      $.modState(_.copy(newEntity = entity))
+    }
 
     def setNewRelation(relationType: Option[RelationType]): Callback = {
       println(relationType.toString)
@@ -199,6 +213,7 @@ object Modal {
         <.br,
         ^.className := "dl-horizontal",
         <.dt(
+
           if(P.treeItem.isInstanceOf[Attribute[Any]]){
             <.div(
               ^.textAlign := "center",
@@ -214,7 +229,7 @@ object Modal {
             ^.className := "form-control",
             ^.width := "95%",
             ^.maxWidth := "95%",
-            ^.value := {if (S.input.isEmpty) P.treeItem.contentToString else S.input},
+            ^.value := setInputValue(P,S),
             ^.maxHeight := "200px",
             ^.border := "1px solid #CCC",
             ^.borderRadius := "5px",

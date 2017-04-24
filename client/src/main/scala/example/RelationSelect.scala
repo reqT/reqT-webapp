@@ -57,7 +57,7 @@ object RelationSelect {
       else
         P.setNewRelation match {
           case Some(setRelation) => setRelation(fromString(e.target.value)) >> $.setState(s = S.copy(value = e.target.value))
-          case None => Callback(println("Set to unknown relation type"))
+          case None => Callback(println("missing setNewRelation method"))
         }
     }
 

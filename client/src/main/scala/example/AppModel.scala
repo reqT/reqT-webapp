@@ -35,8 +35,12 @@ sealed trait Elem {
 
   var uuid: UUID
 
-  def setUUID() = {
+  def setRandomUUID() = {
     uuid = UUID.random()
+  }
+
+  def setUUID(newUUID: UUID) = {
+    uuid = newUUID
   }
 
   def getWithRelation(boolean: Boolean) : Elem= {
@@ -393,7 +397,7 @@ case class RemoveEmptyRelation(path: Seq[String]) extends Action
 
 case class MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) extends Action
 
-case class UpdateEntity(path: Seq[String], newId: String) extends  Action
+case class UpdateEntity(path: Seq[String], newEntity: Entity) extends Action
 
 case class UpdateStringAttribute(path: Seq[String], newValue: String) extends  Action
 

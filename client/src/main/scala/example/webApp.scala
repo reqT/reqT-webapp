@@ -43,7 +43,7 @@ object webApp extends js.JSApp {
   def dragStart(elem: Elem)(event: ReactDragEvent): Callback = {
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("existing", "false")
-    elem.setUUID()
+    elem.setRandomUUID()
     elem match {
       case entity: Entity =>
         event.dataTransfer.setData("type", "entity")

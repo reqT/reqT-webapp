@@ -56,8 +56,8 @@ object EntitySelect {
 
     def onChange(P: Props, S: State)(e: ReactEventI): Callback = {
       e.preventDefault()
-      P.setNewEntity(fromString(e.target.value))
-      $.setState(s = S.copy(value = e.target.value))
+      val newEntity = e.target.value
+      P.setNewEntity(fromString(newEntity)) >> $.setState(s = S.copy(value = newEntity))
     }
 
   }

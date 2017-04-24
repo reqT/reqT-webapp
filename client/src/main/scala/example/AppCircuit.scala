@@ -157,18 +157,17 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
         updated(model)
 
-
-      case UpdateEntity(path: Seq[String], newId: String) =>
+      case UpdateEntity(path:Seq[String], newEntity: Entity) =>
         val elemID = path.last
 
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) =>
-            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).uuid.toString == elemID)
-              elem.asInstanceOf[Entity].setID(newId) else elem)).tree)
-
-          case None => noChange
+            updated(modelRW.updated(modelRW.value.map(elem => if(retrieveEntity(elem).uuid.toString == elemID){
+              newEntity.setUUID(retrieveEntity(elem).uuid)
+              newEntity
+            }
+              else elem)).tree)
         }
-
 
       case UpdateIntAttribute(path: Seq[String], newValue: Int) =>
         val elemID = path.last
