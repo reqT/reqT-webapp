@@ -69,9 +69,9 @@ object Modal {
         <.div()
 
 
-    def resetInput: Callback = $.modState(_.copy(input = ""))
+    def resetStates: Callback = $.modState(_.copy(input = "", newEntity = None, newRelation = None))
 
-    def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetInput
+    def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetStates
 
     def onSave(P: Props, S: State)(e: ReactEvent): Callback = {
 
@@ -273,7 +273,7 @@ object Modal {
         ^.padding := "5px",
         ^.display.flex,
         ^.justifyContent.spaceBetween,
-        <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> P.onClose),
+        <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
         <.button("Save Changes", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> onSave(P, S))
       )
     )
