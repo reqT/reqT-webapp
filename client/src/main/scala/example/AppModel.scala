@@ -50,7 +50,7 @@ sealed trait Elem {
 }
 
 
-case class Relation(entity: Entity, var link: RelationType, submodel:Tree) extends Elem {
+case class Relation(var entity: Entity, var link: RelationType, submodel:Tree) extends Elem {
   isRelation = true
   entity.hasRelation = true
   var uuid : UUID = UUID.random()
@@ -65,6 +65,11 @@ case class Relation(entity: Entity, var link: RelationType, submodel:Tree) exten
 
   def setEntity(newEntityName: String): Relation = {
     entity.setID(newEntityName)
+    this
+  }
+
+  def setEntity(newEntity: Entity): Relation = {
+    entity = newEntity
     this
   }
 
@@ -404,6 +409,8 @@ case class UpdateStringAttribute(path: Seq[String], newValue: String) extends  A
 case class UpdateIntAttribute(path: Seq[String], newValue: Int) extends  Action
 
 case class UpdateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) extends  Action
+
+case class UpdateEntireRelation(path: Seq[String], newEntity: Entity, newRelationType: Option[RelationType]) extends Action
 
 case class SetTemplate(tree : Tree) extends  Action
 
