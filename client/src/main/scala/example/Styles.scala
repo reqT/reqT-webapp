@@ -82,8 +82,7 @@ object Styles extends StyleSheet.Inline {
     top(0.%%),
     height(100.%%),
     left(65.%%),
-    border(1.px),
-    border.solid
+    border(1.px)
   )
 
   /**

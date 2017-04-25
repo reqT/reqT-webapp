@@ -345,7 +345,8 @@ object Modal {
 
     def initStates(newProps: Props): Callback = {
       if(newProps.treeItem != null) {
-        val newInput = newProps.elemToAdd.getOrElse(newProps.treeItem.contentToString).toString
+
+        val newInput = if(newProps.elemToAdd.isEmpty) newProps.treeItem.contentToString else ""
 
         newProps.treeItem.item match {
           case entity: Entity =>
