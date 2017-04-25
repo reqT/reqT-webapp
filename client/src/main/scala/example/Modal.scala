@@ -199,7 +199,7 @@ object Modal {
         ^.display.flex,
         ^.justifyContent.spaceBetween,
         <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-        <.button("Add", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addElem(P, S))
+        <.button("Add", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.disabled := S.input.isEmpty, ^.onClick ==> addElem(P, S))
       )
     )
 
@@ -285,7 +285,7 @@ object Modal {
         ^.display.flex,
         ^.justifyContent.spaceBetween,
         <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-        <.button("Save Changes", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> onSave(P, S))
+        <.button("Save Changes", ^.className := "btn btn-success pull-right", ^.disabled := S.input.isEmpty, ^.bottom := "0px", ^.onClick ==> onSave(P, S))
       )
     )
 
