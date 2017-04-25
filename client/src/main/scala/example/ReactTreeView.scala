@@ -55,7 +55,7 @@ object ReactTreeView {
 
   def getRelationType(treeItem: TreeItem): Option[String] = {
     treeItem.item match {
-      case "Model()" => None
+      case "Model" => None
       case elem : Elem  => if (elem.hasRelation) Some(treeItem.linkToString) else None
     }
   }
@@ -196,7 +196,7 @@ object ReactTreeView {
             item => matches(item) || loop(item.children) || relationTypeMatches(item) || matchesType(item)
           )
 
-      (matches(data) || loop(data.children) || relationTypeMatches(data) || matchesType(data)) && (data.item != "Model()")
+      (matches(data) || loop(data.children) || relationTypeMatches(data) || matchesType(data)) && (data.item != "Model")
     }
 
     def onDrop(P: NodeProps)(event: ReactDragEvent): Callback = {
@@ -208,7 +208,7 @@ object ReactTreeView {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
       var isAttribute = false
 
-      if (P.root.item.toString != "Model()")
+      if (P.root.item.toString != "Model")
         isAttribute = P.root.item.asInstanceOf[Elem].isAttribute
 
       def getElem(event: ReactDragEvent): Elem = event.dataTransfer.getData("type") match {
