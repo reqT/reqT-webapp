@@ -239,10 +239,6 @@ object ReactTreeView {
       val path = (if (P.parent.isEmpty) P.root.uuid.toString
       else P.parent + "/" + P.root.uuid).split("/")
 
-      def updateIntAttr(s : String): Action = UpdateIntAttribute(path, s.toInt: Int)
-      val updateRel = UpdateRelation(path, P.root.item.asInstanceOf[Entity].id, _: Option[RelationType])
-
-
       P.root.item match {
         case entity: Entity =>
           if (entity.hasRelation)
