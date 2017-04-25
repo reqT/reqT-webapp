@@ -169,25 +169,32 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
               else elem)).tree)
         }
 
-      case UpdateIntAttribute(path: Seq[String], newValue: Int) =>
+
+      case UpdateIntAttribute(path: Seq[String], newIntAttribute: IntAttribute) =>
         val elemID = path.last
 
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) =>
-            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).uuid.toString == elemID)
-                elem.asInstanceOf[IntAttribute].setValue(newValue) else elem)).tree)
+            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).uuid.toString == elemID){
+              newIntAttribute.setUUID(retrieveEntity(elem).uuid)
+              newIntAttribute
+            }
+              else elem)).tree)
 
           case None => noChange
         }
 
 
-      case UpdateStringAttribute(path: Seq[String], newValue: String) =>
+      case UpdateStringAttribute(path: Seq[String], newStringAttribute: StringAttribute) =>
         val elemID = path.last
 
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) =>
-            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).uuid.toString == elemID)
-              elem.asInstanceOf[StringAttribute].setValue(newValue) else elem)).tree)
+            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).uuid.toString == elemID){
+              newStringAttribute.setUUID(retrieveEntity(elem).uuid)
+              newStringAttribute
+            }
+            else elem)).tree)
 
           case None => noChange
         }

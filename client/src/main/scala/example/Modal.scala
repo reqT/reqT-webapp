@@ -9,15 +9,11 @@ import japgolly.scalajs.react._
 
 object Modal {
 
-  sealed trait ModalType
+
   case object EMPTY_MODAL extends ModalType
   case object ADD_ELEM_MODAL extends ModalType
   case object EDIT_MODAL extends ModalType
   case object DELETE_MODAL extends ModalType
-
-  case class State(input: String, newEntity: Option[Entity], newRelation: Option[RelationType])
-
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String], elemToAdd: Option[Elem])
 
   def modalStyle = Seq(
     ^.padding := "5px",
@@ -47,9 +43,14 @@ object Modal {
     ^.opacity := "0.5"
   )
 
+  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String], elemToAdd: Option[Elem])
+      = component.set()(Props(isOpen, onClose, modalType, treeItem, dispatch, path, elemToAdd))
 
+  sealed trait ModalType
 
+  case class State(input: String, newEntity: Option[Entity], newRelation: Option[RelationType], newAttribute: Option[Attribute[Any]])
 
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String], elemToAdd: Option[Elem])
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S:State) =
@@ -62,31 +63,33 @@ object Modal {
             ),
             <.div(
                 backdropStyle,
-                ^.onClick ==> onClose(P, S)
+                ^.onClick ==> onClose(P)
             )
         )
       }else
         <.div()
 
+    def resetState: Callback = $.modState(_.copy(input = "", newEntity = None, newRelation = None, newAttribute = None))
 
-    def resetStates: Callback = $.modState(_.copy(input = "", newEntity = None, newRelation = None))
-
-    def onClose(P: Props, S: State)(e: ReactEvent): Callback = P.onClose(e) >> resetStates
+    def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetState
 
     def onSave(P: Props, S: State)(e: ReactEvent): Callback = {
       P.treeItem.item match {
         case entity: Entity => if(entity.hasRelation){
           S.newEntity.get.setID(S.input)
           S.newEntity.get.hasRelation = true
-          P.dispatch(UpdateEntireRelation(path = P.path, newEntity = S.newEntity.get, S.newRelation)) >> onClose(P, S)(e)
+          P.dispatch(UpdateEntireRelation(path = P.path, newEntity = S.newEntity.get, S.newRelation)) >> onClose(P)(e)
 //          P.dispatch(UpdateEntity(path = P.path, newEntity = S.newEntity.get)) >> P.dispatch(UpdateRelation(path = P.path, S.input, S.newRelation)) >> onClose(P)(e)
         }else{
           println(S.input)
           S.newEntity.get.setID(S.input)
-          P.dispatch(UpdateEntity(path = P.path, newEntity = S.newEntity.get)) >> onClose(P, S)(e)
+          P.dispatch(UpdateEntity(path = P.path, newEntity = S.newEntity.get)) >> onClose(P)(e)
         }
-        case _: IntAttribute => P.dispatch(UpdateIntAttribute(path = P.path, S.input.replace(" ", "").toInt)) >> onClose(P, S)(e)
-        case _: StringAttribute => P.dispatch(UpdateStringAttribute(path = P.path, S.input)) >> onClose(P, S)(e)
+
+        case _: IntAttribute =>
+           P.dispatch(UpdateIntAttribute(path = P.path, S.newAttribute.getOrElse(P.treeItem.item).asInstanceOf[IntAttribute].setValue(S.input.toInt))) >> onClose(P)(e)
+        case _: StringAttribute => P.dispatch(UpdateStringAttribute(path = P.path, S.newAttribute.getOrElse(P.treeItem.item).asInstanceOf[StringAttribute].setValue(S.input))) >> onClose(P)(e)
+
       }
     }
 
@@ -106,13 +109,13 @@ object Modal {
 
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
      if (e.nativeEvent.keyCode == KeyCode.Escape){
-        onClose(P, S)(e)
+        onClose(P)(e)
       }
       else
         Callback()
     }
 
-    def addElem(P: Props, S: State)(e: ReactEvent): Callback = P.dispatch(AddElem(P.path, prepareElem(S.input, P.elemToAdd), has)) >> onClose(P, S)(e)
+    def addElem(P: Props, S: State)(e: ReactEvent): Callback = P.dispatch(AddElem(P.path, prepareElem(S.input, P.elemToAdd), has)) >> onClose(P)(e)
 
     def prepareElem(newValue: String, elem: Option[Elem]): Elem = {
       elem.get match {
@@ -125,6 +128,8 @@ object Modal {
     def setNewEntity(entity: Option[Entity]): Callback = $.modState(_.copy(newEntity = entity))
 
     def setNewRelation(relationType: Option[RelationType]): Callback = $.modState(_.copy(newRelation = relationType))
+
+    def setNewAttribute(attribute: Option[Attribute[Any]]): Callback = $.modState(_.copy(newAttribute = attribute))
 
     def addElemModalStyle(P : Props, S: State) = Seq(
       ^.width:= "400px",
@@ -186,7 +191,7 @@ object Modal {
         ^.padding := "5px",
         ^.display.flex,
         ^.justifyContent.spaceBetween,
-        <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P, S)),
+        <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
         <.button("Add", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addElem(P, S))
       )
     )
@@ -201,31 +206,44 @@ object Modal {
         <.br,
         ^.className := "dl-horizontal",
         <.dt(
-
-          if(P.treeItem.isInstanceOf[Attribute[Any]]){
-            <.div(
+          P.treeItem.item match {
+            case intAttr: IntAttribute =>  <.div(
               ^.textAlign := "center",
               ^.color := "#03EE7D",
-              P.treeItem.entityToString
+              AttributeSelect(intAttr.toString.split('(').head, isIntAttr = true, setNewAttribute)
             )
-          } else {
-            EntitySelect(P.treeItem.entityToString, setNewEntity, isModelValue = false)
+            case stringAttr: StringAttribute => <.div(
+              ^.textAlign := "center",
+              ^.color := "#03EE7D",
+              AttributeSelect(stringAttr.toString.split('(').head, isIntAttr = false, setNewAttribute)
+            )
+            case _: Entity => EntitySelect(P.treeItem.entityToString, setNewEntity, isModelValue = false)
           }),
         <.dd(
-          <.textarea(
+          if(P.treeItem.item.isInstanceOf[IntAttribute]){
+            <.input(
+              ^.value := S.input,
+              ^.className := "form-control",
+              ^.width := "60%",
+              ^.borderRadius := "5px",
+              ^.autoFocus := "true",
+              ^.onChange ==> inputChanged
+            )
+          }else{
+            <.textarea(
             ^.rows := "1",
             ^.className := "form-control",
             ^.width := "95%",
             ^.maxWidth := "95%",
             ^.value := S.input,
+            ^.autoFocus := "true",
             ^.maxHeight := "200px",
             ^.border := "1px solid #CCC",
             ^.borderRadius := "5px",
             ^.onChange ==> inputChanged
-          )
+          )}
         ),
-
-        <.hr,
+        P.treeItem.children.nonEmpty ?= <.hr,
         <.dt(
           ^.textAlign := "center",
           ^.color := "#FF3636",
@@ -238,7 +256,7 @@ object Modal {
         ),
         <.dd(
         ),
-        <.hr,
+        P.treeItem.children.nonEmpty ?= <.hr,
         P.treeItem.children.map(x => {
           Seq(
             <.dt(
@@ -258,7 +276,7 @@ object Modal {
         ^.padding := "5px",
         ^.display.flex,
         ^.justifyContent.spaceBetween,
-        <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P, S)),
+        <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
         <.button("Save Changes", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> onSave(P, S))
       )
     )
@@ -309,7 +327,7 @@ object Modal {
         ^.padding := "5px",
         ^.display.flex,
         ^.justifyContent.spaceBetween,
-        <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick ==> onClose(P, S)),
+        <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick ==> onClose(P)),
         <.button("Delete", ^.className := "btn btn-danger", ^.bottom := "0px", ^.onClick ==> onDelete(P))
       )
     )
@@ -317,19 +335,24 @@ object Modal {
     def onDelete(P: Props)(event: ReactEvent): Callback = P.dispatch(RemoveElem(P.path)) >> P.dispatch(RemoveEmptyRelation(P.path.init)) >> P.onClose(event)
 
 
-    def initStates(newProps: Props): Callback =
-      $.modState(_.copy(input = newProps.treeItem.contentToString, newEntity = Some(newProps.treeItem.item.asInstanceOf[Entity]), newRelation = newProps.treeItem.link))
+    def initStates(newProps: Props): Callback = {
+      newProps.treeItem.item match {
+        case entity: Entity =>
+          $.modState(_.copy(input = newProps.treeItem.contentToString, newEntity = Some(entity), newRelation = newProps.treeItem.link, newAttribute = None))
+        case attribute: Attribute[Any] =>
+          $.modState(_.copy(input = newProps.treeItem.contentToString, newEntity = None, newRelation = newProps.treeItem.link, newAttribute = Some(attribute)))
+//        case stringAttr: StringAttribute =>
+//          $.modState(_.copy(input = newProps.treeItem.contentToString, newEntity = None, newRelation = newProps.treeItem.link, newAttribute = Some(stringAttr)))
+      }
+    }
   }
 
 
+
   val component = ReactComponentB[Props]("Modal")
-    .initialState(State(input = "", newEntity = None, newRelation = None))
+    .initialState(State(input = "", newEntity = None, newRelation = None, newAttribute = None))
     .renderBackend[Backend]
     .componentWillReceiveProps(i => i.$.backend.initStates(i.nextProps))
     .build
 
-
-
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String], elemToAdd: Option[Elem])
-      = component.set()(Props(isOpen, onClose, modalType, treeItem, dispatch, path, elemToAdd))
 }

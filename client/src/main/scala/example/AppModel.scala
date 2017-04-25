@@ -404,9 +404,9 @@ case class MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: Re
 
 case class UpdateEntity(path: Seq[String], newEntity: Entity) extends Action
 
-case class UpdateStringAttribute(path: Seq[String], newValue: String) extends  Action
+case class UpdateIntAttribute(path: Seq[String], newStringAttribute: IntAttribute) extends  Action
 
-case class UpdateIntAttribute(path: Seq[String], newValue: Int) extends  Action
+case class UpdateStringAttribute(path: Seq[String], newIntAttribute: StringAttribute) extends  Action
 
 case class UpdateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) extends  Action
 
