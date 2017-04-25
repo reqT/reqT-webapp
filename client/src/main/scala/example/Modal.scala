@@ -336,13 +336,19 @@ object Modal {
 
 
     def initStates(newProps: Props): Callback = {
-      newProps.treeItem.item match {
-        case entity: Entity =>
-          $.modState(_.copy(input = newProps.treeItem.contentToString, newEntity = Some(entity), newRelation = newProps.treeItem.link, newAttribute = None))
-        case attribute: Attribute[Any] =>
-          $.modState(_.copy(input = newProps.treeItem.contentToString, newEntity = None, newRelation = newProps.treeItem.link, newAttribute = Some(attribute)))
-//        case stringAttr: StringAttribute =>
-//          $.modState(_.copy(input = newProps.treeItem.contentToString, newEntity = None, newRelation = newProps.treeItem.link, newAttribute = Some(stringAttr)))
+      if(newProps.treeItem != null) {
+        val newInput = newProps.elemToAdd.getOrElse(newProps.treeItem.contentToString).toString
+
+        newProps.treeItem.item match {
+          case entity: Entity =>
+           $.modState(_.copy(input = newInput, newEntity = Some(entity), newRelation = newProps.treeItem.link, newAttribute = None))
+          case attribute: Attribute[Any] =>
+            $.modState(_.copy(input = newInput, newEntity = None, newRelation = newProps.treeItem.link, newAttribute = Some(attribute)))
+      }
+
+
+      } else {
+        Callback()
       }
     }
   }
