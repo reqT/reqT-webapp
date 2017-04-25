@@ -207,6 +207,13 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
           case None => noChange
         }
 
+      case UpdateEntireRelation(path: Seq[String], newEntity: Entity, newRelationType: Option[RelationType]) =>
+        zoomToRelation(modelRW, path.tail) match {
+          case Some(modelRW) => updated(modelRW.updated(modelRW.value.asInstanceOf[Relation].setLink(newRelationType.getOrElse(modelRW.value.asInstanceOf[Relation].link)).setEntity(newEntity)).tree)
+
+          case None => noChange
+        }
+
       case NoAction => noChange
     }
   }

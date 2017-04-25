@@ -69,16 +69,19 @@ object Modal {
         <.div()
 
 
-    def resetState: Callback = $.modState(_.copy(input = "", newEntity = None, newAttribute = None))
+
+    def resetState: Callback = $.modState(_.copy(input = "", newEntity = None, newRelation = None, newAttribute = None))
 
     def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetState
 
-    def onSave(P: Props, S: State)(e: ReactEvent): Callback = {
-      println(S.newAttribute)
 
+    def onSave(P: Props, S: State)(e: ReactEvent): Callback = {
       P.treeItem.item match {
         case entity: Entity => if(entity.hasRelation){
-          P.dispatch(UpdateRelation(path = P.path, S.input ,S.newRelation)) >> onClose(P)(e)
+          S.newEntity.get.setID(S.input)
+          S.newEntity.get.hasRelation = true
+          P.dispatch(UpdateEntireRelation(path = P.path, newEntity = S.newEntity.get, S.newRelation)) >> onClose(P)(e)
+//          P.dispatch(UpdateEntity(path = P.path, newEntity = S.newEntity.get)) >> P.dispatch(UpdateRelation(path = P.path, S.input, S.newRelation)) >> onClose(P)(e)
         }else{
           println(S.input)
           S.newEntity.get.setID(S.input)
