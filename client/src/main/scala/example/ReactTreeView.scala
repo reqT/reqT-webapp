@@ -252,7 +252,7 @@ object ReactTreeView {
         case _: StringAttribute =>
           P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
 
-        case Model => dispatch(NoAction)
+        case _ => dispatch(NoAction)
       }
     }
 
@@ -263,7 +263,8 @@ object ReactTreeView {
     def removeElem(P: NodeProps): Callback = {
       val path = if (P.parent.isEmpty) P.root.uuid.toString else P.parent + "/" + P.root.uuid
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
-
+      println("P.root: " + P.root)
+      println("path: " + path)
       P.setModalContent(Modal.DELETE_MODAL, P.root, dispatch, path.split("/"), None)
     }
 
