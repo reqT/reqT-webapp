@@ -366,10 +366,8 @@ object Modal {
     def onDelete(P: Props)(event: ReactEvent): Callback = {
       P.treeItem.item match {
         case _: String =>
-          println("Model")
           P.dispatch(RemoveElem(P.path)) >> P.onClose(event)
         case _ =>
-          println("Inte model")
           P.dispatch(RemoveElem(P.path)) >> P.dispatch(RemoveEmptyRelation(P.path.init)) >> P.onClose(event)
       }
 
