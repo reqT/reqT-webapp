@@ -128,7 +128,7 @@ sealed trait StringAttribute extends Attribute[String]{
   isStringAttribute = true
   var value:String
 
-  def setValue(newValue:String): StringAttribute = {
+  def setValue(newValue: String): StringAttribute = {
     value = newValue
     this
   }

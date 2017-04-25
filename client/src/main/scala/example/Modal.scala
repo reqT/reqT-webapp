@@ -98,6 +98,11 @@ object Modal {
       $.modState(_.copy(input = newInput))
     }
 
+    def intInputChanged(e : ReactEventI): Callback = {
+      val newInput = e.target.value
+      $.modState(_.copy(input = newInput.replaceAll( "[^\\d]", "" )))
+    }
+
     def getModalStyle(P: Props, S:State) : Seq[TagMod] = {
       P.modalType match{
         case EDIT_MODAL => editModalStyle(P, S)
@@ -165,15 +170,17 @@ object Modal {
         <.dd(
           if(P.elemToAdd.get.isIntAttribute){
             <.input(
+              ^.value := S.input,
               ^.className := "form-control",
               ^.width := "60%",
               ^.borderRadius := "5px",
               ^.autoFocus := "true",
-              ^.onChange ==> inputChanged,
+              ^.onChange ==> intInputChanged,
+              ^.maxLength := "9",
               ^.placeholder := "Number"
             )
           } else {
-          <.textarea(
+            <.textarea(
             ^.className := "form-control",
             ^.width := "95%",
             ^.maxWidth := "95%",
@@ -224,10 +231,11 @@ object Modal {
             <.input(
               ^.value := S.input,
               ^.className := "form-control",
+              ^.maxLength := "9",
               ^.width := "60%",
               ^.borderRadius := "5px",
               ^.autoFocus := "true",
-              ^.onChange ==> inputChanged
+              ^.onChange ==> intInputChanged
             )
           }else{
             <.textarea(

@@ -168,7 +168,7 @@ object webApp extends js.JSApp {
 
       val sendVerify: Option[Callback] =
         for (websocket <- state.websocket if props.proxy.value.toString.nonEmpty)
-          yield sendMessage(websocket, props.proxy.value.toString)
+          yield sendMessage(websocket, props.proxy.value.toString.replaceAll("\n", ""))
 
       def sendGetTemplate(templateNbr: Int): Option[Callback] =
         for (websocket <- state.websocket if state.message.nonEmpty)
