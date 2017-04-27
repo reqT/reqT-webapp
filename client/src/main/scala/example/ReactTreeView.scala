@@ -252,7 +252,7 @@ object ReactTreeView {
         case _: StringAttribute =>
           P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
 
-        case Model => dispatch(NoAction)
+        case _ => dispatch(NoAction)
       }
     }
 
@@ -404,7 +404,7 @@ object ReactTreeView {
                   ^.width := "70%",
                   ^.top := "0px",
                   ^.bottom := "0px",
-                  ^.paddingTop := { if(P.root.contentToString.length < 38) "3%" else "1%" },
+                  ^.paddingTop := { if(P.root.contentToString.length >= 38 || P.root.contentToString.contains("\n")) "1.8%" else "3%" },
                   ^.paddingLeft := "3%",
                   ^.position := "absolute",
                   ^.left := "30%",

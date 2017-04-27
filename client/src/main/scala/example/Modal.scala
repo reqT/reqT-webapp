@@ -150,7 +150,7 @@ object Modal {
           ^.color := { if (P.treeItem.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
           P.treeItem.entityToString),
         <.dd(
-          P.treeItem.contentToString
+
         ),
         <.hr,
         <.dt(
@@ -289,73 +289,104 @@ object Modal {
       )
     )
 
-    def deleteElemModalStyle(P : Props, S: State) = Seq(
-      ^.width:= "400px",
-      <.h4(
-        "Do you want to delete the following?",
-        ^.textAlign.center
-      ),
+    def deleteElemModalStyle(P : Props, S: State) =
+      if(P.treeItem.item != "Model") {
+        Seq(
+          ^.width := "400px",
+          <.h4(
+            "Do you want to delete the following?",
+            ^.textAlign.center
+          ),
 
-      <.dl(
-        <.br,
-        ^.className := "dl-horizontal",
-        <.dt(
-          ^.textAlign := "center",
-          ^.color := { if (P.treeItem.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
-          P.treeItem.entityToString),
-        <.dd(
-          P.treeItem.contentToString
-        ),
-        P.treeItem.children.nonEmpty ?= <.hr,
-        <.dt(
-          ^.textAlign := "center",
-          ^.color := "#FF3636",
-          P.treeItem.linkToString
-        ),
-        <.dl(
-
-        ),
-        P.treeItem.children.nonEmpty ?= <.br,
-        P.treeItem.children.nonEmpty ?= <.hr,
-        P.treeItem.children.map(x => {
-          Seq(
+          <.dl(
+            <.br,
+            ^.className := "dl-horizontal",
             <.dt(
-              x.entityToString.replaceAll("TreeItem", ""),
               ^.textAlign := "center",
-              ^.color := { if (x.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" }
-            ),
+              ^.color := {
+                if (P.treeItem.item.isInstanceOf[IntAttribute] || P.treeItem.item.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA"
+              },
+              P.treeItem.entityToString),
             <.dd(
-              x.contentToString
-            )
-          )
-        }),
-        P.treeItem.children.nonEmpty ?= <.br
-      ),
-      <.div(
-        ^.padding := "5px",
-        ^.display.flex,
-        ^.justifyContent.spaceBetween,
-        <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-        <.button("Delete", ^.className := "btn btn-danger", ^.bottom := "0px", ^.onClick ==> onDelete(P))
-      )
-    )
+              P.treeItem.contentToString
+            ),
+            P.treeItem.children.nonEmpty ?= <.hr,
+            <.dt(
+              ^.textAlign := "center",
+              ^.color := "#FF3636",
+              P.treeItem.linkToString
+            ),
+            <.dl(
 
-    def onDelete(P: Props)(event: ReactEvent): Callback = P.dispatch(RemoveElem(P.path)) >> P.dispatch(RemoveEmptyRelation(P.path.init)) >> P.onClose(event)
+            ),
+            P.treeItem.children.nonEmpty ?= <.br,
+            P.treeItem.children.nonEmpty ?= <.hr,
+            P.treeItem.children.map(child => {
+              Seq(
+                <.dt(
+                  child.entityToString.replaceAll("TreeItem", ""),
+                  ^.textAlign := "center",
+                  ^.color := {
+                    if (child.item.isInstanceOf[IntAttribute] || child.item.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA"
+                  }
+                ),
+                <.dd(
+                  child.contentToString
+                )
+              )
+            }),
+            P.treeItem.children.nonEmpty ?= <.br
+          ),
+          <.div(
+            ^.padding := "5px",
+            ^.display.flex,
+            ^.justifyContent.spaceBetween,
+            <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick ==> onClose(P)),
+            <.button("Delete", ^.className := "btn btn-danger", ^.bottom := "0px", ^.onClick ==> onDelete(P))
+          )
+        )
+      } else {
+        Seq(
+          ^.width := "400px",
+          <.h4(
+            "Do you want to delete the entire model?",
+            ^.textAlign.center
+          ),
+          <.br,
+          <.div(
+            ^.padding := "5px",
+            ^.display.flex,
+            ^.justifyContent.spaceBetween,
+            <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick ==> onClose(P)),
+            <.button("Delete", ^.className := "btn btn-danger", ^.bottom := "0px", ^.onClick ==> onDelete(P))
+          )
+        )
+      }
+
+    def onDelete(P: Props)(event: ReactEvent): Callback = {
+      P.treeItem.item match {
+        case _: String =>
+          P.dispatch(RemoveElem(P.path)) >> P.onClose(event)
+        case _ =>
+          P.dispatch(RemoveElem(P.path)) >> P.dispatch(RemoveEmptyRelation(P.path.init)) >> P.onClose(event)
+      }
+
+    }
 
 
     def initStates(newProps: Props): Callback = {
       if(newProps.treeItem != null) {
+        val newInput = if (newProps.elemToAdd.isEmpty && newProps.treeItem.item != "Model") newProps.treeItem.contentToString else ""
 
-        val newInput = if(newProps.elemToAdd.isEmpty) newProps.treeItem.contentToString else ""
 
         newProps.treeItem.item match {
           case entity: Entity =>
            $.modState(_.copy(input = newInput, newEntity = Some(entity), newRelation = newProps.treeItem.link, newAttribute = None))
           case attribute: Attribute[Any] =>
             $.modState(_.copy(input = newInput, newEntity = None, newRelation = newProps.treeItem.link, newAttribute = Some(attribute)))
+          case _ =>
+            $.modState(_.copy(input = newInput, newEntity = None, newRelation = None, newAttribute = None))
       }
-
-
       } else {
         Callback()
       }
