@@ -239,7 +239,7 @@ object Modal {
             )
           }else{
             <.textarea(
-            ^.rows := "1",
+            ^.rows := {if (S.input.length < 28 ) "2" else "4"},
             ^.className := "form-control",
             ^.width := "95%",
             ^.maxWidth := "95%",

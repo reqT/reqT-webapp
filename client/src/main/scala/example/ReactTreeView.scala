@@ -354,6 +354,7 @@ object ReactTreeView {
           ^.onDragEnd ==> onItemDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
           ^.onDblClick ==> onDoubleClickTreeItem(P,S),
+//          ^.onMouseOver ==> onHoverTreeItem(P,S),
           S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= dragOverStyle(P),
           <.div(

@@ -34,7 +34,9 @@ object webApp extends js.JSApp {
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalType: ModalType, treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None) {
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalType: ModalType,
+                   treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
+                   entityChecked : Boolean = false, attributeChecked: Boolean = false) {
 
     def log(line: String): State =
       copy(logLines = logLines :+ line)
@@ -78,10 +80,10 @@ object webApp extends js.JSApp {
         ^.border := "1px solid #ccc",
         ^.overflow := "auto",
         ^.id := "searchView"
-
       )
     )
     .build
+
 
   val listElem = ReactComponentB[Elem]("listElem")
     .render($ => <.ul(
@@ -156,7 +158,8 @@ object webApp extends js.JSApp {
 
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
 
-    def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem] ): Callback = $.modState(_.copy(modalType = modalType, treeItem = treeItem, isModalOpen = true, dispatch = newDispatch, path = newPath, elemToModal = newElemToAdd))
+    def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem] ): Callback
+    = $.modState(_.copy(modalType = modalType, treeItem = treeItem, isModalOpen = true, dispatch = newDispatch, path = newPath, elemToModal = newElemToAdd))
 
     def render(props: Props, state: State) = {
       val sc = AppCircuit.connect(_.tree)
@@ -198,7 +201,7 @@ object webApp extends js.JSApp {
           ^.width := "29%",
           ^.height := "100%",
           ^.paddingRight := "9px",
-          entityComponent(state.elems),
+          entityComponent(state),
           //          searchView(state.content)
           <.pre(
             ^.height := "49%",
@@ -230,8 +233,8 @@ object webApp extends js.JSApp {
     }
 
 
-    val entityComponent = ReactComponentB[List[Elem]]("entityComponent")
-      .render(elemList =>
+    val entityComponent = ReactComponentB[State]("entityComponent")
+      .render($ =>
         <.pre(
           Styles.dragList,
           <.form(
@@ -241,10 +244,39 @@ object webApp extends js.JSApp {
               ^.onChange ==> onTextChange
             )
           ),
-          entityListView(elemList.props)
+          checkBoxes($.props),
+          entityListView($.props.elems)
         )
       )
       .build
+
+    val checkBoxes = ReactComponentB[State]("checkBoxes")
+      .render( $ =>
+        <.div(
+          <.input.checkbox(
+            ^.onChange ==> toggleEntity($.props)
+          ),
+          " Entity ",
+          <.input.checkbox(
+            ^.onChange ==> toggleAttribute($.props)
+          ),
+          " Attribute "
+        ))
+      .build
+
+    def toggleEntity(S: State)(event: ReactEventI): Callback = {
+      if(S.entityChecked)
+        $.modState(_.copy(elems= elems, entityChecked = false))
+      else
+        $.modState(_.copy(elems = elems.filter(_.isEntity), entityChecked = true))
+    }
+
+    def toggleAttribute(S: State)(event: ReactEventI): Callback = {
+      if(S.attributeChecked)
+        $.modState(_.copy(elems= elems, attributeChecked = false))
+      else
+        $.modState(_.copy(elems = elems.filter(_.isAttribute), attributeChecked = true))
+    }
 
     val log = ReactComponentB[Vector[String]]("log")
       .render($ =>
@@ -253,7 +285,6 @@ object webApp extends js.JSApp {
           ^.width := "auto",
           ^.height := "80%",
           ^.marginTop := "5px",
-//          ^.border := "1px solid",
           ^.overflow := "auto",
           $.props.map(<.p(_)))
       )
