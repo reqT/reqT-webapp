@@ -200,58 +200,49 @@ object ReactTreeView {
     }
 
     def onDrop(P: NodeProps)(event: ReactDragEvent): Callback = {
-//      event.preventDefault()
       val pathFrom = event.dataTransfer.getData("path").split("/")
       val pathTo = (if (P.parent.isEmpty) P.root.uuid.toString
-        else P.parent + "/" + P.root.uuid).split("/")
+      else P.parent + "/" + P.root.uuid).split("/")
 
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
+
+      val existingElem = event.dataTransfer.getData("existing") == "false"
+      val isModel = P.root.item.toString == "Model"
+      val dropOnSelf = pathFrom.diff(pathTo).isEmpty
+      val dropOnItsChildren = pathFrom.init.corresponds(pathTo)(_ == _)
+      val droppingAttribute = event.dataTransfer.getData("type") == "stringAttr" || event.dataTransfer.getData("type") == "intAttr"
       var isAttribute = false
 
-      if (P.root.item.toString != "Model")
+      if (!isModel)
         isAttribute = P.root.item.asInstanceOf[Elem].isAttribute
 
       def getElem(event: ReactDragEvent): Elem = event.dataTransfer.getData("type") match {
-        case "entity" =>  read[Entity](event.dataTransfer.getData("elem"))
+        case "entity" => read[Entity](event.dataTransfer.getData("elem"))
         case "stringAttr" => read[StringAttribute](event.dataTransfer.getData("elem"))
         case "intAttr" => read[IntAttribute](event.dataTransfer.getData("elem"))
       }
 
-      if (event.dataTransfer.getData("existing") == "false" && !isAttribute){
-         getElem(event) match {
+
+      if (isModel && droppingAttribute || isAttribute || dropOnSelf || dropOnItsChildren) {
+        dispatch(NoAction)
+      }else if (existingElem) {
+        getElem(event) match {
           case entity: Entity => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(entity))
           case intAttr: IntAttribute => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(intAttr))
           case stringAttr: StringAttribute => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(stringAttr))
         }
-
-      }else if (isAttribute || pathFrom.diff(pathTo).isEmpty)
-          dispatch(NoAction)
-        else if(!pathFrom.init.corresponds(pathTo)(_ == _ ))
-          dispatch(MoveElem(pathFrom, pathTo, has)) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))  // has is placeholder
-        else
-          dispatch(NoAction)
+      }else{
+        dispatch(MoveElem(pathFrom, pathTo, has)) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))
+      }
     }
 
 
     def onDoubleClickTreeItem(P: NodeProps, S: NodeState)(e: ReactEvent): Callback = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
-
-      val path = (if (P.parent.isEmpty) P.root.uuid.toString
-      else P.parent + "/" + P.root.uuid).split("/")
+      val path = (if (P.parent.isEmpty) P.root.uuid.toString else P.parent + "/" + P.root.uuid).split("/")
 
       P.root.item match {
-        case entity: Entity =>
-          if (entity.hasRelation)
-            P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
-          else{
-            P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
-          }
-        case _: IntAttribute =>
-          P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
-
-        case _: StringAttribute =>
-          P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
-
+        case _: Elem => P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
         case _ => dispatch(NoAction)
       }
     }
@@ -266,7 +257,6 @@ object ReactTreeView {
 
       P.setModalContent(Modal.DELETE_MODAL, P.root, dispatch, path.split("/"), None)
     }
-
 
     def dragOverStyle(P: NodeProps): Seq[TagMod] = {
       Seq(^.opacity := 0.5,
@@ -333,7 +323,6 @@ object ReactTreeView {
           ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
           ^.overflow.visible,
           ^.position.relative,
-          //          ^.border := "1px solid",
           ^.borderRadius := "5px",
           ^.borderBottomRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
           ^.borderTopRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
@@ -354,7 +343,6 @@ object ReactTreeView {
           ^.onDragEnd ==> onItemDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
           ^.onDblClick ==> onDoubleClickTreeItem(P,S),
-//          ^.onMouseOver ==> onHoverTreeItem(P,S),
           S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= dragOverStyle(P),
           <.div(

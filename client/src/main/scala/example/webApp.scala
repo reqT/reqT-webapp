@@ -97,15 +97,18 @@ object webApp extends js.JSApp {
       ^.borderRadius := "5px",
       ^.draggable := "true",
       ^.onDragStart ==> dragStart($.props)
+//      typeTag($.props)
     ))
     .build
+
+  def typeTag(elem: Elem) = if (elem.isEntity) "Entity" else "Attribute"
 
 
   val entityListView = ReactComponentB[List[Elem]]("entityList")
     .render(elems => <.pre(
       ^.className := "form-control",
       ^.id := "dragList",
-      ^.height := "89%",
+      ^.height := "86%",
       ^.marginTop := "5px",
       ^.overflow := "auto",
       elems.props.sortWith((a,b) => a.toString < b.toString).map(listElem(_))
@@ -132,7 +135,6 @@ object webApp extends js.JSApp {
       )
     )
     ).build
-
 
   val buttonComponent = ReactComponentB[(String, Props)]("buttonComponent")
     .render($ =>
@@ -265,17 +267,21 @@ object webApp extends js.JSApp {
       .build
 
     def toggleEntity(S: State)(event: ReactEventI): Callback = {
-      if(S.entityChecked)
-        $.modState(_.copy(elems= elems, entityChecked = false))
+      if(S.entityChecked && S.attributeChecked)
+        $.modState(_.copy(elems= elems.filter(_.isAttribute), entityChecked = !S.entityChecked))
+      else if(S.attributeChecked || S.entityChecked)
+        $.modState(_.copy(elems = elems, entityChecked = !S.entityChecked))
       else
-        $.modState(_.copy(elems = elems.filter(_.isEntity), entityChecked = true))
+        $.modState(_.copy(elems = elems.filter(_.isEntity), entityChecked = !S.entityChecked))
     }
 
     def toggleAttribute(S: State)(event: ReactEventI): Callback = {
-      if(S.attributeChecked)
-        $.modState(_.copy(elems= elems, attributeChecked = false))
+      if(S.attributeChecked && S.entityChecked)
+        $.modState(_.copy(elems= elems.filter(_.isEntity), attributeChecked = !S.attributeChecked))
+      else if(S.attributeChecked || S.entityChecked)
+        $.modState(_.copy(elems= elems, attributeChecked = !S.attributeChecked))
       else
-        $.modState(_.copy(elems = elems.filter(_.isAttribute), attributeChecked = true))
+        $.modState(_.copy(elems = elems.filter(_.isAttribute), attributeChecked = !S.attributeChecked))
     }
 
     val log = ReactComponentB[Vector[String]]("log")
