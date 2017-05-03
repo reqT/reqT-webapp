@@ -414,6 +414,8 @@ case class UpdateEntireRelation(path: Seq[String], newEntity: Entity, newRelatio
 
 case class SetTemplate(tree : Tree) extends  Action
 
+case class SetModel(treeItem : Seq[Elem]) extends  Action
+
 case object SetTemplate extends Action
 
 case object SetTemplate1 extends Action

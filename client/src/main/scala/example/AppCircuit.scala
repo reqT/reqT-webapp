@@ -141,7 +141,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
             case None => noChange
           }
 
-
       case SetTemplate =>
         val model = Tree(Seq(
           Relation(Goal("accuracy"), has, Tree(Seq(Spec("Our pre-calculations shall hit within 5%")))),
@@ -151,9 +150,33 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         ))
         updated(model)
 
+      case SetModel(treeItem: Seq[Elem]) =>
+        val model = Tree(treeItem)
+        updated(model)
+
+      case SetTemplate(newTree: Tree) => updated(newTree)
+
       case SetTemplate1 =>
-        val model = Tree(Seq(Req("R1"), Req("R2"), Stakeholder("BOSS"),
-          Relation(Req("R3"), has, Tree(Seq(Relation(Req("R3.1"), has, Tree(Seq(Prio(1))))))), Relation(Req("R4"), has, Tree(Seq(Prio(2))))))
+        val model = Tree(Seq(
+          Relation(Stakeholder("a"), has, Tree(Seq(
+            Prio(2),
+            Relation(Req("1"), has,Tree(Seq(Benefit(5)))),
+            Relation(Req("2"), has,Tree(Seq(Benefit(300)))),
+            Relation(Req("3"), has,Tree(Seq(Benefit(8)))),
+            Relation(Req("4"), has,Tree(Seq(Benefit(9)))),
+            Relation(Req("5"), has,Tree(Seq(Benefit(100)))),
+            Relation(Req("6"), has,Tree(Seq(Benefit(10)))),
+            Relation(Req("7"), has,Tree(Seq(Benefit(20))))
+            ))),
+          Relation(Stakeholder("b"), has ,Tree(Seq(
+            Prio(4),
+            Relation(Req("1"), has,Tree(Seq(Benefit(100)))),
+            Relation(Req("2"), has,Tree(Seq(Benefit(7)))),
+            Relation(Req("3"), has,Tree(Seq(Benefit(20)))),
+            Relation(Req("4"), has,Tree(Seq(Benefit(80)))),
+            Relation(Req("5"), has,Tree(Seq(Benefit(10)))),
+            Relation(Req("6"), has,Tree(Seq(Benefit(90)))),
+            Relation(Req("7"), has,Tree(Seq(Benefit(20)))))))))
 
         updated(model)
 

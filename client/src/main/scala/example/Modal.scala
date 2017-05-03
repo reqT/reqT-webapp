@@ -14,6 +14,7 @@ object Modal {
   case object ADD_ELEM_MODAL extends ModalType
   case object EDIT_MODAL extends ModalType
   case object DELETE_MODAL extends ModalType
+  case object COPY_MODAL extends ModalType
 
   def modalStyle = Seq(
     ^.padding := "5px",
@@ -81,7 +82,6 @@ object Modal {
           P.dispatch(UpdateEntireRelation(path = P.path, newEntity = S.newEntity.get, S.newRelation)) >> onClose(P)(e)
 //          P.dispatch(UpdateEntity(path = P.path, newEntity = S.newEntity.get)) >> P.dispatch(UpdateRelation(path = P.path, S.input, S.newRelation)) >> onClose(P)(e)
         }else{
-          println(S.input)
           S.newEntity.get.setID(S.input)
           P.dispatch(UpdateEntity(path = P.path, newEntity = S.newEntity.get)) >> onClose(P)(e)
         }
@@ -108,6 +108,7 @@ object Modal {
         case EDIT_MODAL => editModalStyle(P, S)
         case ADD_ELEM_MODAL => addElemModalStyle(P, S)
         case DELETE_MODAL => deleteElemModalStyle(P, S)
+        case COPY_MODAL => copyModalStyle(P,S)
         case EMPTY_MODAL => Seq("Error 404")
       }
     }
@@ -127,6 +128,7 @@ object Modal {
         case entity: Entity => entity.setID(newValue)
         case intAttr: IntAttribute => intAttr.setValue(newValue.replace(" ","").toInt)
         case stringAttr: StringAttribute => stringAttr.setValue(newValue)
+        case _ => elem.get
       }
     }
 
@@ -146,10 +148,12 @@ object Modal {
         ^.className := "dl-horizontal",
         <.br,
         <.dt(
+          P.treeItem.entityToString,
           ^.textAlign := "center",
-          ^.color := { if (P.treeItem.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" },
-          P.treeItem.entityToString),
+          ^.color := { if (P.treeItem.isInstanceOf[IntAttribute] || P.treeItem.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA" }
+        ),
         <.dd(
+          P.treeItem.contentToString
 
         ),
         <.hr,
@@ -271,7 +275,7 @@ object Modal {
               x.entityToString.replaceAll("TreeItem", ""),
               ^.textAlign := "center",
               ^.paddingRight := "3.5%",
-              ^.color := { if (x.item.isInstanceOf[Attribute[Any]]) "#03EE7D" else "#047BEA" }
+              ^.color := { if (x.item.isInstanceOf[StringAttribute] || x.item.isInstanceOf[IntAttribute]) "#03EE7D" else "#047BEA" }
             ),
             <.dd(
               x.contentToString
@@ -363,6 +367,36 @@ object Modal {
         )
       }
 
+    def copyModalStyle(P: Props, S: State) = Seq(
+      ^.width:= "400px",
+      <.h4(
+        "Copy",
+        ^.textAlign.center
+      ),
+       <.dd(
+            <.textarea(
+              ^.className := "form-control",
+              ^.rows := 6,
+//              ^.width := "95%",
+              ^.maxWidth := "100%",
+              ^.maxHeight := "200px",
+              ^.border := "1px solid #CCC",
+              ^.borderRadius := "5px",
+              ^.background := "#FFF",
+              ^.autoFocus := "true",
+              ^.readOnly := "true",
+              ^.selected := "true",
+              ^.value := P.path.head
+            )
+      ),
+      <.div(
+        ^.padding := "5px",
+        ^.display.flex,
+        ^.justifyContent.spaceBetween,
+        <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P))
+      )
+    )
+
     def onDelete(P: Props)(event: ReactEvent): Callback = {
       P.treeItem.item match {
         case _: String =>
@@ -370,7 +404,6 @@ object Modal {
         case _ =>
           P.dispatch(RemoveElem(P.path)) >> P.dispatch(RemoveEmptyRelation(P.path.init)) >> P.onClose(event)
       }
-
     }
 
 

@@ -5,17 +5,20 @@ import org.scalajs.dom._
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react._
 
 import scala.util.{Failure, Success}
 import diode.react.ModelProxy
 import example.Modal.ModalType
 import org.scalajs.dom.ext.KeyCode
+import shared.functions
 
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
+
+import scala.collection.immutable.Queue
 
 
 @JSExport
@@ -36,7 +39,7 @@ object webApp extends js.JSApp {
 
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalType: ModalType,
                    treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
-                   entityChecked : Boolean = false, attributeChecked: Boolean = false) {
+                   entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[Tree] = Queue()) {
 
     def log(line: String): State =
       copy(logLines = logLines :+ line)
@@ -155,6 +158,43 @@ object webApp extends js.JSApp {
     )
     ).build
 
+  val cachedModels = ReactComponentB[(Props, State)]("cachedModelsComponent")
+    .render($ => <.pre(
+      ^.className := "form-control",
+      ^.overflow := "hidden",
+      ^.height := "22%",
+      $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1)))
+    )
+    ).build
+
+  val listModels = ReactComponentB[(Tree, Props)]("listElem")
+    .render($ => <.ul(
+      $.props._1.toString.take(28),
+      ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
+      ^.padding := 5.px,
+      ^.borderRadius := "5px",
+      ^.background := "#CFEADD",
+      ^.onDblClick --> $.props._2.proxy.dispatchCB(SetTemplate($.props._1))
+    ))
+    .build
+
+  def prepHundredDollar(model: String): String = {
+    val dollarMethod = "\n val shs = m . entitiesOfType ( Stakeholder ) \n val rs = m . entitiesOfType ( Req ) \n val prioSum = shs . map ( s => m / s / Prio ) . sum " +
+      "\n val benefitSum = shs . map ( s => s -> ( m / s ) . collect { case Benefit ( b ) => b }. sum ) . toMap " +
+      "\n val normalized = rs . map ( r => r has Benefit ( math . round ( shs . map ( s =>( m / s / Prio ) *( m / s / r / Benefit ) *100.0 / ( benefitSum ( s ) * prioSum ) ) . sum ) . toInt ) ) . toModel " +
+      "\n val sum = normalized . collect { case Benefit ( b ) => b }. sum"
+
+    "val m="+model+dollarMethod
+  }
+
+  def prepRelease(model: String): String = {
+    val dollarMethod = "\n val problem = csp.releasePlan(m)\n" +
+      "val solution = problem.maximize(Release(\"A\")/Benefit)\n" +
+      "val sortedSolution = solution.sortByTypes(Release, Feature, Stakeholder, Resource)\n" +
+      "sortedSolution"
+
+    "val m="+model+dollarMethod
+  }
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -163,21 +203,29 @@ object webApp extends js.JSApp {
     def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem] ): Callback
     = $.modState(_.copy(modalType = modalType, treeItem = treeItem, isModalOpen = true, dispatch = newDispatch, path = newPath, elemToModal = newElemToAdd))
 
-    def render(props: Props, state: State) = {
+    def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
 
       // Can only send if WebSocket is connected and user has entered text
       val send: Option[Callback] =
-        for (websocket <- state.websocket if state.message.nonEmpty)
-          yield sendMessage(websocket, state.message)
+        for (websocket <- S.websocket if S.message.nonEmpty)
+          yield sendMessage(websocket, S.message)
 
       val sendVerify: Option[Callback] =
-        for (websocket <- state.websocket if props.proxy.value.toString.nonEmpty)
-          yield sendMessage(websocket, props.proxy.value.toString.replaceAll("\n", ""))
+        for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
+          yield sendMessage(websocket, P.proxy.value.toString.replaceAll("\n", ""))
 
-      def sendGetTemplate(templateNbr: Int): Option[Callback] =
-        for (websocket <- state.websocket if state.message.nonEmpty)
-          yield sendMessage(websocket, "Template" + templateNbr)
+      val dollarMethod: Option[Callback] =
+        for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
+          yield sendMessage(websocket, prepHundredDollar(P.proxy.value.toString.replaceAll("\n", "")))
+
+      val release: Option[Callback] =
+        for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
+          yield sendMessage(websocket, prepRelease(P.proxy.value.toString.replaceAll("\n", "")))
+
+//      val sendGetTemplate(templateNbr: Int): Option[Callback] =
+//        for (websocket <- state.websocket if state.message.nonEmpty)
+//          yield sendMessage(websocket, "Template" + templateNbr)
 
 
 
@@ -188,8 +236,15 @@ object webApp extends js.JSApp {
           None
       }
 
+      def saveModel(P: Props, S: State): Callback = {
+        if(S.cachedModels.size > 4)
+          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ P.proxy.value)) >> Callback(println(S.cachedModels.size))
+        else
+          $.modState(_.copy(cachedModels = S.cachedModels :+ P.proxy.value)) >> Callback(println(S.cachedModels.size))
+      }
+
       <.div(
-        Modal(isOpen = state.isModalOpen, onClose = closeModal, treeItem = state.treeItem, modalType = state.modalType, dispatch = state.dispatch, path = state.path, elemToAdd = state.elemToModal),
+        Modal(isOpen = S.isModalOpen, onClose = closeModal, treeItem = S.treeItem, modalType = S.modalType, dispatch = S.dispatch, path = S.path, elemToAdd = S.elemToModal),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -203,17 +258,17 @@ object webApp extends js.JSApp {
           ^.width := "29%",
           ^.height := "100%",
           ^.paddingRight := "9px",
-          entityComponent(state),
+          entityComponent(S),
           //          searchView(state.content)
           <.pre(
-            ^.height := "49%",
+            ^.height := "40%",
             ^.overflow.hidden,
             <.div(
               <.input(
                 ^.className := "form-control",
                 ^.marginBottom := "5px",
                 ^.onChange ==> onChange,
-                ^.value := state.message,
+                ^.value := S.message,
                 ^.onKeyDown ==>? handleKeyDown
               ),
               <.button(
@@ -226,8 +281,36 @@ object webApp extends js.JSApp {
                 ^.className := "btn btn-default",
                 "Verify Model",
                 ^.onClick -->? sendVerify
-              )),
-            log(state.logLines)// Display log
+              )
+            ),
+            log(S.logLines)// Display log
+          ),
+          cachedModels((P,S))),
+        <.div(
+          <.button(
+            ^.className := "btn btn-default",
+            "Copy Model",
+            ^.onClick --> openModalWithContent(Modal.COPY_MODAL, elemToTreeItem(P.proxy.value.children), P.proxy.dispatchCB, Seq(P.proxy.value.toString), None)
+          ),
+          <.button(
+            ^.className := "btn btn-default",
+            "Save Model",
+            ^.onClick --> saveModel(P,S)
+          ),
+          <.button(
+            ^.className := "btn btn-default",
+            "100$ Dollar",
+            ^.onClick -->? dollarMethod
+          ),
+          <.button(
+            ^.className := "btn btn-default",
+            "Ordinal Ranking",
+            ^.onClick -->? openModalWithContent()
+          ),
+          <.button(
+            ^.className := "btn btn-default",
+            "Release Planning",
+            ^.onClick -->? release
           )
         ),
         sc(proxy => treeView((proxy, openModalWithContent)))
@@ -299,14 +382,8 @@ object webApp extends js.JSApp {
     def onTextChange(event: ReactEventI): Callback =
       event.extract(_.target.value.toLowerCase) {
         case "entity" | "entities" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
-        case "attribute" | "attributes"=> $.modState(_.copy(elems = elems.filter(_.isAttribute)))
-        case value =>
-          if(value.startsWith("entity:"))
-            $.modState(_.copy(elems = elems.filter(_.isEntity).filter(_.toString.toLowerCase.contains(value.drop(7).trim.toLowerCase))))
-          else if(value.startsWith("attribute:"))
-            $.modState(_.copy(elems = elems.filter(_.isAttribute).filter(_.toString.toLowerCase.contains(value.drop(11).trim.toLowerCase))))
-          else
-            $.modState(_.copy(elems = elems.filter(_.toString.toLowerCase.contains(value.toLowerCase))))
+        case "attribute" | "attributes" => $.modState(_.copy(elems = elems.filter(_.isAttribute)))
+        case value => $.modState(_.copy(elems = elems.filter(_.toString.toLowerCase.contains(value.toLowerCase))))
       }
 
     def onChange(event: ReactEventI): Callback = {
@@ -342,12 +419,10 @@ object webApp extends js.JSApp {
         }
 
         def onerror(event: ErrorEvent): Unit = {
-          // Display error message
           direct.modState(_.log(s"Error: ${event.message}"))
         }
 
         def onclose(event: CloseEvent): Unit = {
-          // Close the connection
           direct.modState(_.copy(websocket = None).log(s"Closed: ${event.reason}"))
         }
 

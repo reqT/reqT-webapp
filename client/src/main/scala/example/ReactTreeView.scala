@@ -230,6 +230,7 @@ object ReactTreeView {
           case entity: Entity => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(entity))
           case intAttr: IntAttribute => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(intAttr))
           case stringAttr: StringAttribute => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(stringAttr))
+          case _ => Callback()
         }
       }else{
         dispatch(MoveElem(pathFrom, pathTo, has)) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))
@@ -314,7 +315,6 @@ object ReactTreeView {
         "▶"
         )
         else ""
-
 
 
       <.li(
