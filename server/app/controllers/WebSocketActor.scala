@@ -14,7 +14,6 @@ class WebSocketActor(out: ActorRef) extends Actor {
   //val templateHandler = new TemplateHandler
 
 
-
   def trim(text: String): String = text.drop(text.indexOf("reqT>"))
 
   implicit class Regex(sc: StringContext) {

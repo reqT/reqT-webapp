@@ -52,6 +52,10 @@ object Styles extends StyleSheet.Inline {
     padding(10.px)
   )
 
+  val removeButtonSimple = style(
+    addClassName("btn glyphicon glyphicon-remove pull-right")
+  )
+
   val bootStrapRemoveButton = style(
     addClassName("btn glyphicon glyphicon-remove pull-right"),
 //    borderBottomRightRadius(0.px),

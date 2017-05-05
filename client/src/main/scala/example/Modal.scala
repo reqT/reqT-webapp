@@ -8,7 +8,7 @@ import japgolly.scalajs.react._
 
 
 object Modal {
-
+  sealed trait ModalType
 
   case object EMPTY_MODAL extends ModalType
   case object ADD_ELEM_MODAL extends ModalType
@@ -46,8 +46,6 @@ object Modal {
 
   def apply(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String], elemToAdd: Option[Elem])
       = component.set()(Props(isOpen, onClose, modalType, treeItem, dispatch, path, elemToAdd))
-
-  sealed trait ModalType
 
   case class State(input: String, newEntity: Option[Entity], newRelation: Option[RelationType], newAttribute: Option[Attribute[Any]])
 
@@ -153,8 +151,7 @@ object Modal {
           ^.color := { if (P.treeItem.isInstanceOf[IntAttribute] || P.treeItem.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA" }
         ),
         <.dd(
-          P.treeItem.contentToString
-
+          {if (P.treeItem.entityToString != "Model") P.treeItem.contentToString else ""}
         ),
         <.hr,
         <.dt(

@@ -51,7 +51,6 @@ object RelationSelect {
     def onChange(P: Props, S: State)(e: ReactEventI): Callback = {
       e.preventDefault()
 
-
       if(P.isModelValue)
         P.dispatch(P.updateRel.get(fromString(e.target.value)))
       else

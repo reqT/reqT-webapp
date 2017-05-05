@@ -4,7 +4,6 @@ import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, _}
 import diode.Action
 
-
 /**
   * Created by johan on 4/4/17.
   */
@@ -17,7 +16,6 @@ object AttributeSelect {
     ^.width := "155px",
     ^.height :=  "100%",
     ^.color := "#03EE7D",
-    ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
     ^.background := "white",
     ^.textAlign.center,
     ^.textAlignLast.center

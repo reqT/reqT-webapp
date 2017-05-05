@@ -12,7 +12,6 @@ import scala.util.{Failure, Success}
 import diode.react.ModelProxy
 import example.Modal.ModalType
 import org.scalajs.dom.ext.KeyCode
-import shared.functions
 
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
@@ -33,13 +32,14 @@ object webApp extends js.JSApp {
     Test(), Story(), UseCase(), VariationPoint(), Variant(), Code(), Comment(), Deprecated(), Example(), Expectation(), FileName(), Gist(), Image(), Spec(),
     Text(), Title(), Why(), Benefit(), Capacity(), Cost(), Damage(), Frequency(), Min(), Max(), Order(), Prio(), Probability(), Profit(), Value())
 
-  val headerButtons = List("Export", "Import", "Release Planning", "Templates", "Help")
+  val headerButtons = List("Export", "Import", "Templates", "Help")
 
   case class Props(proxy: ModelProxy[Tree])
 
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalType: ModalType,
                    treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
-                   entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[Tree] = Queue()) {
+                   entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[Tree] = Queue(),
+                   isDollarModalOpen: Boolean = false, isReleaseModal: Boolean = false) {
 
     def log(line: String): State =
       copy(logLines = logLines :+ line)
@@ -158,50 +158,18 @@ object webApp extends js.JSApp {
     )
     ).build
 
-  val cachedModels = ReactComponentB[(Props, State)]("cachedModelsComponent")
-    .render($ => <.pre(
-      ^.className := "form-control",
-      ^.overflow := "hidden",
-      ^.height := "22%",
-      $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1)))
-    )
-    ).build
-
-  val listModels = ReactComponentB[(Tree, Props)]("listElem")
-    .render($ => <.ul(
-      $.props._1.toString.take(28),
-      ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
-      ^.padding := 5.px,
-      ^.borderRadius := "5px",
-      ^.background := "#CFEADD",
-      ^.onDblClick --> $.props._2.proxy.dispatchCB(SetTemplate($.props._1))
-    ))
-    .build
-
-  def prepHundredDollar(model: String): String = {
-    val dollarMethod = "\n val shs = m . entitiesOfType ( Stakeholder ) \n val rs = m . entitiesOfType ( Req ) \n val prioSum = shs . map ( s => m / s / Prio ) . sum " +
-      "\n val benefitSum = shs . map ( s => s -> ( m / s ) . collect { case Benefit ( b ) => b }. sum ) . toMap " +
-      "\n val normalized = rs . map ( r => r has Benefit ( math . round ( shs . map ( s =>( m / s / Prio ) *( m / s / r / Benefit ) *100.0 / ( benefitSum ( s ) * prioSum ) ) . sum ) . toInt ) ) . toModel " +
-      "\n val sum = normalized . collect { case Benefit ( b ) => b }. sum"
-
-    "val m="+model+dollarMethod
-  }
-
-  def prepRelease(model: String): String = {
-    val dollarMethod = "\n val problem = csp.releasePlan(m)\n" +
-      "val solution = problem.maximize(Release(\"A\")/Benefit)\n" +
-      "val sortedSolution = solution.sortByTypes(Release, Feature, Stakeholder, Resource)\n" +
-      "sortedSolution"
-
-    "val m="+model+dollarMethod
-  }
 
   class Backend($: BackendScope[Props, State]) {
 
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
+    def closeDollarModal(e: ReactEvent): Callback = $.modState(_.copy(isDollarModalOpen = false))
+    def closeReleaseModal(e: ReactEvent): Callback = $.modState(_.copy(isReleaseModal = false))
 
     def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem] ): Callback
     = $.modState(_.copy(modalType = modalType, treeItem = treeItem, isModalOpen = true, dispatch = newDispatch, path = newPath, elemToModal = newElemToAdd))
+
+    def openDollarModal = $.modState(_.copy(isDollarModalOpen = true))
+    def openReleaseModal = $.modState(_.copy(isReleaseModal = true))
 
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
@@ -215,13 +183,13 @@ object webApp extends js.JSApp {
         for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
           yield sendMessage(websocket, P.proxy.value.toString.replaceAll("\n", ""))
 
-      val dollarMethod: Option[Callback] =
-        for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
-          yield sendMessage(websocket, prepHundredDollar(P.proxy.value.toString.replaceAll("\n", "")))
+//      def release(prepMessage: String => String): Option[Callback] =
+//        for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
+//          yield sendMessage(websocket, P.proxy.value.toString.replaceAll("\n", ""))
 
-      val release: Option[Callback] =
+      def sendPrepMessage(prepMessage: String => String): Option[Callback] =
         for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
-          yield sendMessage(websocket, prepRelease(P.proxy.value.toString.replaceAll("\n", "")))
+          yield sendMessage(websocket, prepMessage(v1 = P.proxy.value.toString.replaceAll("\n", "")))
 
 //      val sendGetTemplate(templateNbr: Int): Option[Callback] =
 //        for (websocket <- state.websocket if state.message.nonEmpty)
@@ -238,13 +206,15 @@ object webApp extends js.JSApp {
 
       def saveModel(P: Props, S: State): Callback = {
         if(S.cachedModels.size > 4)
-          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ P.proxy.value)) >> Callback(println(S.cachedModels.size))
+          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ P.proxy.value))
         else
-          $.modState(_.copy(cachedModels = S.cachedModels :+ P.proxy.value)) >> Callback(println(S.cachedModels.size))
+          $.modState(_.copy(cachedModels = S.cachedModels :+ P.proxy.value))
       }
 
       <.div(
         Modal(isOpen = S.isModalOpen, onClose = closeModal, treeItem = S.treeItem, modalType = S.modalType, dispatch = S.dispatch, path = S.path, elemToAdd = S.elemToModal),
+        HundredDollarModal(isOpen = S.isDollarModalOpen, onClose = closeDollarModal, sendPrepMessage),
+        ReleaseModal(isOpen = S.isReleaseModal, onClose = closeReleaseModal, sendPrepMessage, S.treeItem),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -300,17 +270,17 @@ object webApp extends js.JSApp {
           <.button(
             ^.className := "btn btn-default",
             "100$ Dollar",
-            ^.onClick -->? dollarMethod
+            ^.onClick --> openDollarModal
           ),
           <.button(
             ^.className := "btn btn-default",
             "Ordinal Ranking",
-            ^.onClick -->? openModalWithContent()
+            ^.onClick --> openDollarModal
           ),
           <.button(
             ^.className := "btn btn-default",
             "Release Planning",
-            ^.onClick -->? release
+            ^.onClick --> openReleaseModal
           )
         ),
         sc(proxy => treeView((proxy, openModalWithContent)))
@@ -348,6 +318,38 @@ object webApp extends js.JSApp {
           " Attribute "
         ))
       .build
+
+    val cachedModels = ReactComponentB[(Props, State)]("cachedModelsComponent")
+      .render($ => <.pre(
+        ^.className := "form-control",
+        ^.overflow := "hidden",
+        ^.height := "22%",
+        $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1, $.props._2)))
+      )
+      ).build
+
+    val listModels = ReactComponentB[(Tree, Props, State)]("listElem")
+      .render(T => <.ul(
+        T.props._1.toString.take(28),
+        ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
+        ^.padding := 5.px,
+        ^.borderRadius := "5px",
+        ^.background := "#CFEADD",
+        ^.onDblClick --> T.props._2.proxy.dispatchCB(SetTemplate(T.props._1)),
+        <.button(
+          Styles.removeButtonSimple,
+          ^.onClick --> removeCachedModel(T.props._3, T.props._1)
+      )
+      ))
+      .build
+
+    def removeCachedModel(state: State, tree: Tree): Callback = {
+      val index = state.cachedModels.indexWhere(_.equals(tree))
+      val beginning = state.cachedModels.take(index)
+      val end = state.cachedModels.drop(index+1)
+
+      $.modState(_.copy(cachedModels = beginning ++ end))
+    }
 
     def toggleEntity(S: State)(event: ReactEventI): Callback = {
       if(S.entityChecked && S.attributeChecked)

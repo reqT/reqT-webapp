@@ -132,7 +132,7 @@ object ReactTreeView {
         P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
         TreeNode.withKey("root")(NodeProps(
           root = P.root,
-          open = if (S.filterText.nonEmpty) true else P.open,
+          open = P.open,
           onNodeSelect = onNodeSelect(P),
           onNodeDrag = onNodeDrag(P),
           onNodeDrop = onNodeDrop(P),
@@ -174,10 +174,11 @@ object ReactTreeView {
 
     def childrenFromProps(P: NodeProps): CallbackTo[Option[Unit]] =
       $.modState(S => S.copy(children = if (S.children.isEmpty) P.root.children else Nil))
-        .conditionally(P.root.children.nonEmpty)
+        .when(P.root.children.nonEmpty)
 
 
     def matchesFilterText(filterText: String, data: TreeItem): Boolean = {
+      def trim(data : String): String = data.toString.replaceAll("""(UUID\([^\)]*\))|TreeItem|List|None|[\(\),"]|Some"""," ").trim.replaceAll(" +", " ")
 
         def matchesType(treeItem: TreeItem): Boolean =
           treeItem.item match {
@@ -187,9 +188,9 @@ object ReactTreeView {
             case _ => false
           }
 
-        def matches(treeItem: TreeItem): Boolean = treeItem.toString.toLowerCase.contains(filterText.toLowerCase)
+        def matches(treeItem: TreeItem): Boolean = trim(treeItem.toString).toLowerCase.contains(filterText.toLowerCase)
 
-        def relationTypeMatches(treeItem: TreeItem): Boolean = treeItem.linkToString.toLowerCase.contains(filterText.toLowerCase)
+        def relationTypeMatches(treeItem: TreeItem): Boolean = trim(treeItem.linkToString).toLowerCase.contains(filterText.toLowerCase)
 
         def loop(data: Seq[TreeItem]): Boolean =
           data.view.exists(
@@ -243,7 +244,7 @@ object ReactTreeView {
       val path = (if (P.parent.isEmpty) P.root.uuid.toString else P.parent + "/" + P.root.uuid).split("/")
 
       P.root.item match {
-        case _: Elem => P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
+        case _ : Elem => P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
         case _ => dispatch(NoAction)
       }
     }
@@ -288,6 +289,7 @@ object ReactTreeView {
 
     def render(P: NodeProps, S: NodeState): ReactTag = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
+
 
       val depth = P.depth + 1
 
@@ -421,10 +423,6 @@ object ReactTreeView {
                 )
               )
             }
-
-//            <.span(
-//              if (P.root.item.isInstanceOf[Elem]) P.root.entityToString + " - " + P.root.contentToString else P.root.entityToString
-//            )
           ),
           <.button(
             Styles.bootStrapRemoveButton,
@@ -460,7 +458,7 @@ object ReactTreeView {
   }
 
 
-  case class NodeState(children: Seq[TreeItem] = Nil, selected: Boolean = false, draggedOver: Boolean = false)
+  case class NodeState(children: Seq[TreeItem], selected: Boolean = false, draggedOver: Boolean = false)
 
   case class NodeProps(root: TreeItem,
                        open: Boolean,
@@ -479,12 +477,12 @@ object ReactTreeView {
 
 
   lazy val TreeNode = ReactComponentB[NodeProps]("ReactTreeNode")
-    .initialState_P(P => if (P.open) NodeState(P.root.children) else NodeState())
+    .initialState_P(P => if (P.open) NodeState(P.root.children) else NodeState(Nil))
     .renderBackend[NodeBackend]
     .componentWillReceiveProps {
       case ComponentWillReceiveProps(_$, newProps) =>
         _$.modState(_.copy(children = if (newProps.open) newProps.root.children else Nil))
-          .conditionally(newProps.filterMode)
+          .when(newProps.filterMode)
           .void
     }
     .build

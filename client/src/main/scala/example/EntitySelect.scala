@@ -23,7 +23,6 @@ object EntitySelect {
     ^.color := {if(P.isModelValue) "black" else "#047BEA"},
     ^.borderBottomLeftRadius := "5px",
     ^.borderTopLeftRadius := "5px",
-    ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
     ^.background := {if(P.isModelValue) "#cedbe7" else "white"},
     ^.textAlign.center,
     ^.textAlignLast.center
@@ -50,7 +49,7 @@ object EntitySelect {
         },
         ^.onChange ==> onChange(P, S)
       )(
-        entityList.map(x => <.option(x))
+        entityList.map(x => <.option(^.font :="bold",x))
       )
 
 

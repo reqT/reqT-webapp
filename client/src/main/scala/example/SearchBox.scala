@@ -22,9 +22,6 @@ object ReactSearchBox {
       padding(3 px),
       backgroundColor.transparent,
       borderBottom :=! "1px solid #B2ADAD"
-//      &.focus(outline.none,
-//        borderBottom :=! "1.5px solid #03a9f4"
-//      )
     )
   }
 
