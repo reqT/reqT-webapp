@@ -59,7 +59,6 @@ object HundredDollarModal {
                 "Normalize: "
               ),
               <.dd(
-
                 AttributeSelect("Benefit", isIntAttr = true, setNewBAttribute)
               ),
               <.dt(

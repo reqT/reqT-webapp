@@ -155,7 +155,9 @@ object ReleaseModal {
       .build
 
     def createOptions(P: Props): Seq[TagMod] = {
-      $.props.currentModel.children.map(<.option(_))
+      P.currentModel.children.map(_ => print(_))
+
+      Seq(<.option("hej"))
     }
 
 
@@ -214,8 +216,7 @@ object ReleaseModal {
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
       if (e.nativeEvent.keyCode == KeyCode.Escape) {
         onClose(P)(e)
-      }
-      else
+      } else
         Callback()
     }
   }
@@ -223,7 +224,7 @@ object ReleaseModal {
 
 
     val component = ReactComponentB[Props]("Modal")
-      .initialState(State(None  ,None, standardList))
+      .initialState(State(None, None, standardList))
       .renderBackend[Backend]
       .build
 

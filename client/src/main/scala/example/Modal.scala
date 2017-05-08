@@ -102,7 +102,7 @@ object Modal {
     }
 
     def getModalStyle(P: Props, S:State) : Seq[TagMod] = {
-      P.modalType match{
+      P.modalType match {
         case EDIT_MODAL => editModalStyle(P, S)
         case ADD_ELEM_MODAL => addElemModalStyle(P, S)
         case DELETE_MODAL => deleteElemModalStyle(P, S)
@@ -114,9 +114,21 @@ object Modal {
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
      if (e.nativeEvent.keyCode == KeyCode.Escape){
         onClose(P)(e)
+     } else if(e.nativeEvent.keyCode == KeyCode.Enter &&  !e.shiftKey){
+        onEnter(P,S)(e)
+     }else{
+       Callback()
+     }
+    }
+
+    def onEnter(P: Props, S: State)(e: ReactEvent): Callback = {
+      P.modalType match {
+        case EDIT_MODAL => onSave(P, S)(e)
+        case ADD_ELEM_MODAL => addElem(P,S)(e)
+        case DELETE_MODAL => onDelete(P)(e)
+        case COPY_MODAL => onClose(P)(e)
+        case EMPTY_MODAL => onClose(P)(e)
       }
-      else
-        Callback()
     }
 
     def addElem(P: Props, S: State)(e: ReactEvent): Callback = P.dispatch(AddElem(P.path, prepareElem(S.input, P.elemToAdd), has)) >> onClose(P)(e)
@@ -240,16 +252,16 @@ object Modal {
             )
           }else{
             <.textarea(
-            ^.rows := {if (S.input.length < 28 ) "2" else "4"},
-            ^.className := "form-control",
-            ^.width := "95%",
-            ^.maxWidth := "95%",
-            ^.value := S.input,
-            ^.autoFocus := "true",
-            ^.maxHeight := "200px",
-            ^.border := "1px solid #CCC",
-            ^.borderRadius := "5px",
-            ^.onChange ==> inputChanged
+              ^.rows := {if (S.input.length < 28 ) "2" else "4"},
+              ^.className := "form-control",
+              ^.width := "95%",
+              ^.maxWidth := "95%",
+              ^.value := S.input,
+              ^.autoFocus := "true",
+              ^.maxHeight := "200px",
+              ^.border := "1px solid #CCC",
+              ^.borderRadius := "5px",
+              ^.onChange ==> inputChanged
           )}
         ),
         P.treeItem.children.nonEmpty ?= <.hr,
@@ -359,7 +371,7 @@ object Modal {
             ^.display.flex,
             ^.justifyContent.spaceBetween,
             <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-            <.button("Delete", ^.className := "btn btn-danger", ^.bottom := "0px", ^.onClick ==> onDelete(P))
+            <.button("Delete", ^.className := "btn btn-danger",   ^.autoFocus := "true", ^.bottom := "0px", ^.onClick ==> onDelete(P))
           )
         )
       }
