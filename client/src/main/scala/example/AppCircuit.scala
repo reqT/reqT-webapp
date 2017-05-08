@@ -54,7 +54,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
     case node: Node => node
   }
 
-
   class TreeHandler[M](modelRW: ModelRW[Model, Tree]) extends ActionHandler(modelRW) {
     override def handle = {
       //case Reset => updated(Tree(Seq()))

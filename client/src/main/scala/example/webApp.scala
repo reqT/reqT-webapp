@@ -5,6 +5,7 @@ import org.scalajs.dom._
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
+import org.scalajs.dom
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react._
 
@@ -23,7 +24,6 @@ object webApp extends js.JSApp {
 
   //Måste ändras till hostname
   val url = "ws://127.0.0.1:9000/socket"
-
   val elems = List(Item(), Label(), Meta(), Section(),Term(), Actor(), App(), Component(), Module(), Product(), Release(), Resource(),
     Risk(), Service(), Stakeholder(), System(), User(), Class(), Data(), Input(), Member(),Output(), Relationship(), Design(), Screen(), MockUp(), Function(),
     Interface(), Epic(), Feature(), Goal(), Idea(), Issue(), Req(), Ticket(), WorkPackage(), Breakpoint(), Barrier(), Quality(), Target(), Scenario(), Task(),
@@ -115,7 +115,6 @@ object webApp extends js.JSApp {
     ))
     .build
 
-
   val treeView = ReactComponentB[(ModelProxy[Tree], (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback)]("treeView")
     .render(P => <.pre(
       Styles.treeView,
@@ -136,10 +135,52 @@ object webApp extends js.JSApp {
     )
     ).build
 
+  @JSExport
+  def newInstanceFromString(className: String)(args: Any*): Any = {
+    val ctor = className.split("\\.").foldLeft(js.Dynamic.global) { (prev, part) =>
+      prev.selectDynamic(part)
+    }
+    js.Dynamic.newInstance(ctor)(args.asInstanceOf[Seq[js.Any]]: _*)
+  }
+
+  def parseModel(newModel: String, dispatch: Action => Callback): Callback = {
+//    val m = Parser.parseModel(newModel.split('\n').map(_.trim.filter(_ >= ' ')).mkString)
+    Callback()
+  }
+
+  def importModel(dispatch: Action => Callback)(e: ReactEventI): Callback = {
+    if(e.currentTarget.files.item(0).`type` == "text/plain") {
+      println(e.currentTarget.files.item(0).`type`)
+      var newModel = "newModel empty, shouldn't happen"
+      val fileReader = new FileReader
+      fileReader.readAsText(e.currentTarget.files.item(0), "UTF-8")
+
+      fileReader.onload = (_: UIEvent) => {
+        newModel = fileReader.result.asInstanceOf[String]
+
+        parseModel(newModel, dispatch)
+      }
+
+      Callback()
+    } else {
+      Callback(window.alert("Invalid file type, only .txt is supported"))
+    }
+ }
+
   val buttonComponent = ReactComponentB[(String, Props)]("buttonComponent")
     .render($ =>
       $.props._1 match {
         case "Templates" => TemplateSelect($.props._2.proxy.dispatchCB)
+        case "Import" => <.label(
+          Styles.navBarButton,
+          "Import",
+          <.input(
+            ^.`type`:="file",
+            ^.display.none,
+            ^.accept := "text/plain, .txt",
+            ^.onChange ==> importModel($.props._2.proxy.dispatchCB)
+          )
+        )
         case _ => <.button(
           $.props._1,
           Styles.navBarButton)
