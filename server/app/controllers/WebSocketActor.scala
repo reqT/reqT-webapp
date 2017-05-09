@@ -17,21 +17,13 @@ class WebSocketActor(out: ActorRef) extends Actor {
       val reqTprocess = sysRuntime.exec("java -jar reqT.jar")
       val (reqTis, reqTos) = (reqTprocess.getInputStream, reqTprocess.getOutputStream)
       var buf = new Array[Byte](1024)
-//    println(s"user wrote $message")
-      reqTos.write("".getBytes)
+      reqTos.write("\n\n".getBytes)
       reqTos.flush()
+      Thread.sleep(100)
       var nbrOfReadBytes = reqTis.read(buf, 0, 1024)
       var response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
       println(s"printed $response")
       out ! response
-      reqTos.write("".getBytes)
-      reqTos.flush()
-      nbrOfReadBytes = reqTis.read(buf, 0, 1024)
-      response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
-      println(s"printed $response")
-      out ! response
-      buf = new Array[Byte](1024)
-
   //val templateHandler = new TemplateHandler
 
   def trim(text: String): String = text.drop(text.indexOf("reqT>"))
@@ -54,13 +46,18 @@ class WebSocketActor(out: ActorRef) extends Actor {
       //val inputStream = new ByteArrayInputStream((message + "\n").getBytes("UTF-8"))
       //out ! trim(reqT.run().toString)
       println(s"user wrote $message")
-      reqTos.write(message.getBytes)
+      reqTos.write((message + "\n").getBytes("UTF-8"))
       reqTos.flush()
 
-      val nbrOfReadBytes = reqTis.read(buf, 0, 1024)
-      val response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
+      println(buf.length)
+      Thread.sleep(100)
+      var nbrOfReadBytes = reqTis.read(buf, 0, 1024)
+      var response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
       println(s"printed $response")
-//      reqTprocess.destroy
+      out ! response
+      nbrOfReadBytes = reqTis.read(buf, 0, 1024)
+      response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
+      println(s"printed $response")
       out ! response
 
     //    case message: String =>
