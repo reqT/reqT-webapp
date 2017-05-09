@@ -51,9 +51,9 @@ object ReleaseModal {
   case object MAX extends ReleaseType
   case object MIN extends ReleaseType
 
-  case class State(newEntity: Option[Entity], newAttribute: Option[Attribute[Any]], sortBy: Seq[String], releaseType: ReleaseType = MAX)
+  case class State(newEntity: String, newAttribute: Option[Attribute[Any]], sortBy: Seq[String], releaseType: ReleaseType = MAX)
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => String) => Option[Callback], currentModel: TreeItem)
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => String) => Option[Callback], currentModel: Tree)
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
@@ -155,15 +155,26 @@ object ReleaseModal {
       .build
 
     def createOptions(P: Props): Seq[TagMod] = {
-      P.currentModel.children.map(_ => print(_))
-
-      Seq(<.option("hej"))
+      val entities = getAllEntities(P.currentModel.children)
+      entities.map(e => <.option(e.toString.replaceAll("\"","")))
     }
 
 
+    def getAllEntities(elems: Seq[Elem]): Seq[Entity] = {
+      if (elems.isEmpty){
+        Seq()
+      }else{
+        val noAttr = elems.filter(_.isEntity).asInstanceOf[Seq[Entity]]
+        val relations = elems.filter(_.isRelation)
+        val children = relations.flatMap(_.asInstanceOf[Relation].submodel.children)
+
+        noAttr ++ relations.map(_.asInstanceOf[Relation].entity) ++ getAllEntities(children)
+      }
+    }
 
     def changeEntity(e: ReactEventI): Callback = {
-      Callback(e.target.value)
+      val choosenEntity = e.target.value
+      $.modState(_.copy(newEntity = choosenEntity))
     }
 
 
@@ -182,7 +193,7 @@ object ReleaseModal {
 
 
     def prepRelease(state: State, model: String): String = {
-      val entity = state.newEntity.getOrElse(Release()).toString.split('(').head
+      val entity = state.newEntity
       val attribute = state.newAttribute.getOrElse(Benefit()).toString.split('(').head
       val problemType = state.releaseType match {
         case MAX => "maximize"
@@ -192,7 +203,7 @@ object ReleaseModal {
 
 
       val dollarMethod = "\n val problem = csp.releasePlan(m)\n" +
-        s"val solution = problem.$problemType($attribute/$entity)\n" +
+        s"val solution = problem.$problemType($entity/$attribute)\n" +
         s"val sortedSolution = solution.sortByTypes(${state.sortBy(0)}, ${state.sortBy(1)}, ${state.sortBy(2)}, ${state.sortBy(3)})\n" +
         "sortedSolution"
 
@@ -200,8 +211,8 @@ object ReleaseModal {
 
     }
 
-    def resetState: Callback = $.setState(State(None,None, standardList))
-    def setNewEntity(entity: Option[Entity]): Callback = $.modState(_.copy(newEntity = entity))
+    def resetState: Callback = $.setState(State("",None, standardList))
+//    def setNewEntity(entity: Option[Entity]): Callback = $.modState(_.copy(newEntity = entity))
     def setNewAttribute(attribute: Option[Attribute[Any]]): Callback = $.modState(_.copy(newAttribute = attribute))
 
 
@@ -224,12 +235,12 @@ object ReleaseModal {
 
 
     val component = ReactComponentB[Props]("Modal")
-      .initialState(State(None, None, standardList))
+      .initialState(State("", None, standardList))
       .renderBackend[Backend]
       .build
 
 
-    def apply(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => String) => Option[Callback], currentModel: TreeItem)
+    def apply(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => String) => Option[Callback], currentModel: Tree)
     = component.set()(Props(isOpen, onClose, send, currentModel))
 
 }

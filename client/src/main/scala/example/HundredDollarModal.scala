@@ -66,7 +66,6 @@ object HundredDollarModal {
                 " from "
               ),
               <.dd(
-
                 EntitySelect("Req", setNewRSEntity, isModelValue = false)
               ),
               <.hr,
@@ -83,8 +82,8 @@ object HundredDollarModal {
               ),
               <.dd(
                 EntitySelect("Stakeholder", setNewSHSEntity, isModelValue = false)
-              ),
-              <.hr
+              )
+//              <.hr
             ),
             <.div(
               ^.width:= "95%",
@@ -92,7 +91,7 @@ object HundredDollarModal {
               ^.display.flex,
               ^.justifyContent.spaceBetween,
               <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-              <.button("OK", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> send(P,S))
+              <.button("OK", ^.className := "btn btn-success pull-right",  ^.autoFocus := "true", ^.bottom := "0px", ^.onClick ==> send(P,S))
             )),
           <.div(
             backdropStyle,

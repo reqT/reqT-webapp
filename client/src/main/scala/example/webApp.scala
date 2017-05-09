@@ -183,9 +183,6 @@ object webApp extends js.JSApp {
         for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
           yield sendMessage(websocket, P.proxy.value.toString.replaceAll("\n", ""))
 
-//      def release(prepMessage: String => String): Option[Callback] =
-//        for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
-//          yield sendMessage(websocket, P.proxy.value.toString.replaceAll("\n", ""))
 
       def sendPrepMessage(prepMessage: String => String): Option[Callback] =
         for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
@@ -212,14 +209,12 @@ object webApp extends js.JSApp {
       }
 
       <.div(
-        Modal(isOpen = S.isModalOpen, onClose = closeModal, treeItem = S.treeItem, modalType = S.modalType, dispatch = S.dispatch, path = S.path, elemToAdd = S.elemToModal),
+        Modal(S.isModalOpen, closeModal, S.modalType, S.treeItem, S.dispatch, S.path, S.elemToModal),
         HundredDollarModal(isOpen = S.isDollarModalOpen, onClose = closeDollarModal, sendPrepMessage),
-        ReleaseModal(isOpen = S.isReleaseModal, onClose = closeReleaseModal, sendPrepMessage, S.treeItem),
+        ReleaseModal(isOpen = S.isReleaseModal, onClose = closeReleaseModal, sendPrepMessage, P.proxy.value),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
-        //^.paddingLeft := "0px",
-        //^.paddingRight := "0px",
         ^.paddingTop := "25px",
         ^.overflow := "hidden",
         <.div(
@@ -229,7 +224,6 @@ object webApp extends js.JSApp {
           ^.height := "100%",
           ^.paddingRight := "9px",
           entityComponent(S),
-          //          searchView(state.content)
           <.pre(
             ^.height := "40%",
             ^.overflow.hidden,
@@ -272,11 +266,11 @@ object webApp extends js.JSApp {
             "100$ Dollar",
             ^.onClick --> openDollarModal
           ),
-          <.button(
-            ^.className := "btn btn-default",
-            "Ordinal Ranking",
-            ^.onClick --> openDollarModal
-          ),
+//          <.button(
+//            ^.className := "btn btn-default",
+//            "Ordinal Ranking",
+//            ^.onClick --> openDollarModal
+//          ),
           <.button(
             ^.className := "btn btn-default",
             "Release Planning",
