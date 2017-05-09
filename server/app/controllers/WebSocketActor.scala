@@ -13,10 +13,24 @@ object WebSocketActor {
 
 class WebSocketActor(out: ActorRef) extends Actor {
 //  val reqT = stringToProcess("java -jar reqT.jar")
-      val sysRuntime = java.lang.Runtime.getRuntime
+      val sysRuntime = Runtime.getRuntime
       val reqTprocess = sysRuntime.exec("java -jar reqT.jar")
       val (reqTis, reqTos) = (reqTprocess.getInputStream, reqTprocess.getOutputStream)
-      val buf = new Array[Byte](1024)
+      var buf = new Array[Byte](1024)
+//    println(s"user wrote $message")
+      reqTos.write("".getBytes)
+      reqTos.flush()
+      var nbrOfReadBytes = reqTis.read(buf, 0, 1024)
+      var response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
+      println(s"printed $response")
+      out ! response
+      reqTos.write("".getBytes)
+      reqTos.flush()
+      nbrOfReadBytes = reqTis.read(buf, 0, 1024)
+      response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
+      println(s"printed $response")
+      out ! response
+      buf = new Array[Byte](1024)
 
   //val templateHandler = new TemplateHandler
 
@@ -42,11 +56,12 @@ class WebSocketActor(out: ActorRef) extends Actor {
       println(s"user wrote $message")
       reqTos.write(message.getBytes)
       reqTos.flush()
+
       val nbrOfReadBytes = reqTis.read(buf, 0, 1024)
       val response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
       println(s"printed $response")
+//      reqTprocess.destroy
       out ! response
-
 
     //    case message: String =>
 //      message match {

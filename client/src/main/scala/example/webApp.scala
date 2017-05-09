@@ -375,6 +375,7 @@ object webApp extends js.JSApp {
 
         def onopen(event: Event): Unit = {
           // Indicate the connection is open
+          sendMessage(direct.state.websocket.get, "")
           direct.modState(_.log("Connected."))
         }
 
