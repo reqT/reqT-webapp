@@ -5,7 +5,9 @@ import org.scalajs.dom._
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
+
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
+
 import japgolly.scalajs.react._
 
 import scala.util.{Failure, Success}
@@ -26,7 +28,6 @@ object webApp extends js.JSApp {
 
   //Måste ändras till hostname
   val url = "ws://127.0.0.1:9000/socket"
-
   val elems = List(Item(), Label(), Meta(), Section(),Term(), Actor(), App(), Component(), Module(), Product(), Release(), Resource(),
     Risk(), Service(), Stakeholder(), System(), User(), Class(), Data(), Input(), Member(),Output(), Relationship(), Design(), Screen(), MockUp(), Function(),
     Interface(), Epic(), Feature(), Goal(), Idea(), Issue(), Req(), Ticket(), WorkPackage(), Breakpoint(), Barrier(), Quality(), Target(), Scenario(), Task(),
@@ -119,7 +120,6 @@ object webApp extends js.JSApp {
     ))
     .build
 
-
   val treeView = ReactComponentB[(ModelProxy[Tree], (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback)]("treeView")
     .render(P => <.pre(
       Styles.treeView,
@@ -140,13 +140,50 @@ object webApp extends js.JSApp {
     )
     ).build
 
+
+  def parseModel(newModel: String, dispatch: Action => Callback): Callback = {
+//    val m = Parser.parseModel(newModel.split('\n').map(_.trim.filter(_ >=
+    Callback()
+  }
+
+  def importModel(dispatch: Action => Callback)(e: ReactEventI): Callback = {
+    if(e.currentTarget.files.item(0).`type` == "text/plain") {
+      println(e.currentTarget.files.item(0).`type`)
+      var newModel = "newModel empty, shouldn't happen"
+      val fileReader = new FileReader
+      fileReader.readAsText(e.currentTarget.files.item(0), "UTF-8")
+
+      fileReader.onload = (_: UIEvent) => {
+        newModel = fileReader.result.asInstanceOf[String]
+
+        parseModel(newModel, dispatch)
+      }
+
+      Callback()
+    } else {
+      Callback(window.alert("Invalid file type, only .txt is supported"))
+    }
+ }
+
   val buttonComponent = ReactComponentB[(String, Props)]("buttonComponent")
     .render($ =>
       $.props._1 match {
         case "Templates" => TemplateSelect($.props._2.proxy.dispatchCB)
+        case "Import" => <.label(
+          Styles.navBarButton,
+          "Import",
+          <.input(
+            ^.`type`:="file",
+            ^.display.none,
+            ^.accept := "text/plain, .txt",
+            ^.onChange ==> importModel($.props._2.proxy.dispatchCB)
+          )
+        )
         case _ => <.button(
           $.props._1,
-          Styles.navBarButton)
+          Styles.navBarButton,
+          ^.onClick --> Callback(Parser)
+        )
       }).build
 
 
@@ -371,7 +408,8 @@ object webApp extends js.JSApp {
           ^.width := "auto",
           ^.height := "80%",
           ^.marginTop := "5px",
-          ^.overflow := "auto",
+          ^.overflowY.auto,
+          ^.whiteSpace.`pre-line`,
           $.props.map(<.p(_)))
       )
       .build
@@ -390,7 +428,7 @@ object webApp extends js.JSApp {
 
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
       def send = Callback(websocket.send(msg))
-      def updateState = $.modState(s => s.log(s"Sent").copy(message = ""))
+      def updateState = $.modState(s => s.log(s"Sent: \n$msg"))
 
       send >> updateState
     }
@@ -412,7 +450,7 @@ object webApp extends js.JSApp {
         }
 
         def onmessage(event: MessageEvent): Unit = {
-          direct.modState(_.log(s" ${event.data.toString}"))
+          direct.modState(_.log(s"${event.data.toString}"))
         }
 
         def onerror(event: ErrorEvent): Unit = {

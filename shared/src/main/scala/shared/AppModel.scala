@@ -2,6 +2,7 @@ package shared
 
 import diode.Action
 
+
 case class Model(tree: Tree)
 
 case class Tree(children: Seq[Elem]){ override def toString: String = children.map(_.toString).toString.replace("List", "Model")}
@@ -22,6 +23,7 @@ object UUID {
 
   def model(): UUID = modeluuid
 }
+
 
 sealed trait Elem {
   var isRelation = false
@@ -72,19 +74,14 @@ case class Relation(var entity: Entity, var link: RelationType, submodel:Tree) e
   }
 
 }
-
 sealed trait Node extends Elem {
 
 }
-
 
 sealed trait Attribute[T] extends Node {
   def value: T
   isAttribute = true
 }
-
-
-
 
 sealed trait Entity extends Node {
   var id: String
@@ -95,14 +92,12 @@ sealed trait Entity extends Node {
   def getID: String = id
 
   override def toString: String = (getClass.getName + "(\"" + id + "\")").replace("shared.", "")
-
   isEntity = true
-
 
 }
 
 sealed trait RelationType
-//sealed trait AttributeTypes[T]
+
 sealed trait General extends Entity
 
 sealed trait Context extends Entity
@@ -150,12 +145,12 @@ sealed trait IntAttribute extends Attribute[Int]{
 
 sealed trait VectorAttribute[T] extends Attribute[Vector[T]]
 
-
 sealed trait StatusValueAttribute extends Attribute[Enumeration]
 
 /**
   * General Entities
   */
+
 case class Item(var id: String= "", var uuid: UUID = UUID.random()) extends General {
 }
 
@@ -172,6 +167,7 @@ case class Term(var id: String= "", var uuid: UUID = UUID.random()) extends Gene
 /**
   * Context Entities
   */
+
 case class Actor(var id: String= "", var uuid: UUID = UUID.random()) extends Context
 
 case class App(var id: String= "", var uuid: UUID = UUID.random()) extends Context
@@ -267,6 +263,7 @@ case class Target(var id: String= "", var uuid: UUID = UUID.random()) extends Qu
 /**
   * Scenario Requirements
   */
+
 case class Scenario(var id: String= "", var uuid: UUID = UUID.random()) extends ScenarioReq
 
 case class Task(var id: String= "", var uuid: UUID = UUID.random()) extends ScenarioReq
@@ -280,6 +277,7 @@ case class UseCase(var id: String= "", var uuid: UUID = UUID.random()) extends S
 /**
   * Variability Requirements
   */
+
 case class VariationPoint(var id: String= "", var uuid: UUID = UUID.random()) extends VariabilityReq
 
 case class Variant(var id: String= "", var uuid: UUID = UUID.random()) extends VariabilityReq
@@ -287,6 +285,7 @@ case class Variant(var id: String= "", var uuid: UUID = UUID.random()) extends V
 /**
   * String Attribute Types
   */
+
 case class Code(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
 
 case class Comment(var value: String= "", var uuid: UUID = UUID.random()) extends StringAttribute
