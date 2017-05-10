@@ -73,7 +73,7 @@ object webApp extends js.JSApp {
 
   def convert(elem: Elem): TreeItem = elem match {
     case relation: Relation => TreeItem(relation.entity, relation.entity.uuid, relation.submodel.children.map(convert), Some(relation.link))
-    case node: Node => TreeItem(node, node.uuid, Seq(), None)
+    case node: shared.Node => TreeItem(node, node.uuid, Seq(), None)
   }
 
   val searchView = ReactComponentB[Unit]("searchView")
