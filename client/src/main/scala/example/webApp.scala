@@ -135,16 +135,9 @@ object webApp extends js.JSApp {
     )
     ).build
 
-  @JSExport
-  def newInstanceFromString(className: String)(args: Any*): Any = {
-    val ctor = className.split("\\.").foldLeft(js.Dynamic.global) { (prev, part) =>
-      prev.selectDynamic(part)
-    }
-    js.Dynamic.newInstance(ctor)(args.asInstanceOf[Seq[js.Any]]: _*)
-  }
 
   def parseModel(newModel: String, dispatch: Action => Callback): Callback = {
-//    val m = Parser.parseModel(newModel.split('\n').map(_.trim.filter(_ >= ' ')).mkString)
+//    val m = Parser.parseModel(newModel.split('\n').map(_.trim.filter(_ >=
     Callback()
   }
 
@@ -183,7 +176,9 @@ object webApp extends js.JSApp {
         )
         case _ => <.button(
           $.props._1,
-          Styles.navBarButton)
+          Styles.navBarButton,
+          ^.onClick --> Callback(Parser)
+        )
       }).build
 
 
@@ -332,7 +327,8 @@ object webApp extends js.JSApp {
           ^.width := "auto",
           ^.height := "80%",
           ^.marginTop := "5px",
-          ^.overflow := "auto",
+          ^.overflowY.auto,
+          ^.whiteSpace.`pre-line`,
           $.props.map(<.p(_)))
       )
       .build
@@ -357,7 +353,7 @@ object webApp extends js.JSApp {
 
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
       def send = Callback(websocket.send(msg))
-      def updateState = $.modState(s => s.log(s"Sent").copy(message = ""))
+      def updateState = $.modState(s => s.log(s"Sent: \n$msg"))
 
       send >> updateState
     }
@@ -379,7 +375,7 @@ object webApp extends js.JSApp {
         }
 
         def onmessage(event: MessageEvent): Unit = {
-          direct.modState(_.log(s" ${event.data.toString}"))
+          direct.modState(_.log(s"${event.data.toString}"))
         }
 
         def onerror(event: ErrorEvent): Unit = {
