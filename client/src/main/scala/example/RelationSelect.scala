@@ -3,6 +3,7 @@ package example
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, _}
 import diode.Action
+import shared._
 
 
 /**

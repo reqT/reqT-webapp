@@ -5,6 +5,7 @@ import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent}
 import org.scalajs.dom.ext.KeyCode
 import japgolly.scalajs.react._
+import shared._
 
 
 object Modal {

@@ -6,6 +6,7 @@ import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 import scala.scalajs.js
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
+import shared._
 
 object ReactSearchBox {
 

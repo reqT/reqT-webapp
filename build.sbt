@@ -49,7 +49,13 @@ lazy val client = (project in file("client")).settings(
 
 
 lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).
-  settings(scalaVersion := scalaV).
+  settings(
+    scalaVersion := scalaV,
+    libraryDependencies ++= Seq(
+      "io.suzaku" %%% "diode" % "1.1.1",
+      "io.suzaku" % "diode-react_sjs0.6_2.11" % "1.1.1"
+    )
+  ).
   jsConfigure(_ enablePlugins ScalaJSWeb)
 
 lazy val sharedJvm = shared.jvm

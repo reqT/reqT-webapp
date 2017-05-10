@@ -2,6 +2,7 @@ package example
 
 import diode._
 import diode.react.ReactConnector
+import shared._
 
 object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
@@ -236,8 +237,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
           case None => noChange
         }
-
-      case NoAction => noChange
     }
   }
 

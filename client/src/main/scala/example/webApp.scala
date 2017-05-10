@@ -18,6 +18,7 @@ import scalacss.Defaults._
 import upickle.default._
 
 import scala.collection.immutable.Queue
+import shared._
 
 
 @JSExport

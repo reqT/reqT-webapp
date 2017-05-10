@@ -9,6 +9,7 @@ import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 
 import scalacss.ScalaCssReact._
 import scala.scalajs.js
+import shared._
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def linkToString: String = link.getOrElse("").toString

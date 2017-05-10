@@ -2,6 +2,7 @@ package example
 
 import scalacss.Defaults._
 import scalacss.internal.mutable.GlobalRegistry
+import shared._
 
 
 /**
