@@ -1,0 +1,12 @@
+Benefit
+Capacity
+Cost
+Damage
+Frequency
+Min
+Max
+Order
+Prio
+Probability
+Profit
+Value
