@@ -14,7 +14,9 @@ object WebSocketActor {
 
 
 class WebSocketActor(out: ActorRef) extends Actor {
-//val templateHandler = new TemplateHandler
+  //val templateHandler = new TemplateHandler
+
+
   val sysRuntime = Runtime.getRuntime
   val reqTprocess = sysRuntime.exec("java -jar reqT.jar")
   val (reqTis, reqTos) = (reqTprocess.getInputStream, reqTprocess.getOutputStream)

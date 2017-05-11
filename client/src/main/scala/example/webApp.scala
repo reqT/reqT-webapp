@@ -27,12 +27,15 @@ import shared._
 object webApp extends js.JSApp {
 
   //Måste ändras till hostname
+
   val url = "ws://127.0.0.1:9000/socket"
-  val elems = List(Item(), Label(), Meta(), Section(),Term(), Actor(), App(), Component(), Module(), Product(), Release(), Resource(),
-    Risk(), Service(), Stakeholder(), System(), User(), Class(), Data(), Input(), Member(),Output(), Relationship(), Design(), Screen(), MockUp(), Function(),
-    Interface(), Epic(), Feature(), Goal(), Idea(), Issue(), Req(), Ticket(), WorkPackage(), Breakpoint(), Barrier(), Quality(), Target(), Scenario(), Task(),
-    Test(), Story(), UseCase(), VariationPoint(), Variant(), Code(), Comment(), Deprecated(), Example(), Expectation(), FileName(), Gist(), Image(), Spec(),
-    Text(), Title(), Why(), Benefit(), Capacity(), Cost(), Damage(), Frequency(), Min(), Max(), Order(), Prio(), Probability(), Profit(), Value())
+  val entities = List("Item", "Label", " Meta", "Section", "Term", "Actor", " App", "Component", " Module", "Product", " Release", "Resource", "Risk", "Service", "Stakeholder",
+    " System", " User", " Class", " Data", " Input", " Member", "Output", " Relationship", " Design", " Screen", " MockUp", " Function",
+    "Interface", " Epic", "Feature", " Goal", "Idea", " Issue", "Req", " Ticket", "WorkPackage", "Breakpoint", "Barrier", " Quality", "Target", " Scenario", "Task",
+    "Test", "Story", "UseCase", "VariationPoint", "Variant")
+
+  val attribute = List("Code", "Comment", "Deprecated", "Example", "Expectation", "FileName", "Gist", "Image", "Spec",
+    "Text", "Title", "Why", "Benefit", "Capacity", "Cost", " Damage", " Frequency", " Min", " Max", "Order", "Prio", " Probability", "Profit", "Value")
 
   val headerButtons = List("Export", "Import", "Templates", "Help")
 
@@ -392,14 +395,15 @@ object webApp extends js.JSApp {
         $.modState(_.copy(elems = elems.filter(_.isEntity), entityChecked = !S.entityChecked))
     }
 
-    def toggleAttribute(S: State)(event: ReactEventI): Callback = {
-      if(S.attributeChecked && S.entityChecked)
-        $.modState(_.copy(elems= elems.filter(_.isEntity), attributeChecked = !S.attributeChecked))
-      else if(S.attributeChecked || S.entityChecked)
-        $.modState(_.copy(elems= elems, attributeChecked = !S.attributeChecked))
-      else
-        $.modState(_.copy(elems = elems.filter(_.isAttribute), attributeChecked = !S.attributeChecked))
-    }
+    def toggleAttribute(S: State)(event: ReactEventI): Callback = Callback()
+//    {
+//      if(S.attributeChecked && S.entityChecked)
+//        $.modState(_.copy(elems= elems.filter(_.isEntity), attributeChecked = !S.attributeChecked))
+//      else if(S.attributeChecked || S.entityChecked)
+//        $.modState(_.copy(elems= elems, attributeChecked = !S.attributeChecked))
+//      else
+//        $.modState(_.copy(elems = elems.filter(_.isAttribute), attributeChecked = !S.attributeChecked))
+//    }
 
     val log = ReactComponentB[Vector[String]]("log")
       .render($ =>
