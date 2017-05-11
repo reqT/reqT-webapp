@@ -52,7 +52,7 @@ object ReleaseModal {
   case object MAX extends ReleaseType
   case object MIN extends ReleaseType
 
-  case class State(newEntity: String, newAttribute: Option[Attribute[Any]], sortBy: Seq[String], releaseType: ReleaseType = MAX)
+  case class State(newEntity: String, newAttribute: Option[Attribute], sortBy: Seq[String], releaseType: ReleaseType = MAX)
 
   case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => String) => Option[Callback], currentModel: Tree)
 
@@ -195,7 +195,7 @@ object ReleaseModal {
 
     def prepRelease(state: State, model: String): String = {
       val entity = state.newEntity
-      val attribute = state.newAttribute.getOrElse(Benefit()).toString.split('(').head
+      val attribute = state.newAttribute.getOrElse("Benefit").toString.split('(').head
       val problemType = state.releaseType match {
         case MAX => "maximize"
         case MIN => "minimize"
@@ -214,7 +214,7 @@ object ReleaseModal {
 
     def resetState: Callback = $.setState(State("",None, standardList))
 //    def setNewEntity(entity: Option[Entity]): Callback = $.modState(_.copy(newEntity = entity))
-    def setNewAttribute(attribute: Option[Attribute[Any]]): Callback = $.modState(_.copy(newAttribute = attribute))
+    def setNewAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newAttribute = attribute))
 
 
     def send(P: Props, S: State)(e: ReactEvent): Callback =

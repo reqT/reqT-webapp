@@ -33,9 +33,9 @@ object RelationSelect {
   val relationList = List("binds", "deprecates", "excludes", "has", "helps", "hurts", "impacts", "implements", "interactsWith", "is",
   "precedes", "requires", "relatesTo", "superOf", "verifies")
 
-  def fromString(value: String): Option[RelationType] = {
-    Vector(binds, deprecates, excludes, has, helps, hurts, impacts, implements, interactsWith, is, precedes, requires, relatesTo, superOf, verifies).find(_.toString == value)
-  }
+//  def fromString(value: String): Option[RelationType] = {
+//    Vector(binds, deprecates, excludes, has, helps, hurts, impacts, implements, interactsWith, is, precedes, requires, relatesTo, superOf, verifies).find(_.toString == value)
+//  }
 
 
   class Backend($: BackendScope[Props, State]) {
@@ -52,11 +52,13 @@ object RelationSelect {
     def onChange(P: Props, S: State)(e: ReactEventI): Callback = {
       e.preventDefault()
 
+      val newRel = e.target.value
+
       if(P.isModelValue)
-        P.dispatch(P.updateRel.get(fromString(e.target.value)))
+        P.dispatch(P.updateRel.get(Some(RelationType(newRel))))
       else
         P.setNewRelation match {
-          case Some(setRelation) => setRelation(fromString(e.target.value)) >> $.setState(s = S.copy(value = e.target.value))
+          case Some(setRelation) => setRelation(Some(RelationType(newRel))) >> $.setState(s = S.copy(value = e.target.value))
           case None => Callback(println("missing setNewRelation method"))
         }
     }

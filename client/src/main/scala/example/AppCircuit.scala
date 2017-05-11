@@ -6,8 +6,26 @@ import shared._
 
 object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
-  def initialModel: Model = Model(Tree(Seq(Req("R1"), Req("R2"), Stakeholder("BOSS"),
-    Relation(Req("R3"), has, Tree(Seq(Relation(Req("R3.1"), has, Tree(Seq(Prio(1))))))), Relation(Req("R4"), has, Tree(Seq(Prio(2)))))))
+  def initialModel: Model = Model(Tree(Seq(
+    Entity("Req", "R1"),
+    Entity("Req", "R2"),
+    Entity("Stakeholder", "BOSS"),
+    Relation(
+      Entity("Req", "R3"),
+      RelationType("has"),
+      Tree(Seq(Relation(
+        Entity("Req", "R3.1"),
+        RelationType("has"),
+        Tree(Seq(IntAttribute("Prio", 1)))
+      )))),
+    Relation(
+      Entity("Req", "R4"),
+      RelationType("has"),
+      Tree(Seq(IntAttribute("Prio", 2)))
+    )
+
+  )))
+
 
   def zoomToChildren(modelRW: ModelRW[Model, Tree], path: Seq[String]): Option[ModelRW[Model, Seq[Elem]]] = {
     if (path.isEmpty) {
@@ -118,7 +136,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         }
 
       case MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) =>
-          var element: Elem = Req()
+          var element: Elem = Entity("Error", "404")
           val elemToRemove = oldPath.last
 
           zoomToChildren(modelRW, oldPath.init.tail) match {
@@ -143,10 +161,10 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
       case SetTemplate =>
         val model = Tree(Seq(
-          Relation(Goal("accuracy"), has, Tree(Seq(Spec("Our pre-calculations shall hit within 5%")))),
-          Relation(Feature("quotation"), has, Tree(Seq(Spec("Product shall support cost recording and quotation with experience data")))),
-          Relation(Function("experienceData"), has, Tree(Seq(Spec("Product shall have recording and retrieval functions for experience data")))),
-          Relation(Design("screenX"), has, Tree(Seq(Spec("System shall have screen pictures as shown in Fig. X"))))
+          Relation(Entity("Goal", "accuracy"), RelationType("has"), Tree(Seq( StringAttribute("Spec","Our pre-calculations shall hit within 5%")))),
+          Relation(Entity("Feature","quotation"), RelationType("has"), Tree(Seq( StringAttribute("Spec","Product shall support cost recording and quotation with experience data")))),
+          Relation(Entity("Function","experienceData"), RelationType("has"), Tree(Seq( StringAttribute("Spec","Product shall have recording and retrieval functions for experience data")))),
+          Relation(Entity("Design","screenX"), RelationType("has"), Tree(Seq( StringAttribute("Spec","System shall have screen pictures as shown in Fig. X"))))
         ))
         updated(model)
 
@@ -158,25 +176,25 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
       case SetTemplate1 =>
         val model = Tree(Seq(
-          Relation(Stakeholder("a"), has, Tree(Seq(
-            Prio(2),
-            Relation(Req("1"), has,Tree(Seq(Benefit(5)))),
-            Relation(Req("2"), has,Tree(Seq(Benefit(300)))),
-            Relation(Req("3"), has,Tree(Seq(Benefit(8)))),
-            Relation(Req("4"), has,Tree(Seq(Benefit(9)))),
-            Relation(Req("5"), has,Tree(Seq(Benefit(100)))),
-            Relation(Req("6"), has,Tree(Seq(Benefit(10)))),
-            Relation(Req("7"), has,Tree(Seq(Benefit(20))))
+          Relation(Entity("Stakeholder","a"), RelationType("has"), Tree(Seq(
+            IntAttribute("Prio",2),
+            Relation(Entity("Req","1"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",5)))),
+            Relation(Entity("Req","2"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(300))))),
+            Relation(Entity("Req","3"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(8))))),
+            Relation(Entity("Req","4"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(9))))),
+            Relation(Entity("Req","5"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(100))))),
+            Relation(Entity("Req","6"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(10))))),
+            Relation(Entity("Req","7"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(20)))))
             ))),
-          Relation(Stakeholder("b"), has ,Tree(Seq(
-            Prio(4),
-            Relation(Req("1"), has,Tree(Seq(Benefit(100)))),
-            Relation(Req("2"), has,Tree(Seq(Benefit(7)))),
-            Relation(Req("3"), has,Tree(Seq(Benefit(20)))),
-            Relation(Req("4"), has,Tree(Seq(Benefit(80)))),
-            Relation(Req("5"), has,Tree(Seq(Benefit(10)))),
-            Relation(Req("6"), has,Tree(Seq(Benefit(90)))),
-            Relation(Req("7"), has,Tree(Seq(Benefit(20)))))))))
+          Relation(Entity("Stakeholder","b"), RelationType("has") ,Tree(Seq(
+            IntAttribute("Prio",4),
+            Relation(Entity("Req","1"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(100))))),
+            Relation(Entity("Req","2"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(7))))),
+            Relation(Entity("Req","3"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(20))))),
+            Relation(Entity("Req","4"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(80))))),
+            Relation(Entity("Req","5"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(10))))),
+            Relation(Entity("Req","6"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(90))))),
+            Relation(Entity("Req","7"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(20))))))))))
 
         updated(model)
 
@@ -225,7 +243,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
       case UpdateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) =>
         zoomToRelation(modelRW, path.tail) match {
-          case Some(modelRW) => updated(modelRW.updated(modelRW.value.asInstanceOf[Relation].setLink(newRelationType.getOrElse(modelRW.value.asInstanceOf[Relation].link)).setEntity(newId)).tree)
+          case Some(modelRW) => updated(modelRW.updated(modelRW.value.asInstanceOf[Relation].setLink(newRelationType.getOrElse(modelRW.value.asInstanceOf[Relation].link)).setEntityID(newId)).tree)
 
           case None => noChange
         }
@@ -236,6 +254,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
           case None => noChange
         }
+      case NoAction => noChange
     }
   }
 

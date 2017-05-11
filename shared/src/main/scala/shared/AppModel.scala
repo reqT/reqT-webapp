@@ -5,7 +5,9 @@ import diode.Action
 
 case class Model(tree: Tree)
 
-case class Tree(children: Seq[Elem]){ override def toString: String = children.map(_.toString).toString.replace("List", "Model")}
+case class Tree(children: Seq[Elem]){
+  override def toString: String = children.map(_.toString).toString.replace("List", "Model")
+}
 
 case class UUID(x1: Int, x2: Int, x3: Int, x4: Int)
 
@@ -33,7 +35,7 @@ sealed trait Elem {
   var isStringAttribute = false
   var isIntAttribute = false
 
-  var uuid: UUID
+  var uuid: UUID = UUID.random()
 
   def setRandomUUID() = {
     uuid = UUID.random()
@@ -54,44 +56,88 @@ sealed trait Node extends Elem
 case class Relation(var entity: Entity, var link: RelationType, submodel:Tree) extends Elem {
   isRelation = true
   entity.hasRelation = true
-  var uuid: UUID = UUID.random()
 
   override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString.replaceAll("List", "")
 
+  def setLink(newLink: RelationType): Relation = {
+    link = newLink
+    this
+  }
+
+  def setEntityID(newID: String): Relation ={
+    entity.setID(newID)
+    this
+  }
+
+  def setEntity(newEntity: Entity): Relation ={
+    entity = newEntity
+    this
+  }
 }
 
-case class Entity(entityType: String, id : String, var uuid: UUID) extends Node
+case class Entity(var entityType: String, var id : String ="") extends Node {
+  isEntity = true
 
-case class StringAttribute(attrType: String, value: String, var  uuid: UUID) extends Node
+  def setID(newID:String): Node = {
+    id = newID
+    this
+  }
 
-case class IntAttribute(attrType: String, value: Int, var uuid: UUID) extends Node
+  def setType(newType:String): Node = {
+    entityType = newType
+    this
+  }
 
-case class RelationType(relationType: String)
+  def getID: String = id
+  def getType: String = entityType
+  override def toString(): String = entityType+"(\""+id+"\")"
+}
 
+trait Attribute extends Node
 
+case class StringAttribute(var attrType: String, var value: String = "") extends Attribute{
+  isAttribute = true
+  isStringAttribute= true
 
+  def setValue(newValue:String): StringAttribute = {
+    value = newValue
+    this
+  }
 
+  def setType(newType:String): StringAttribute = {
+    attrType = newType
+    this
+  }
 
+  def getValue: String = value
+  def getType: String = attrType
+  override def toString(): String = attrType+"(\""+value+"\")"
+}
 
+case class IntAttribute(var attrType: String, var value: Int = 0) extends Attribute{
+  isAttribute = true
+  isIntAttribute = true
 
+  def setValue(newValue:Int): IntAttribute = {
+    value = newValue
+    this
+  }
 
+  def setType(newType:String): IntAttribute = {
+    attrType = newType
+    this
+  }
 
-  //  def setLink(newLink: RelationType): Relation = {
-  //    link = newLink
-  //    this
-  //  }
-  //
-  //  def setEntity(newEntityName: String): Relation = {
-  //    entity.setID(newEntityName)
-  //    this
-  //  }
-  //
-  //  def setEntity(newEntity: Entity): Relation = {
-  //    entity = newEntity
-  //    this
-  //  }
+  def getValue: Int = value
+  def getType : String = attrType
+  override def toString(): String = s"$attrType($value)"
 
+}
 
+case class RelationType(relationType: String) {
+  def getType: String = relationType
+  override def toString: String = relationType
+}
 
 
 
@@ -442,7 +488,7 @@ case object SetTemplate extends Action
 
 case object SetTemplate1 extends Action
 
-case object NoAction extends Action
+//case object NoAction extends Action
 
 
 

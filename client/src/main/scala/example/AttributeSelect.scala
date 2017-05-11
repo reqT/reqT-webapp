@@ -22,21 +22,21 @@ object AttributeSelect {
     ^.textAlignLast.center
   )
 
-  case class Props(value: String, isIntAttr: Boolean, setNewAttribute: Option[Attribute[Any]] => Callback)
+  case class Props(value: String, isIntAttr: Boolean, setNewAttribute: Option[Attribute] => Callback)
 
   case class State(value: String)
 
   val intAttributeList = List("Benefit", "Capacity", "Cost", "Damage", "Frequency", "Min", "Max", "Order", "Prio", "Probability", "Profit", "Value")
 
   val stringAttributeList = List("Code", "Comment", "Deprecated", "Example", "Expectation", "FileName", "Gist", "Image", "Spec", "Text", "Title", "Why")
-
-  def intAttrfromString(value: String): Option[IntAttribute] = {
-    Vector(Benefit(), Capacity(), Cost(), Damage(), Frequency(), Min(), Max(), Order(), Prio(), Probability(), Profit(), Value()).find(_.toString.replace("(0)", "") == value)
-  }
-
-  def stringAttrfromString(value: String): Option[StringAttribute] = {
-    Vector(Code(), Comment(), Deprecated(), Example(), Expectation(), FileName(), Gist(), Image(), Spec(), Text(), Title(), Why()).find(_.toString.replace("(\"\")","") == value)
-  }
+//
+//  def intAttrfromString(value: String): Option[IntAttribute] = {
+//    Vector("Benefit", "Capacity", "Cost", "Damage", "Frequency", "Min", "Max", "Order", "Prio", "Probability", "Profit", "Value").find(_ == value)
+//  }
+//
+//  def stringAttrfromString(value: String): Option[StringAttribute] = {
+//    Vector("Code", "Comment", "Deprecated", "Example", "Expectation", "FileName", "Gist", "Image", "Spec", "Text", "Title", "Why").find(_ == value)
+//  }
 
 
   class Backend($: BackendScope[Props, State]) {
@@ -52,13 +52,15 @@ object AttributeSelect {
 
 
     def onChange(P: Props, S: State)(e: ReactEventI): Callback = {
+      val newAttr = e.target.value
       e.preventDefault()
+
       if (P.isIntAttr) {
-        val attribute = intAttrfromString(e.target.value).asInstanceOf[Option[Attribute[Any]]]
-        P.setNewAttribute(attribute) >> $.setState(s = S.copy(value = e.target.value))
+        val attribute = Some(IntAttribute(newAttr))
+        P.setNewAttribute(attribute) >> $.setState(s = S.copy(value = newAttr))
       } else {
-        val attribute = stringAttrfromString(e.target.value).asInstanceOf[Option[Attribute[Any]]]
-        P.setNewAttribute(attribute) >> $.setState(s = S.copy(value = e.target.value))
+        val attribute = Some(StringAttribute(newAttr))
+        P.setNewAttribute(attribute) >> $.setState(s = S.copy(value = newAttr))
       }
     }
   }
@@ -70,7 +72,7 @@ object AttributeSelect {
 
 
 
-  def apply(value: String, isIntAttr: Boolean, setNewAttribute: Option[Attribute[Any]] => Callback)
+  def apply(value: String, isIntAttr: Boolean, setNewAttribute: Option[Attribute] => Callback)
   = component.set()(Props(value, isIntAttr, setNewAttribute))
 
 }

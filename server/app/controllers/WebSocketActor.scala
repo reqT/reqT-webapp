@@ -36,8 +36,6 @@ class WebSocketActor(out: ActorRef) extends Actor {
         if(reqTis.available() > 0){
           var nbrOfReadBytes = reqTis.read(buf, 0, 1024)
           var response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
-          println(response.length)
-          println(response)
           if(response.contains(":") && !response.contains("Welcome to")){
             out ! ("Answer: \n" + response.replace("reqT>", "").drop(response.indexOf("res")))
           }
@@ -50,7 +48,6 @@ class WebSocketActor(out: ActorRef) extends Actor {
 
   def receive = {
     case message: String =>
-      println(s"user wrote $message")
       reqTos.write((trim(message) + "\n").getBytes("UTF-8"))
       reqTos.flush()
 

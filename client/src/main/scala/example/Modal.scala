@@ -48,7 +48,7 @@ object Modal {
   def apply(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String], elemToAdd: Option[Elem])
       = component.set()(Props(isOpen, onClose, modalType, treeItem, dispatch, path, elemToAdd))
 
-  case class State(input: String, newEntity: Option[Entity], newRelation: Option[RelationType], newAttribute: Option[Attribute[Any]])
+  case class State(input: String, newEntity: Option[Entity], newRelation: Option[RelationType], newAttribute: Option[Attribute])
 
   case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, modalType: ModalType, treeItem: TreeItem, dispatch: Action => Callback, path: Seq[String], elemToAdd: Option[Elem])
 
@@ -87,7 +87,8 @@ object Modal {
 
         case _: IntAttribute =>
            P.dispatch(UpdateIntAttribute(path = P.path, S.newAttribute.getOrElse(P.treeItem.item).asInstanceOf[IntAttribute].setValue(S.input.toInt))) >> onClose(P)(e)
-        case _: StringAttribute => P.dispatch(UpdateStringAttribute(path = P.path, S.newAttribute.getOrElse(P.treeItem.item).asInstanceOf[StringAttribute].setValue(S.input))) >> onClose(P)(e)
+        case _: StringAttribute =>
+          P.dispatch(UpdateStringAttribute(path = P.path, S.newAttribute.getOrElse(P.treeItem.item).asInstanceOf[StringAttribute].setValue(S.input))) >> onClose(P)(e)
 
       }
     }
@@ -132,7 +133,7 @@ object Modal {
       }
     }
 
-    def addElem(P: Props, S: State)(e: ReactEvent): Callback = P.dispatch(AddElem(P.path, prepareElem(S.input, P.elemToAdd), has)) >> onClose(P)(e)
+    def addElem(P: Props, S: State)(e: ReactEvent): Callback = P.dispatch(AddElem(P.path, prepareElem(S.input, P.elemToAdd), RelationType("has"))) >> onClose(P)(e)
 
     def prepareElem(newValue: String, elem: Option[Elem]): Elem = {
       elem.get match {
@@ -147,7 +148,7 @@ object Modal {
 
     def setNewRelation(relationType: Option[RelationType]): Callback = $.modState(_.copy(newRelation = relationType))
 
-    def setNewAttribute(attribute: Option[Attribute[Any]]): Callback = $.modState(_.copy(newAttribute = attribute))
+    def setNewAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newAttribute = attribute))
 
     def addElemModalStyle(P : Props, S: State) = Seq(
       ^.width:= "400px",
@@ -161,7 +162,7 @@ object Modal {
         <.dt(
           P.treeItem.entityToString,
           ^.textAlign := "center",
-          ^.color := { if (P.treeItem.isInstanceOf[IntAttribute] || P.treeItem.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA" }
+          ^.color := { if (P.treeItem.isInstanceOf[Attribute]) "#03EE7D" else "#047BEA" }
         ),
         <.dd(
           {if (P.treeItem.entityToString != "Model") P.treeItem.contentToString else ""}
@@ -177,7 +178,12 @@ object Modal {
         ),
         <.hr,
         <.dt(
-          P.elemToAdd.get.toString.split('(').head,
+          P.elemToAdd match {
+            case Some(e: Entity) => e.getType
+            case Some(e: IntAttribute) => e.getType
+            case Some(e: StringAttribute) => e.getType
+            case None => "Error"
+          },
           ^.textAlign := "center",
           ^.color := { if (P.elemToAdd.get.isEntity) "#047BEA" else "#03EE7D"}
         ),
@@ -231,12 +237,12 @@ object Modal {
             case intAttr: IntAttribute =>  <.div(
               ^.textAlign := "center",
               ^.color := "#03EE7D",
-              AttributeSelect(intAttr.toString.split('(').head, isIntAttr = true, setNewAttribute)
+              AttributeSelect(intAttr.getType, isIntAttr = true, setNewAttribute)
             )
             case stringAttr: StringAttribute => <.div(
               ^.textAlign := "center",
               ^.color := "#03EE7D",
-              AttributeSelect(stringAttr.toString.split('(').head, isIntAttr = false, setNewAttribute)
+              AttributeSelect(stringAttr.getType, isIntAttr = false, setNewAttribute)
             )
             case _: Entity => EntitySelect(P.treeItem.entityToString, setNewEntity, isModelValue = false)
           }),
@@ -425,7 +431,9 @@ object Modal {
         newProps.treeItem.item match {
           case entity: Entity =>
            $.modState(_.copy(input = newInput, newEntity = Some(entity), newRelation = newProps.treeItem.link, newAttribute = None))
-          case attribute: Attribute[Any] =>
+          case attribute: IntAttribute =>
+            $.modState(_.copy(input = newInput, newEntity = None, newRelation = newProps.treeItem.link, newAttribute = Some(attribute)))
+          case attribute: StringAttribute =>
             $.modState(_.copy(input = newInput, newEntity = None, newRelation = newProps.treeItem.link, newAttribute = Some(attribute)))
           case _ =>
             $.modState(_.copy(input = newInput, newEntity = None, newRelation = None, newAttribute = None))

@@ -33,12 +33,12 @@ object EntitySelect {
 
   case class State(value: String)
 
-  def fromString(value: String): Option[Entity] = {
-    Vector(Item(), Label(), Meta(), Section(), Term(), Actor(), App(), Component(), Domain(), Module(), Product(), Release(),
-      Risk(), Service(), Stakeholder(), System(), User(), Class(), Data(), Input(), Member(), Output(), Relationship(), Design(), Screen(), MockUp(),
-      Function(), Interface(), Epic(), Feature(), Goal(), Idea(), Issue(), Req(), Ticket(), WorkPackage(), Breakpoint(), Barrier(), Quality(), Target(),
-      Scenario(), Task(), Test(), Story(), UseCase(), VariationPoint(), Variant()).find(_.toString.replace("(\"\")","") == value)
-  }
+//  def fromString(value: String): Option[Entity] = {
+//    Vector(Item(), Label(), Meta(), Section(), Term(), Actor(), App(), Component(), Domain(), Module(), Product(), Release(),
+//      Risk(), Service(), Stakeholder(), System(), User(), Class(), Data(), Input(), Member(), Output(), Relationship(), Design(), Screen(), MockUp(),
+//      Function(), Interface(), Epic(), Feature(), Goal(), Idea(), Issue(), Req(), Ticket(), WorkPackage(), Breakpoint(), Barrier(), Quality(), Target(),
+//      Scenario(), Task(), Test(), Story(), UseCase(), VariationPoint(), Variant()).find(_.toString.replace("(\"\")","") == value)
+//  }
 
 
   class Backend($: BackendScope[Props, State]) {
@@ -57,7 +57,7 @@ object EntitySelect {
     def onChange(P: Props, S: State)(e: ReactEventI): Callback = {
       e.preventDefault()
       val newEntity = e.target.value
-      P.setNewEntity(fromString(newEntity)) >> $.setState(s = S.copy(value = newEntity))
+      P.setNewEntity(Some(Entity(newEntity))) >> $.setState(s = S.copy(value = newEntity))
     }
 
   }

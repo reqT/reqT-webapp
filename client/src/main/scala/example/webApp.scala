@@ -29,19 +29,25 @@ object webApp extends js.JSApp {
   //Måste ändras till hostname
 
   val url = "ws://127.0.0.1:9000/socket"
-  val entities = List("Item", "Label", " Meta", "Section", "Term", "Actor", " App", "Component", " Module", "Product", " Release", "Resource", "Risk", "Service", "Stakeholder",
-    " System", " User", " Class", " Data", " Input", " Member", "Output", " Relationship", " Design", " Screen", " MockUp", " Function",
-    "Interface", " Epic", "Feature", " Goal", "Idea", " Issue", "Req", " Ticket", "WorkPackage", "Breakpoint", "Barrier", " Quality", "Target", " Scenario", "Task",
-    "Test", "Story", "UseCase", "VariationPoint", "Variant")
 
-  val attribute = List("Code", "Comment", "Deprecated", "Example", "Expectation", "FileName", "Gist", "Image", "Spec",
-    "Text", "Title", "Why", "Benefit", "Capacity", "Cost", " Damage", " Frequency", " Min", " Max", "Order", "Prio", " Probability", "Profit", "Value")
+  val entities = Seq("Item", "Label", "Meta", "Section", "Term", "Actor", "App", "Component", "Module", "Product", "Release", "Resource", "Risk", "Service", "Stakeholder",
+    "System", "User", "Class", "Data", "Input", "Member", "Output", "Relationship", "Design", "Screen", "MockUp", "Function",
+    "Interface", "Epic", "Feature", "Goal", "Idea", "Issue", "Req", "Ticket", "WorkPackage", "Breakpoint", "Barrier", "Quality", "Target", "Scenario", "Task",
+    "Test", "Story", "UseCase", "VariationPoint", "Variant")//Används men borde läsas in ifrån reqT
 
-  val headerButtons = List("Export", "Import", "Templates", "Help")
+  val intAttribute = Seq("Benefit", "Capacity", "Cost", "Damage", "Frequency", "Min", "Max", "Order", "Prio", "Probability", "Profit", "Value")//Används men borde läsas in ifrån reqT
+
+  val stringAttribute = Seq("Code", "Comment", "Deprecated", "Example", "Expectation", "FileName", "Gist", "Image", "Spec",
+    "Text", "Title", "Why") //Används men borde läsas in ifrån reqT
+
+  val attributes = intAttribute ++ stringAttribute
+  val elems = entities ++ attributes
+
+  val headerButtons = Seq("Export", "Import", "Templates", "Help")
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: List[Elem], isModalOpen: Boolean, modalType: ModalType,
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], isModalOpen: Boolean, modalType: ModalType,
                    treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
                    entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[Tree] = Queue(),
                    isDollarModalOpen: Boolean = false, isReleaseModal: Boolean = false) {
@@ -93,33 +99,35 @@ object webApp extends js.JSApp {
     .build
 
 
-  val listElem = ReactComponentB[Elem]("listElem")
+  val listElem = ReactComponentB[String]("listElem")
     .render($ => <.ul(
       $.props.toString.takeWhile(_!='('),
       Styles.listElem,
       ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
       ^.id := $.props.toString,
       ^.classID := $.props.toString,
-      ^.background := (if ($.props.isEntity) "#CEDBE7" else "#CFEADD"),
+      ^.background := (if (entities.contains($.props)) "#CEDBE7" else "#CFEADD"),
       ^.padding := 5.px,
       ^.borderRadius := "5px",
       ^.draggable := "true",
-      ^.onDragStart ==> dragStart($.props)
-//      typeTag($.props)
+      ^.onDragStart ==> (
+        if (entities.contains($.props)) dragStart(Entity($.props))
+      else if(intAttribute.contains($.props)) dragStart(IntAttribute($.props))
+      else dragStart(StringAttribute($.props))
+        )
     ))
     .build
 
-  def typeTag(elem: Elem) = if (elem.isEntity) "Entity" else "Attribute"
 
 
-  val entityListView = ReactComponentB[List[Elem]]("entityList")
+  val entityListView = ReactComponentB[Seq[String]]("entityList")
     .render(elems => <.pre(
       ^.className := "form-control",
       ^.id := "dragList",
       ^.height := "86%",
       ^.marginTop := "5px",
       ^.overflow := "auto",
-      elems.props.sortWith((a,b) => a.toString < b.toString).map(listElem(_))
+      elems.props.sorted.map(listElem(_))
     ))
     .build
 
@@ -388,22 +396,21 @@ object webApp extends js.JSApp {
 
     def toggleEntity(S: State)(event: ReactEventI): Callback = {
       if(S.entityChecked && S.attributeChecked)
-        $.modState(_.copy(elems= elems.filter(_.isAttribute), entityChecked = !S.entityChecked))
+        $.modState(_.copy(elems = attributes, entityChecked = !S.entityChecked))
       else if(S.attributeChecked || S.entityChecked)
         $.modState(_.copy(elems = elems, entityChecked = !S.entityChecked))
       else
-        $.modState(_.copy(elems = elems.filter(_.isEntity), entityChecked = !S.entityChecked))
+        $.modState(_.copy(elems = entities, entityChecked = !S.entityChecked))
     }
 
-    def toggleAttribute(S: State)(event: ReactEventI): Callback = Callback()
-//    {
-//      if(S.attributeChecked && S.entityChecked)
-//        $.modState(_.copy(elems= elems.filter(_.isEntity), attributeChecked = !S.attributeChecked))
-//      else if(S.attributeChecked || S.entityChecked)
-//        $.modState(_.copy(elems= elems, attributeChecked = !S.attributeChecked))
-//      else
-//        $.modState(_.copy(elems = elems.filter(_.isAttribute), attributeChecked = !S.attributeChecked))
-//    }
+    def toggleAttribute(S: State)(event: ReactEventI): Callback = {
+      if(S.attributeChecked && S.entityChecked)
+        $.modState(_.copy(elems= entities, attributeChecked = !S.attributeChecked))
+      else if(S.attributeChecked || S.entityChecked)
+        $.modState(_.copy(elems= elems, attributeChecked = !S.attributeChecked))
+      else
+        $.modState(_.copy(elems = attributes, attributeChecked = !S.attributeChecked))
+    }
 
     val log = ReactComponentB[Vector[String]]("log")
       .render($ =>
@@ -420,9 +427,9 @@ object webApp extends js.JSApp {
 
     def onTextChange(event: ReactEventI): Callback =
       event.extract(_.target.value.toLowerCase) {
-        case "entity" | "entities" => $.modState(_.copy(elems = elems.filter(_.isEntity)))
-        case "attribute" | "attributes" => $.modState(_.copy(elems = elems.filter(_.isAttribute)))
-        case value => $.modState(_.copy(elems = elems.filter(_.toString.toLowerCase.contains(value.toLowerCase))))
+        case "entity" | "entities" => $.modState(_.copy(elems = entities))
+        case "attribute" | "attributes" => $.modState(_.copy(elems = attributes))
+        case value => $.modState(_.copy(elems = elems.filter(_.toLowerCase.contains(value.toLowerCase))))
       }
 
     def onChange(event: ReactEventI): Callback = {

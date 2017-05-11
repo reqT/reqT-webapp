@@ -10,15 +10,31 @@ import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
 import scalacss.ScalaCssReact._
 import scala.scalajs.js
 import shared._
+import diode.NoAction
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
-  def linkToString: String = link.getOrElse("").toString
+  def linkToString: String = link match {
+    case Some(relationType) => relationType.getType
+    case None => ""
+  }
 
   def itemToString: String = item.toString.replaceAll("\"", "")
 
-  def entityToString: String = item.toString.split('(').head
+  def entityToString: String =
+    item match {
+      case i :Entity => i.getType
+      case i: IntAttribute => i.getType
+      case i: StringAttribute   => i.getType
+      case "Model" => item.toString
+    }
 
-  def contentToString: String = item.toString.split('(').tail.mkString.init.replaceAll("\"", "")
+  def contentToString: String =
+    item match {
+      case i :Entity => i.getID
+      case i: IntAttribute => i.getValue.toString
+      case i: StringAttribute   => i.getValue
+      case "Model" => item.toString
+    }
   
   def apply(item: Any, uuid: UUID, children: Seq[TreeItem]): TreeItem = this (item, uuid, Seq())
 
@@ -235,7 +251,7 @@ object ReactTreeView {
           case _ => Callback()
         }
       }else{
-        dispatch(MoveElem(pathFrom, pathTo, has)) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))
+        dispatch(MoveElem(pathFrom, pathTo, RelationType("has"))) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))
       }
     }
 
@@ -263,7 +279,7 @@ object ReactTreeView {
 
     def dragOverStyle(P: NodeProps): Seq[TagMod] = {
       Seq(^.opacity := 0.5,
-        P.root.item.isInstanceOf[Attribute[Any]] ?= Seq(
+        P.root.item.isInstanceOf[Attribute] ?= Seq(
           ^.color := "#FF3636",
           ^.border := "1px solid",
           ^.borderColor := "#FF3636"
