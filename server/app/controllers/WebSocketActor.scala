@@ -20,7 +20,8 @@ class WebSocketActor(out: ActorRef) extends Actor {
   class ExprParser extends RegexParsers {
 
     val int = "[0-9][0-9]*".r
-    val string = "[a-zA-Z1-9.!?-][a-zA-Z1-9.!?-]+".r
+    val string = "[a-zA-Z0-9~!@#$^%&*|;:'{}\\[\\] /<,>.+?`-][a-zA-Z0-9~!@#$^%&*|;:'{}\\[\\] /<,>.+?`-]*".r
+    val relType = "[a-zA-Z][a-zA-Z]*".r
 
     def Model: Parser[shared.Model] = "Model(" ~ opt(rep(Elem ~ ",")) ~ Elem ~")"^^{
       case   _ ~ Some(list) ~ elem ~ _=> {
@@ -34,7 +35,7 @@ class WebSocketActor(out: ActorRef) extends Actor {
       case ent ~ reltype ~ model => new Relation(ent,reltype, model.tree)
     }
 
-    def RelationType: Parser[shared.RelationType] = string ^^{new RelationType(_)}
+    def RelationType: Parser[shared.RelationType] = relType ^^{new RelationType(_)}
 
     def Node: Parser[shared.Node] = Attribute | Entity ^^{
       case node :Node => node
@@ -50,9 +51,9 @@ class WebSocketActor(out: ActorRef) extends Actor {
 //      case tpe ~ _ ~ Some(value) ~ _ => new StringAttribute(tpe,value)
 //    }
 
-    def Entity: Parser[shared.Entity] = string ~ "(\"" ~ opt(string) ~ "\")" ^^{
-      case tpe ~ _ ~ Some(id) ~ _ => new Entity(tpe,id)
-      case tpe ~ _ ~ None ~ _ => new Entity(tpe)
+    def Entity: Parser[shared.Entity] = string ~ "(" ~ "\"" ~ opt(string) ~ "\"" ~ ")" ^^{
+      case tpe ~ _ ~  _ ~ Some(id) ~ _ ~ _ => new Entity(tpe,id)
+      case tpe ~ _ ~  _ ~ None ~ _ ~ _ => new Entity(tpe)
     }
   }
 
@@ -60,15 +61,7 @@ class WebSocketActor(out: ActorRef) extends Actor {
   val parser = new ExprParser
 
   val result = parser.parseAll(parser.Model,
-    "Model(" +
-      "Req(\"R1\"), " +
-      "Comment(\"R2\"), " +
-      "Stakeholder(\"BOSS\"), " +
-      "Req(\"R3\") helps " +
-        "Model(Req(\"R3.1\") has " +
-          "Model(Prio(1))), " +
-      "Req(\"R4\") has " +
-        "Model(Comment(\" hej\"), Feature(\" YOYO\")))"
+    "Model(Goal(\"accuracy\") has Model(Spec(\"Our pre-calculations shall hit within 5%\")), Feature(\"quotation\") has Model(Spec(\"Product shall support cost recording and quotation with experience data\")), Function(\"experienceData\") has Model(Spec(\"Product shall have recording and retrieval functions for experience data\")), Design(\"screenX\") has Model(Spec(\"System shall have screen pictures as shown in Fig. X\")))"
   )
 
 
