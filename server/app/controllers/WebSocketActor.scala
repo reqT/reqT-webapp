@@ -1,11 +1,10 @@
 package controllers
-import java.io.ByteArrayInputStream
 
 import akka.actor._
 import shared._
-
 import scala.util.parsing.combinator.RegexParsers
-import scala.sys.process._
+import upickle.default._
+
 
 
 object WebSocketActor {
@@ -105,10 +104,17 @@ class WebSocketActor(out: ActorRef) extends Actor {
     }
   }).start()
 
+  testUpickle
+  def testUpickle = {
+    out ! write[Model](result.get)
+  }
+
   def receive = {
     case message: String =>
       reqTos.write((trim(message) + "\n").getBytes("UTF-8"))
       reqTos.flush()
+
+
 
 //      message match {
 //        case r"Template[1-9][0-9]*" =>
