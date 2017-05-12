@@ -59,11 +59,11 @@ object webApp extends js.JSApp {
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], isModalOpen: Boolean, modalType: ModalType,
                    treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
                    entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[Tree] = Queue(),
-                   isDollarModalOpen: Boolean = false, isReleaseModal: Boolean = false, latestRecModel: Model = null) {
+                   isDollarModalOpen: Boolean = false, isReleaseModal: Boolean = false, latestRecTree: Tree = null) {
 
     def log(line: String): State = copy(logLines = logLines :+ line)
 
-    def disp(model: Model): State = copy(latestRecModel = model)
+    def disp(tree: Tree): State = copy(latestRecTree = tree)
 
   }
 
@@ -454,6 +454,20 @@ object webApp extends js.JSApp {
       $.modState(_.copy(message = newMessage))
     }
 
+    def fixInputModel(tree: Tree): Tree = {
+      if(tree.children.nonEmpty) {
+        tree.copy(children = tree.children.collect({
+          case child: Entity => if(stringAttribute.contains(child.getType)) new StringAttribute(child.getType, child.getID) else child
+          case child: Relation => if(child.submodel.children.nonEmpty) {
+            fixInputModel(child.submodel)
+            }
+            child
+        }))
+
+        }
+
+    }
+
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
       def send = Callback(websocket.send(msg))
       def updateState = $.modState(s => s.log(s"Sent: \n$msg").copy(message = ""))
@@ -480,7 +494,8 @@ object webApp extends js.JSApp {
 
         def onmessage(event: MessageEvent): Unit = {
           if(event.data.toString.startsWith("{")){
-            direct.modState(_.disp(read[Model](event.data.toString)))
+            val m = fixInputModel(read[Model](event.data.toString).tree)
+            direct.modState(_.disp(m)))
           } else {
             direct.modState(_.log(s"${event.data.toString}"))
           }
