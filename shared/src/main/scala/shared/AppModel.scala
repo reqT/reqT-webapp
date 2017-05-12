@@ -93,7 +93,7 @@ case class Entity(var entityType: String, var id : String ="") extends Node {
   override def toString(): String = entityType+"(\""+id+"\")"
 }
 
-trait Attribute extends Node
+sealed trait Attribute extends Node
 
 case class StringAttribute(var attrType: String, var value: String = "") extends Attribute{
   isAttribute = true

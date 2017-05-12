@@ -46,10 +46,23 @@ class WebSocketActor(out: ActorRef) extends Actor {
     }
   }).start()
 
+  val model = Model(Tree(Seq(
+    Relation(Entity("Goal", "accuracy"), RelationType("has"), Tree(Seq( StringAttribute("Spec","Our pre-calculations shall hit within 5%")))),
+    Relation(Entity("Feature","quotation"), RelationType("has"), Tree(Seq( StringAttribute("Spec","Product shall support cost recording and quotation with experience data")))),
+    Relation(Entity("Function","experienceData"), RelationType("has"), Tree(Seq( StringAttribute("Spec","Product shall have recording and retrieval functions for experience data")))),
+    Relation(Entity("Design","screenX"), RelationType("has"), Tree(Seq( StringAttribute("Spec","System shall have screen pictures as shown in Fig. X")))))))
+
+  testUpickle
+  def testUpickle = {
+    out ! write[Model](model)
+  }
+
   def receive = {
     case message: String =>
       reqTos.write((trim(message) + "\n").getBytes("UTF-8"))
       reqTos.flush()
+
+
 
 //      message match {
 //        case r"Template[1-9][0-9]*" =>

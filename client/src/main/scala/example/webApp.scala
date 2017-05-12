@@ -54,7 +54,7 @@ object webApp extends js.JSApp {
 
   val attributes = intAttribute ++ stringAttribute
   val elems = entities ++ attributes
-  
+
   val headerButtons = Seq("Export", "Import", "Templates", "Help")
 
 
@@ -473,8 +473,13 @@ object webApp extends js.JSApp {
           direct.modState(_.log("Connected."))
         }
 
+
         def onmessage(event: MessageEvent): Unit = {
-          direct.modState(_.log(s"${event.data.toString}"))
+          if(event.data.toString.startsWith("{")){
+            println(read[Model](event.data.toString))
+          } else {
+            direct.modState(_.log(s"${event.data.toString}"))
+          }
         }
 
         def onerror(event: ErrorEvent): Unit = {
