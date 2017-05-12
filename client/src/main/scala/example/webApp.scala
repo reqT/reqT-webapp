@@ -63,9 +63,9 @@ object webApp extends js.JSApp {
 
     def log(line: String): State = copy(logLines = logLines :+ line)
 
-    def disp(model: Model): State = {
-      println(model.tree.children)
-      dispatch(SetModel(model.tree.children.seq)).runNow()
+    def disp(tree: Tree): State = {
+      println(tree.children)
+      dispatch(SetModel(tree.children.seq)).runNow()
       this
     }
 
@@ -454,6 +454,20 @@ object webApp extends js.JSApp {
       $.modState(_.copy(message = newMessage))
     }
 
+    def fixInputModel(tree: Tree): Tree = {
+      if(tree.children.nonEmpty) {
+        tree.copy(children = tree.children.collect({
+          case child: Entity => if(stringAttribute.contains(child.getType)) new StringAttribute(child.getType, child.getID) else child
+          case child: Relation => if(child.submodel.children.nonEmpty) {
+            fixInputModel(child.submodel)
+            }
+            child
+        }))
+
+        }
+
+    }
+
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
       def send = Callback(websocket.send(msg))
       def updateState = $.modState(s => s.log(s"Sent: \n$msg").copy(message = ""))
@@ -480,7 +494,8 @@ object webApp extends js.JSApp {
 
         def onmessage(event: MessageEvent): Unit = {
           if(event.data.toString.startsWith("{")){
-            direct.modState(_.disp(read[Model](event.data.toString)))
+            val m = fixInputModel(read[Model](event.data.toString).tree)
+            direct.modState(_.disp(m)))
           } else {
             direct.modState(_.log(s"${event.data.toString}"))
           }
