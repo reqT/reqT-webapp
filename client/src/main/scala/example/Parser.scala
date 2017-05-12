@@ -8,6 +8,7 @@ import shared._
   */
 object Parser {
   val str = "Model(Stakeholder(\"Lovelace\") has (Feature(\"export\") has ( Benefit(4), Feature(\"Hejsan\")),Feature(\"print\") has Benefit(1), Feature(\"upload\") has Benefit(2)),Stakeholder(\"Babbage\") has ( Feature(\"export\") has Benefit(2),Feature(\"print\") has Benefit(1), Feature(\"upload\") has Benefit(1)))"
+
   //Entities or Attributes
   val entOrAttrMatch = """\w+[(]["]?\w+["]?[)]""".r
   //Entities or StringAttributes

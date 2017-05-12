@@ -5,15 +5,13 @@ import org.scalajs.dom._
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
-
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
-
 import japgolly.scalajs.react._
 
 import scala.util.{Failure, Success}
 import diode.react.ModelProxy
 import example.Modal.ModalType
-import org.scalajs.dom.ext.KeyCode
+import org.scalajs.dom.ext.{Ajax, KeyCode}
 
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
@@ -22,6 +20,9 @@ import upickle.default._
 import scala.collection.immutable.Queue
 import shared._
 
+import scala.concurrent.{Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.scalajs.js.timers._
 
 @JSExport
 object webApp extends js.JSApp {
@@ -30,20 +31,32 @@ object webApp extends js.JSApp {
 
   val url = "ws://127.0.0.1:9000/socket"
 
-  val entities = Seq("Item", "Label", "Meta", "Section", "Term", "Actor", "App", "Component", "Module", "Product", "Release", "Resource", "Risk", "Service", "Stakeholder",
-    "System", "User", "Class", "Data", "Input", "Member", "Output", "Relationship", "Design", "Screen", "MockUp", "Function",
-    "Interface", "Epic", "Feature", "Goal", "Idea", "Issue", "Req", "Ticket", "WorkPackage", "Breakpoint", "Barrier", "Quality", "Target", "Scenario", "Task",
-    "Test", "Story", "UseCase", "VariationPoint", "Variant")//Används men borde läsas in ifrån reqT
+  val entities = List("Ent", "Meta", "Item", "Label", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release", "Resource", "Risk", "Service",
+    "Stakeholder", "System", "User", "Class", "Data", "Input", "Member", "Output", "Relationship", "Design", "Screen", "MockUp", "Function", "Interface", "State", "Event",
+    "Epic", "Feature", "Goal", "Idea", "Issue", "Req", "Ticket", "WorkPackage", "Breakpoint", "Barrier", "Quality", "Target", "Scenario", "Task", "Test", "Story", "UseCase",
+    "VariationPoint", "Variant")
+  val intAttribute = List("Benefit", "Capacity", "Cost", "Damage", "Frequency", "Min", "Max", "Order", "Prio", "Probability", "Profit", "Value")
+  val stringAttribute = List("Comment", "Deprecated", "Example", "Expectation", "FileName", "Gist", "Image", "Spec", "Text", "Title", "Why")
 
-  val intAttribute = Seq("Benefit", "Capacity", "Cost", "Damage", "Frequency", "Min", "Max", "Order", "Prio", "Probability", "Profit", "Value")//Används men borde läsas in ifrån reqT
 
-  val stringAttribute = Seq("Code", "Comment", "Deprecated", "Example", "Expectation", "FileName", "Gist", "Image", "Spec",
-    "Text", "Title", "Why") //Används men borde läsas in ifrån reqT
+  /**
+    * Example of how to fetch data from client. Problem is that in the case of entities/attributes, these are needed when the client application is started.
+    * No blocking on UI does not allow for sync read from server.
+    */
+  //  val statusValueAttrList = List()
+//
+//  def getStatusValueAttributes: Future[List[String]] = {
+//    Ajax.get("/statusvalueattributes").map { r =>
+//      println(read[List[String]](r.responseText))
+//      read[List[String]](r.responseText)
+//    }
+//  }
 
   val attributes = intAttribute ++ stringAttribute
   val elems = entities ++ attributes
-
+  
   val headerButtons = Seq("Export", "Import", "Templates", "Help")
+
 
   case class Props(proxy: ModelProxy[Tree])
 
@@ -439,7 +452,7 @@ object webApp extends js.JSApp {
 
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
       def send = Callback(websocket.send(msg))
-      def updateState = $.modState(s => s.log(s"Sent: \n$msg"))
+      def updateState = $.modState(s => s.log(s"Sent: \n$msg").copy(message = ""))
 
       send >> updateState
     }
