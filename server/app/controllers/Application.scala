@@ -6,12 +6,14 @@ import akka.actor.ActorSystem
 import akka.stream.Materializer
 import play.api.libs.streams.ActorFlow
 import play.api.mvc._
+import shared._
 //import shared.{ Class => Clazz, _}
 import upickle.default._
 
 
 class Application @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller{
   val templateHandler = new TemplateHandler
+  val parser = new ExprParser
 
   def index = Action {
     Ok(views.html.index("hej"))
@@ -19,6 +21,11 @@ class Application @Inject() (implicit system: ActorSystem, materializer: Materia
 
   def socket = WebSocket.accept[String, String] { request =>
     ActorFlow.actorRef(out => WebSocketActor.props(out))
+  }
+
+  def getModelFromString(model: String) = Action {
+    println(model)
+    Ok(write[Model](parser.parseAll(parser.Model, model).getOrElse(null)))
   }
 
   /**
