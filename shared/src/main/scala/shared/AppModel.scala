@@ -6,7 +6,8 @@ import diode.Action
 case class Model(tree: Tree)
 
 case class Tree(children: Seq[Elem]){
-  override def toString: String = children.map(_.toString).toString.replace("List", "Model").replace("Vector", "Model")
+  override def toString: String = children.map(_.toString).toString.replace("List", "Model").replace("Vector","Model")
+
 }
 
 case class UUID(x1: Int, x2: Int, x3: Int, x4: Int)

@@ -19,15 +19,7 @@ class WebSocketActor(out: ActorRef) extends Actor {
   val parser = new ExprParser
 
   val result = parser.parseAll(parser.Model,
-    "Model(" +
-      "Req(\"R1\"), " +
-      "Comment(\"R2\"), " +
-      "Stakeholder(\"BOSS\"), " +
-      "Req(\"R3\") helps " +
-        "Model(Req(\"R3.1\") has " +
-          "Model(Prio(1))), " +
-      "Req(\"R4\") has " +
-        "Model(Comment(\" hej\"), Feature(\" YOYO\")))"
+    "Model(Goal(\"accuracy\") has Model(Spec(\"Our pre-calculations shall hit within 5%\")), Feature(\"quotation\") has Model(Spec(\"Product shall support cost recording and quotation with experience data\")), Function(\"experienceData\") has Model(Spec(\"Product shall have recording and retrieval functions for experience data\")), Design(\"screenX\") has Model(Spec(\"System shall have screen pictures as shown in Fig. X\")))"
   )
 
 
