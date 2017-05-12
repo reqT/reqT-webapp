@@ -63,7 +63,10 @@ object webApp extends js.JSApp {
 
     def log(line: String): State = copy(logLines = logLines :+ line)
 
-    def disp(tree: Tree): State = copy(latestRecTree = tree)
+    def disp(tree: Tree): State ={
+    println(tree)
+    copy(latestRecTree = tree)
+    }
 
   }
 
@@ -236,7 +239,6 @@ object webApp extends js.JSApp {
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
 
-      // Can only send if WebSocket is connected and user has entered text
       val send: Option[Callback] =
         for (websocket <- S.websocket if S.message.nonEmpty)
           yield sendMessage(websocket, S.message)
@@ -299,12 +301,12 @@ object webApp extends js.JSApp {
               ),
               <.button(
                 ^.className := "btn btn-default",
-                ^.disabled := send.isEmpty, // Disable button if unable to send
-                ^.onClick -->? send, // --> suffixed by ? because it's for Option[Callback]
+                ^.disabled := send.isEmpty,
+                ^.onClick -->? send,
                 "Send"),
               <.button(
                 ^.className := "btn btn-default",
-                ^.onClick --> P.proxy.dispatchCB(SetModel(S.latestRecModel.tree.children)), // --> suffixed by ? because it's for Option[Callback]
+                ^.onClick --> P.proxy.dispatchCB(SetModel(S.latestRecTree.children)),
                 "asdf"),
               <.button(
                 ^.disabled := sendVerify.isEmpty,
@@ -455,17 +457,24 @@ object webApp extends js.JSApp {
     }
 
     def fixInputModel(tree: Tree): Tree = {
+      var t = tree
       if(tree.children.nonEmpty) {
-        tree.copy(children = tree.children.collect({
-          case child: Entity => if(stringAttribute.contains(child.getType)) new StringAttribute(child.getType, child.getID) else child
+         val newChildren = tree.children.map({
+          case child: Entity => if(stringAttribute.contains(child.getType)){
+                StringAttribute(child.getType, child.getID)
+              }else{
+                child
+              }
           case child: Relation => if(child.submodel.children.nonEmpty) {
-            fixInputModel(child.submodel)
-            }
-            child
-        }))
-
-        }
-
+                Relation(child.entity, child.link , fixInputModel(child.submodel))
+              }else {
+                child
+              }
+          case child: IntAttribute => child
+        })
+        t = Tree(newChildren)
+      }
+      t
     }
 
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
@@ -494,8 +503,8 @@ object webApp extends js.JSApp {
 
         def onmessage(event: MessageEvent): Unit = {
           if(event.data.toString.startsWith("{")){
-            val m = fixInputModel(read[Model](event.data.toString).tree)
-            direct.modState(_.disp(m)))
+            val tree = fixInputModel(read[Model](event.data.toString).tree)
+            direct.modState(_.disp(tree))
           } else {
             direct.modState(_.log(s"${event.data.toString}"))
           }

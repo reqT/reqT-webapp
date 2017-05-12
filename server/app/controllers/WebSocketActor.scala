@@ -62,13 +62,13 @@ class WebSocketActor(out: ActorRef) extends Actor {
   val result = parser.parseAll(parser.Model,
     "Model(" +
       "Req(\"R1\"), " +
-      "Req(\"R2\"), " +
+      "Comment(\"R2\"), " +
       "Stakeholder(\"BOSS\"), " +
       "Req(\"R3\") helps " +
         "Model(Req(\"R3.1\") has " +
           "Model(Prio(1))), " +
       "Req(\"R4\") has " +
-        "Model(Comment(\" hej\")))"
+        "Model(Comment(\" hej\"), Feature(\" YOYO\")))"
   )
 
 
