@@ -64,15 +64,12 @@ class WebSocketActor(out: ActorRef) extends Actor {
       "Req(\"R1\"), " +
       "Req(\"R2\"), " +
       "Stakeholder(\"BOSS\"), " +
-      "Req(\"R3\") has " +
+      "Req(\"R3\") helps " +
         "Model(Req(\"R3.1\") has " +
           "Model(Prio(1))), " +
       "Req(\"R4\") has " +
         "Model(Comment(\" hej\")))"
   )
-
-  println(result)
-  
 
 
   val sysRuntime = Runtime.getRuntime

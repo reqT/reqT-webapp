@@ -59,17 +59,13 @@ object webApp extends js.JSApp {
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], isModalOpen: Boolean, modalType: ModalType,
                    treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
                    entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[Tree] = Queue(),
-                   isDollarModalOpen: Boolean = false, isReleaseModal: Boolean = false) {
+                   isDollarModalOpen: Boolean = false, isReleaseModal: Boolean = false, latestRecModel: Model = null) {
 
     def log(line: String): State = copy(logLines = logLines :+ line)
 
-    def disp(model: Model): State = {
-      println(model.tree.children)
-      dispatch(SetModel(model.tree.children.seq)).runNow()
-      this
-    }
+    def disp(model: Model): State = copy(latestRecModel = model)
 
-    }
+  }
 
 
 
@@ -306,6 +302,10 @@ object webApp extends js.JSApp {
                 ^.disabled := send.isEmpty, // Disable button if unable to send
                 ^.onClick -->? send, // --> suffixed by ? because it's for Option[Callback]
                 "Send"),
+              <.button(
+                ^.className := "btn btn-default",
+                ^.onClick --> P.proxy.dispatchCB(SetModel(S.latestRecModel.tree.children)), // --> suffixed by ? because it's for Option[Callback]
+                "asdf"),
               <.button(
                 ^.disabled := sendVerify.isEmpty,
                 ^.className := "btn btn-default",

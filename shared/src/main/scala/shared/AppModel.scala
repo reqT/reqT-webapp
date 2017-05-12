@@ -6,7 +6,7 @@ import diode.Action
 case class Model(tree: Tree)
 
 case class Tree(children: Seq[Elem]){
-//  override def toString: String = children.map(_.toString).toString.replace("List", "Model")
+  override def toString: String = children.map(_.toString).toString.replace("List", "Model")
 }
 
 case class UUID(x1: Int, x2: Int, x3: Int, x4: Int)
@@ -57,7 +57,7 @@ case class Relation(var entity: Entity, var link: RelationType, submodel:Tree) e
   isRelation = true
   entity.hasRelation = true
 
-//  override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString.replaceAll("List", "")
+  override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString.replaceAll("List", "")
 
   def setLink(newLink: RelationType): Relation = {
     link = newLink
@@ -90,7 +90,7 @@ case class Entity(var entityType: String, var id : String ="") extends Node {
 
   def getID: String = id
   def getType: String = entityType
-//  override def toString(): String = entityType+"(\""+id+"\")"
+  override def toString(): String = entityType+"(\""+id+"\")"
 }
 
 sealed trait Attribute extends Node
@@ -111,7 +111,7 @@ case class StringAttribute(var attrType: String, var value: String = "") extends
 
   def getValue: String = value
   def getType: String = attrType
-//  override def toString(): String = attrType+"(\""+value+"\")"
+  override def toString(): String = attrType+"(\""+value+"\")"
 }
 
 case class IntAttribute(var attrType: String, var value: Int = 0) extends Attribute{
@@ -130,13 +130,13 @@ case class IntAttribute(var attrType: String, var value: Int = 0) extends Attrib
 
   def getValue: Int = value
   def getType : String = attrType
-//  override def toString(): String = s"$attrType($value)"
+  override def toString(): String = s"$attrType($value)"
 
 }
 
 case class RelationType(relationType: String) {
   def getType: String = relationType
-//  override def toString: String = relationType
+  override def toString: String = relationType
 }
 
 
