@@ -19,7 +19,7 @@ class WebSocketActor(out: ActorRef) extends Actor {
   val parser = new ExprParser
 
   val result = parser.parseAll(parser.Model,
-    "Model(Goal(\"accuracy\") has Model(Spec(\"Our pre-calculations shall hit within 5%\")), Feature(\"quotation\") has Model(Spec(\"Product shall support cost recording and quotation with experience data\")), Function(\"experienceData\") has Model(Spec(\"Product shall have recording and retrieval functions for experience data\")), Design(\"screenX\") has Model(Spec(\"System shall have screen pictures as shown in Fig. X\")))"
+    "Model(Goal(\"accuracy\") has Spec(\"On \"), Feature(\"quotation\") has Spec(\"Producata\"), Function(\"experienceData\") has Spec(\"Prod data\"), Design(\"screenX\") has Spec(\"Systin Fig\"))"
   )
 
 
@@ -31,6 +31,16 @@ class WebSocketActor(out: ActorRef) extends Actor {
   def trim(text: String): String = text.drop(text.indexOf("reqT>"))
   def trimResponse(text: String): String = text.drop(text.indexOf("res"))
 
+  def findEndOfModel(model: List[Char]): Int = {
+    def go(cs: List[Char], level: Int): Int = cs match {
+      case ')' :: _ if level==1 => 1
+      case ')' :: xs => go(xs, level-1) + 1
+      case '(' :: xs => go(xs, level+1) + 1
+      case _  :: xs => go(xs, level) + 1
+    }
+    go(model, 0)
+  }
+
   implicit class Regex(sc: StringContext) {
     def r = new util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
   }
@@ -40,9 +50,16 @@ class WebSocketActor(out: ActorRef) extends Actor {
       while(reqTprocess.isAlive) {
 
         if(reqTis.available() > 0){
-          var nbrOfReadBytes = reqTis.read(buf, 0, 1024)
-          var response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
-          if(response.contains(":") && !response.contains("Welcome to")){
+          val nbrOfReadBytes = reqTis.read(buf, 0, 1024)
+          val response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
+          if (response.contains("= Model(")){
+            val start = response.indexOf("= Model(")+2
+            val end = findEndOfModel(response.toList)
+
+            val result = parser.parseAll(parser.Model, response.slice(start,end))
+
+            out ! write[Model](result.get)
+          } else if(response.contains(":") && !response.contains("Welcome to")){
             out ! ("Answer: \n" + response.replace("reqT>", "").drop(response.indexOf("res")))
           }
         } else {

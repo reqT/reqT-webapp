@@ -19,7 +19,6 @@ import scala.scalajs.js.URIUtils._
 import scala.collection.immutable.Queue
 import shared._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 @JSExport
 object webApp extends js.JSApp {
@@ -64,7 +63,7 @@ object webApp extends js.JSApp {
 
     def log(line: String): State = copy(logLines = logLines :+ line)
 
-    def disp(tree: Tree): State ={
+    def saveTree(tree: Tree): State ={
       copy(latestRecTree = tree)
     }
 
@@ -270,12 +269,12 @@ object webApp extends js.JSApp {
 
       val sendVerify: Option[Callback] =
         for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
-          yield sendMessage(websocket, P.proxy.value.toString.replaceAll("\n", ""))
+          yield sendMessage(websocket, P.proxy.value.makeString.replaceAll("\n", ""))
 
 
       def sendPrepMessage(prepMessage: String => String): Option[Callback] =
         for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
-          yield sendMessage(websocket, prepMessage(v1 = P.proxy.value.toString.replaceAll("\n", "")))
+          yield sendMessage(websocket, prepMessage(v1 = P.proxy.value.makeString.replaceAll("\n", "")))
 
 //      val sendGetTemplate(templateNbr: Int): Option[Callback] =
 //        for (websocket <- state.websocket if state.message.nonEmpty)
@@ -347,7 +346,7 @@ object webApp extends js.JSApp {
           <.button(
             ^.className := "btn btn-default",
             "Copy Model",
-            ^.onClick --> openModalWithContent(Modal.COPY_MODAL, elemToTreeItem(P.proxy.value.children), P.proxy.dispatchCB, Seq(P.proxy.value.toString), None)
+            ^.onClick --> openModalWithContent(Modal.COPY_MODAL, elemToTreeItem(P.proxy.value.children), P.proxy.dispatchCB, Seq(P.proxy.value.makeString), None)
           ),
           <.button(
             ^.className := "btn btn-default",
@@ -498,10 +497,7 @@ object webApp extends js.JSApp {
         // (for access outside of a normal DOM/React callback).
         val direct = $.accessDirect
 
-        // These are message-receiving events from the WebSocket "thread".
-
         def onopen(event: Event): Unit = {
-          // Indicate the connection is open
           direct.modState(_.log("Connected."))
         }
 
@@ -509,7 +505,7 @@ object webApp extends js.JSApp {
         def onmessage(event: MessageEvent): Unit = {
           if(event.data.toString.startsWith("{")){
             val tree = fixInputModel(read[Model](event.data.toString).tree)
-            direct.modState(_.disp(tree))
+            direct.modState(_.saveTree(tree))
           } else {
             direct.modState(_.log(s"${event.data.toString}"))
           }
