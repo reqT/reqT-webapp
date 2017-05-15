@@ -204,6 +204,7 @@ object webApp extends js.JSApp {
       println(e.currentTarget.files.item(0).`type`)
       var newModel = "newModel empty, shouldn't happen"
       val fileReader = new FileReader
+      println(e.currentTarget.files.item(0))
       fileReader.readAsText(e.currentTarget.files.item(0), "UTF-8")
 
       fileReader.onload = (_: UIEvent) => {
@@ -211,8 +212,7 @@ object webApp extends js.JSApp {
         println("Kom in i FileReader")
         parseModel(newModel.replace("\n", "").trim, dispatch)
       }
-
-      Callback()
+      Callback(e.currentTarget.value = "")
     } else {
       Callback(window.alert("Invalid file type, only .txt is supported"))
     }
