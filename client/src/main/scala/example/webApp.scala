@@ -7,16 +7,15 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react._
-
+import scala.scalajs.js.dom._
 import scala.util.{Failure, Success}
 import diode.react.ModelProxy
 import example.Modal.ModalType
 import org.scalajs.dom.ext.{Ajax, KeyCode}
-
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
-
+import scala.scalajs.js.URIUtils._
 import scala.collection.immutable.Queue
 import shared._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -190,7 +189,7 @@ object webApp extends js.JSApp {
   }
 
   def parseModel(newModel: String, dispatch: Action => Callback): Unit = {
-    Ajax.get("/getmodelfromstring/" + newModel.replace(".", "")).onComplete{
+    Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete{
       case Success(r) =>
         println(read[Model](r.responseText))
         dispatch(SetModel(fixInputModel(read[Model](r.responseText).tree).children)).runNow()
