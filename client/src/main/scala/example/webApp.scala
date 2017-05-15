@@ -63,9 +63,9 @@ object webApp extends js.JSApp {
 
     def log(line: String): State = copy(logLines = logLines :+ line)
 
-    def disp(tree: Tree): State ={
-    println(tree)
-    copy(latestRecTree = tree)
+    def saveTree(tree: Tree): State ={
+      println(tree)
+      copy(latestRecTree = tree)
     }
 
   }
@@ -493,18 +493,16 @@ object webApp extends js.JSApp {
         // (for access outside of a normal DOM/React callback).
         val direct = $.accessDirect
 
-        // These are message-receiving events from the WebSocket "thread".
-
         def onopen(event: Event): Unit = {
-          // Indicate the connection is open
           direct.modState(_.log("Connected."))
         }
 
 
         def onmessage(event: MessageEvent): Unit = {
           if(event.data.toString.startsWith("{")){
+            println("asdf")
             val tree = fixInputModel(read[Model](event.data.toString).tree)
-            direct.modState(_.disp(tree))
+            direct.modState(_.saveTree(tree))
           } else {
             direct.modState(_.log(s"${event.data.toString}"))
           }
