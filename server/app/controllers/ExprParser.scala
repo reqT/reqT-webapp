@@ -20,13 +20,22 @@ class ExprParser extends RegexParsers {
 
   def Elem: Parser[shared.Elem] = Relation | Node
 
-  def Relation: Parser[shared.Relation] = Entity ~ RelationType ~ Model^^{
-    case ent ~ reltype ~ model => new Relation(ent,reltype, model.tree)
+  def Relation: Parser[shared.Relation] = Entity ~ RelationType ~ RelationModel ^^{
+    case ent ~ reltype ~ relationModel => new Relation(ent,reltype, relationModel)
+  }
+
+  def RelationModel : Parser[shared.Tree] = RelationList | Elem  ^^ {
+    case list: shared.Tree => list
+    case elem: shared.Elem => Tree(Seq(elem))
+  }
+
+  def RelationList: Parser[shared.Tree] = "(" ~ rep1(Elem ~ ",") ~ Elem ~ ")" ^^{
+    case _ ~ list ~ elem ~ _ => Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem]))
   }
 
   def RelationType: Parser[shared.RelationType] = relType ^^{new RelationType(_)}
 
-  def Node: Parser[shared.Node] = Attribute | Entity ^^{
+  def Node: Parser[shared.Node] = (Attribute | Entity) ^^{
     case node :Node => node
   }
 

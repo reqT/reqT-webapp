@@ -18,9 +18,9 @@ class WebSocketActor(out: ActorRef) extends Actor {
 
   val parser = new ExprParser
 
-//  val result = parser.parseAll(parser.Model,
-//    "Model(Goal(\"accuracy\") has Model(Spec(\"Our pre-calculations shall hit within 5%\")), Feature(\"quotation\") has Model(Spec(\"Product shall support cost recording and quotation with experience data\")), Function(\"experienceData\") has Model(Spec(\"Product shall have recording and retrieval functions for experience data\")), Design(\"screenX\") has Model(Spec(\"System shall have screen pictures as shown in Fig. X\")))"
-//  )
+  val result = parser.parseAll(parser.Model,
+    "Model(Goal(\"accuracy\") has Spec(\"On \"), Feature(\"quotation\") has Spec(\"Producata\"), Function(\"experienceData\") has Spec(\"Prod data\"), Design(\"screenX\") has Spec(\"Systin Fig\"))"
+  )
 
 
   val sysRuntime = Runtime.getRuntime
@@ -69,10 +69,10 @@ class WebSocketActor(out: ActorRef) extends Actor {
     }
   }).start()
 
-//  testUpickle
-//  def testUpickle = {
-//    out ! write[Model](result.get)
-//  }
+  testUpickle
+  def testUpickle = {
+    out ! write[Model](result.get)
+  }
 
   def receive = {
     case message: String =>

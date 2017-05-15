@@ -6,8 +6,14 @@ import diode.Action
 case class Model(tree: Tree)
 
 case class Tree(children: Seq[Elem]){
-  override def toString: String = children.map(_.toString).toString.replace("List", "Model").replace("Vector","Model")
-
+  override def toString: String =  {
+    if (children.size == 1 && !children.head.isRelation)
+      children.head.toString
+    else{
+      children.map(_.toString).toString.replace("List", "").replace("Vector","")
+    }
+  }
+  def makeString: String = "Model"+this.toString
 }
 
 case class UUID(x1: Int, x2: Int, x3: Int, x4: Int)
@@ -58,7 +64,7 @@ case class Relation(var entity: Entity, var link: RelationType, submodel:Tree) e
   isRelation = true
   entity.hasRelation = true
 
-  override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString.replaceAll("List", "Model")
+  override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString //.replaceAll("List", "Model")
 
   def setLink(newLink: RelationType): Relation = {
     link = newLink
