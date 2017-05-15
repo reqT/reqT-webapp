@@ -19,6 +19,8 @@ import upickle.default._
 
 import scala.collection.immutable.Queue
 import shared._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 @JSExport
 object webApp extends js.JSApp {
@@ -39,7 +41,7 @@ object webApp extends js.JSApp {
     * Example of how to fetch data from client. Problem is that in the case of entities/attributes, these are needed when the client application is started.
     * No blocking on UI does not allow for sync read from server.
     */
-  //  val statusValueAttrList = List()
+//    val statusValueAttrList = List()
 //
 //  def getStatusValueAttributes: Future[List[String]] = {
 //    Ajax.get("/statusvalueattributes").map { r =>
@@ -62,7 +64,7 @@ object webApp extends js.JSApp {
                    isDollarModalOpen: Boolean = false, isReleaseModal: Boolean = false, latestRecTree: Tree = null) {
 
     def log(line: String): State = copy(logLines = logLines :+ line)
-
+    
     def saveTree(tree: Tree): State ={
       println(tree)
       copy(latestRecTree = tree)
@@ -167,10 +169,35 @@ object webApp extends js.JSApp {
     )
     ).build
 
+  def fixInputModel(tree: Tree): Tree = {
+    var t = tree
+    if(tree.children.nonEmpty) {
+      val newChildren = tree.children.map({
+        case child: Entity => if(stringAttribute.contains(child.getType)){
+          StringAttribute(child.getType, child.getID)
+        }else{
+          child
+        }
+        case child: Relation => if(child.submodel.children.nonEmpty) {
+          Relation(child.entity, child.link , fixInputModel(child.submodel))
+        }else {
+          child
+        }
+        case child: IntAttribute => child
+      })
+      t = Tree(newChildren)
+    }
+    t
+  }
 
-  def parseModel(newModel: String, dispatch: Action => Callback): Callback = {
-//    val m = Parser.parseModel(newModel.split('\n').map(_.trim.filter(_ >=
-    Callback()
+  def parseModel(newModel: String, dispatch: Action => Callback): Unit = {
+    Ajax.get("/getmodelfromstring/" + newModel.replace(".", "")).onComplete{
+      case Success(r) =>
+        println(read[Model](r.responseText))
+        dispatch(SetModel(fixInputModel(read[Model](r.responseText).tree).children)).runNow()
+      case Failure(e) =>
+        println(e.toString)
+    }
   }
 
   def importModel(dispatch: Action => Callback)(e: ReactEventI): Callback = {
@@ -178,15 +205,15 @@ object webApp extends js.JSApp {
       println(e.currentTarget.files.item(0).`type`)
       var newModel = "newModel empty, shouldn't happen"
       val fileReader = new FileReader
+      println(e.currentTarget.files.item(0))
       fileReader.readAsText(e.currentTarget.files.item(0), "UTF-8")
 
       fileReader.onload = (_: UIEvent) => {
         newModel = fileReader.result.asInstanceOf[String]
-
-        parseModel(newModel, dispatch)
+        println("Kom in i FileReader")
+        parseModel(newModel.replace("\n", "").trim, dispatch)
       }
-
-      Callback()
+      Callback(e.currentTarget.value = "")
     } else {
       Callback(window.alert("Invalid file type, only .txt is supported"))
     }
@@ -456,26 +483,6 @@ object webApp extends js.JSApp {
       $.modState(_.copy(message = newMessage))
     }
 
-    def fixInputModel(tree: Tree): Tree = {
-      var t = tree
-      if(tree.children.nonEmpty) {
-         val newChildren = tree.children.map({
-          case child: Entity => if(stringAttribute.contains(child.getType)){
-                StringAttribute(child.getType, child.getID)
-              }else{
-                child
-              }
-          case child: Relation => if(child.submodel.children.nonEmpty) {
-                Relation(child.entity, child.link , fixInputModel(child.submodel))
-              }else {
-                child
-              }
-          case child: IntAttribute => child
-        })
-        t = Tree(newChildren)
-      }
-      t
-    }
 
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
       def send = Callback(websocket.send(msg))
