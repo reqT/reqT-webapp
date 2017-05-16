@@ -225,7 +225,6 @@ object webApp extends js.JSApp {
     var file = new Blob(js.Array(p.proxy.value.makeString), js.Dynamic.literal(`type` = "text/plain").asInstanceOf[BlobPropertyBag])
     val a = document.createElement("a")
     var tempURL = dom.URL.createObjectURL(file)
-//    url = dom.URL.createObjectURL(file)
     a.setAttribute("href", tempURL)
     a.setAttribute("download", "reqTModel.txt")
     document.body.appendChild(a)
@@ -234,21 +233,6 @@ object webApp extends js.JSApp {
       document.body.removeChild(a)
       dom.URL.revokeObjectURL(tempURL)
     }
-
-//    if (dom.window.navigator.msSaveOrOpenBlob) // IE10+
-//    dom.window.navigator.msSaveOrOpenBlob(file, filename)
-////    else { // Others
-//    val a = document.createElement("a")
-//    url = URL.createObjectURL(file)
-//    a.href = url
-//    a.download = filename
-//    document.body.appendChild(a)
-//    a.click()
-//    setTimeout(function() {
-//    document.body.removeChild(a)
-//    window.URL.revokeObjectURL(url)
-//  }, 0)
-//  }
   }
 
   val buttonComponent = ReactComponentB[(String, Props)]("buttonComponent")
