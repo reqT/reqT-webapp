@@ -54,9 +54,6 @@ object webApp extends js.JSApp {
   val attributes = intAttribute ++ stringAttribute
   val elems = entities ++ attributes
 
-  val headerButtons = Seq("Export", "Import", "Templates", "Help")
-
-
   case class Props(proxy: ModelProxy[Tree])
 
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], isModalOpen: Boolean, modalType: ModalType,
@@ -235,44 +232,6 @@ object webApp extends js.JSApp {
     }
   }
 
-  val buttonComponent = ReactComponentB[(String, Props)]("buttonComponent")
-    .render($ =>
-      $.props._1 match {
-        case "Templates" => TemplateSelect($.props._2.proxy.dispatchCB)
-        case "Import" => <.label(
-          Styles.navBarButton,
-          "Import",
-          <.input(
-            ^.`type`:="file",
-            ^.display.none,
-            ^.accept := "text/plain, .txt",
-            ^.onChange ==> importModel($.props._2.proxy.dispatchCB)
-          )
-        )
-        case "Export" =>
-          <.button(
-          Styles.navBarButton,
-          "Export",
-          ^.onClick --> Callback(downloadModel($.props._2))
-          )
-        case _ => <.button(
-          $.props._1,
-          Styles.navBarButton,
-          ^.onClick --> Callback()
-        )
-      }).build
-
-
-  val navigationBar = ReactComponentB[(Seq[String], Props)]("navigationBar")
-    .render($ => <.nav(
-      ^.paddingLeft := "15px",
-      ^.paddingRight := "15px",
-      Styles.navBar,
-      $.props._1.map(x => buttonComponent((x, $.props._2)))
-    )
-    ).build
-
-
   class Backend($: BackendScope[Props, State]) {
 
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
@@ -284,6 +243,14 @@ object webApp extends js.JSApp {
 
     def openDollarModal = $.modState(_.copy(isDollarModalOpen = true))
     def openReleaseModal = $.modState(_.copy(isReleaseModal = true))
+
+    def saveModel(P: Props, S: State): Callback = {
+      if(S.cachedModels.size > 4)
+        $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ P.proxy.value))
+      else
+        $.modState(_.copy(cachedModels = S.cachedModels :+ P.proxy.value))
+    }
+
 
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
@@ -314,22 +281,21 @@ object webApp extends js.JSApp {
           None
       }
 
-      def saveModel(P: Props, S: State): Callback = {
-        if(S.cachedModels.size > 4)
-          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ P.proxy.value))
-        else
-          $.modState(_.copy(cachedModels = S.cachedModels :+ P.proxy.value))
-      }
 
       <.div(
-        Modal(S.isModalOpen, closeModal, S.modalType, S.treeItem, S.dispatch, S.path, S.elemToModal),
-        HundredDollarModal(isOpen = S.isDollarModalOpen, onClose = closeDollarModal, sendPrepMessage),
-        ReleaseModal(isOpen = S.isReleaseModal, onClose = closeReleaseModal, sendPrepMessage, P.proxy.value),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
-        ^.paddingTop := "25px",
         ^.overflow := "hidden",
+        ^.paddingRight := "5px",
+        ^.paddingLeft := "5px",
+        Modal(S.isModalOpen, closeModal, S.modalType, S.treeItem, S.dispatch, S.path, S.elemToModal),
+        HundredDollarModal(isOpen = S.isDollarModalOpen, onClose = closeDollarModal, sendPrepMessage),
+        ReleaseModal(isOpen = S.isReleaseModal, onClose = closeReleaseModal, sendPrepMessage, P.proxy.value),
+        <.div(
+          ^.className := "header",
+          navigationBar((headerButtons, P, S))
+        ),
         <.div(
           ^.className := "col-1",
           ^.float := "left",
@@ -338,7 +304,7 @@ object webApp extends js.JSApp {
           ^.paddingRight := "9px",
           entityComponent(S),
           <.pre(
-            ^.height := "40%",
+            ^.height := "45%",
             ^.overflow.hidden,
             <.div(
               <.input(
@@ -365,38 +331,82 @@ object webApp extends js.JSApp {
               )
             ),
             log(S.logLines)// Display log
-          ),
-          cachedModels((P,S))),
-        <.div(
-          <.button(
-            ^.className := "btn btn-default",
-            "Copy Model",
-            ^.onClick --> openModalWithContent(Modal.COPY_MODAL, elemToTreeItem(P.proxy.value.children), P.proxy.dispatchCB, Seq(P.proxy.value.makeString), None)
-          ),
-          <.button(
-            ^.className := "btn btn-default",
-            "Save Model",
-            ^.onClick --> saveModel(P,S)
-          ),
-          <.button(
-            ^.className := "btn btn-default",
-            "100$ Dollar",
-            ^.onClick --> openDollarModal
-          ),
-//          <.button(
-//            ^.className := "btn btn-default",
-//            "Ordinal Ranking",
-//            ^.onClick --> openDollarModal
-//          ),
-          <.button(
-            ^.className := "btn btn-default",
-            "Release Planning",
-            ^.onClick --> openReleaseModal
           )
         ),
-        sc(proxy => treeView((proxy, openModalWithContent)))
+        <.div(
+          ^.className := "col-2",
+          ^.width := "71%",
+          ^.height := "100%",
+          ^.float.left,
+          cachedModels((P,S)),
+          sc(proxy => treeView((proxy, openModalWithContent)))
+        )
+
       )
     }
+
+    val headerButtons = Seq("Import", "Export", "Copy Model", "Templates", "100$", "Ordinal", "Release", "Help")
+    val buttonComponent = ReactComponentB[(String, Props, State)]("buttonComponent")
+      .render($ =>
+        $.props._1 match {
+
+          case "Import" => <.label(
+            Styles.navBarButton,
+            "Import",
+            <.input(
+              ^.`type`:="file",
+              ^.display.none,
+              ^.accept := "text/plain, .txt",
+              ^.onChange ==> importModel($.props._2.proxy.dispatchCB)
+            )
+          )
+          case "Export" =>
+            <.button(
+              Styles.navBarButton,
+              "Export",
+              ^.onClick --> Callback(downloadModel($.props._2))
+            )
+          case "Copy Model" =>
+            <.button(
+              Styles.navBarButton,
+              "Copy Model",
+              ^.onClick --> openModalWithContent(Modal.COPY_MODAL,
+                elemToTreeItem($.props._2.proxy.value.children), $.props._2.proxy.dispatchCB, Seq($.props._2.proxy.value.makeString), None)
+            )
+          case "Templates" => TemplateSelect($.props._2.proxy.dispatchCB)
+          case "100$" =>
+            <.button(
+              Styles.navBarButton,
+              "100$",
+              ^.onClick --> openDollarModal
+            )
+          case "Release" =>
+            <.button(
+              Styles.navBarButton,
+              "Release",
+              ^.onClick --> openReleaseModal
+            )
+          case "Help" =>
+            <.button(
+              Styles.navBarButton,
+              ^.className := "glyphicon glyphicon-question-sign pull-right"
+            )
+          case _ => <.button(
+            $.props._1,
+            Styles.navBarButton,
+            ^.onClick --> Callback()
+          )
+        }).build
+
+
+    val navigationBar = ReactComponentB[(Seq[String], Props, State)]("navigationBar")
+      .render($ => <.nav(
+        ^.paddingLeft := "15px",
+        ^.paddingRight := "15px",
+        Styles.navBar,
+        $.props._1.map(x => buttonComponent((x, $.props._2, $.props._3)))
+      )
+      ).build
 
 
     val entityComponent = ReactComponentB[State]("entityComponent")
@@ -432,22 +442,60 @@ object webApp extends js.JSApp {
 
     val cachedModels = ReactComponentB[(Props, State)]("cachedModelsComponent")
       .render($ => <.pre(
-        ^.className := "form-control",
+        ^.padding := "5px",
+        ^.paddingRight := "5px",
+        ^.height := "4%",
         ^.overflow := "hidden",
-        ^.height := "22%",
-        $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1, $.props._2)))
+        <.button(
+          ^.top := "0%",
+          ^.width := "5%",
+          ^.height := "42px",
+          ^.marginLeft := "-6px",
+          ^.marginTop := "-6px",
+          Styles.navBarButton,
+          ^.className := "glyphicon glyphicon-plus",
+          ^.onClick --> saveModel($.props._1,$.props._2)
+        ),
+        <.ul(
+          ^.width := "95%",
+          ^.left := "10%",
+          ^.className := "nav nav-pills",
+          ^.listStyleType.none,
+          $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1, $.props._2)))
+        )
       )
       ).build
 
     val listModels = ReactComponentB[(Tree, Props, State)]("listElem")
-      .render(T => <.ul(
-        T.props._1.toString.take(28),
-        ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
-        ^.padding := 5.px,
+      .render(T => <.li(
+
+//        ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
+        ^.marginLeft := "5px",
+        ^.marginRight := "5px",
+        ^.padding := "5px",
+        ^.overflow := "hidden",
         ^.borderRadius := "5px",
+        ^.height := "30px",
+        ^.top := "0px",
+        ^.width := "200px",
+        ^.marginTop := "-18px",
         ^.background := "#CFEADD",
+        ^.position.relative,
+        <.span(
+          ^.position.absolute,
+          ^.width := "80%",
+          ^.height := "30px",
+          "Model 1"
+          //  T.props._1.toString.take(10)
+        ),
         ^.onDblClick --> T.props._2.proxy.dispatchCB(SetTemplate(T.props._1)),
         <.button(
+          ^.position.absolute,
+          ^.width := "20%",
+          ^.height := "30px",
+          ^.left := "80%",
+          ^.top := "0%",
+
           Styles.removeButtonSimple,
           ^.onClick --> removeCachedModel(T.props._3, T.props._1)
       )
@@ -580,7 +628,7 @@ object webApp extends js.JSApp {
 
   def main(): Unit = {
     Styles.addToDocument()
-    ReactDOM.render(dc(proxy => navigationBar((headerButtons, Props(proxy)))), document.getElementById("header"))
+//    ReactDOM.render(dc(proxy => navigationBar((headerButtons, Props(proxy)))), document.getElementById("header"))
     ReactDOM.render(dc(proxy => pageContent(Props(proxy))), document.getElementById("content"))
   }
 }
