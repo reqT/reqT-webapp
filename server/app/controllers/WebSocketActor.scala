@@ -18,9 +18,9 @@ class WebSocketActor(out: ActorRef) extends Actor {
 
   val parser = new ExprParser
 
-  val result = parser.parseAll(parser.Model,
-    "Model(Goal(\"accuracy\") has Spec(\"On \"), Feature(\"quotation\") has Spec(\"Producata\"), Function(\"experienceData\") has Spec(\"Prod data\"), Design(\"screenX\") has Spec(\"Systin Fig\"))"
-  )
+//  val result = parser.parseAll(parser.Model,
+//    "Model(Goal(\"accuracy\") has Spec(\"On \"), Feature(\"quotation\") has Spec(\"Producata\"), Function(\"experienceData\") has Spec(\"Prod data\"), Design(\"screenX\") has Spec(\"Systin Fig\"))"
+//  )
 
 
   val sysRuntime = Runtime.getRuntime
@@ -45,6 +45,39 @@ class WebSocketActor(out: ActorRef) extends Actor {
     def r = new util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
   }
 
+  private def sendResponse(response: String) = {
+    """= *Model[(].*[)]""".r.findFirstMatchIn(response.replaceAll("\n"," ")) match {
+      case Some(m) => {
+        val model = m.matched.drop(m.matched.indexOf("M")).replaceAll(" +", " ")
+        println("K:" + model)
+        out ! write[Model](parser.parseAll(parser.Model, model).get)
+      }
+      case None if response.contains(":") && !response.contains("Welcome to") => {
+        out ! ("Answer: \n" + response.replace("reqT>", "").drop(response.indexOf("res")))
+      }
+      case None => println("Not found")
+    }
+
+
+//    if (response.contains("= Model(")) {
+//      val start = response.indexOf("= Model(") + 2
+//      val end = findEndOfModel(response.toList)
+//      val result = parser.parseAll(parser.Model, response.slice(start, end))
+//
+//      out ! write[Model](result.get)
+//    } else if (response.contains("hundreddollarmethod: reqT.Model")){
+//      val start = response.indexOf("Model(")
+//      val end = findEndOfModel(response.toList)
+//      val result = parser.parseAll(parser.Model, response.slice(start, end))
+//
+//      out ! write[Model](result.get)
+//    } else if (response.contains(":") && !response.contains("Welcome to")) {
+//      out ! ("Answer: \n" + response.replace("reqT>", "").drop(response.indexOf("res")))
+//    }
+
+  }
+
+
   val readThread = new Thread(new Runnable {
     override def run() = {
       while(reqTprocess.isAlive) {
@@ -52,16 +85,9 @@ class WebSocketActor(out: ActorRef) extends Actor {
         if(reqTis.available() > 0){
           val nbrOfReadBytes = reqTis.read(buf, 0, 1024)
           val response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
-          if (response.contains("= Model(")){
-            val start = response.indexOf("= Model(")+2
-            val end = findEndOfModel(response.toList)
 
-            val result = parser.parseAll(parser.Model, response.slice(start,end))
+          sendResponse(response)
 
-            out ! write[Model](result.get)
-          } else if(response.contains(":") && !response.contains("Welcome to")){
-            out ! ("Answer: \n" + response.replace("reqT>", "").drop(response.indexOf("res")))
-          }
         } else {
           Thread.sleep(500)
         }
@@ -69,10 +95,14 @@ class WebSocketActor(out: ActorRef) extends Actor {
     }
   }).start()
 
-  testUpickle
-  def testUpickle = {
-    out ! write[Model](result.get)
-  }
+//  testUpickle
+//  def testUpickle = {
+//    val m1 = "Model(\n Goal(\"y\") has \nSpec(\"O\"),\nFeature(\"q\") has \n Spec(\"a\"),\nFunction(\"a\") has \nSpec(\"P\"),\nDesign(\"X\") has \n Spec(\"X\"))"
+//
+//    val parser = new ExprParser
+//    val result = parser.parseAll(parser.Model, m)
+//    out ! write[Model](result.get)
+//  }
 
   def receive = {
     case message: String =>

@@ -111,8 +111,8 @@ object HundredDollarModal {
 
       val dollarMethod =s"\n val shs = m . entitiesOfType ( $shs ) \n val rs = m . entitiesOfType ( $rs ) \n val prioSum = shs . map ( s => m / s / $p ) . sum " +
         s"\n val benefitSum = shs . map ( s => s -> ( m / s ) . collect { case $b ( b ) => b }. sum ) . toMap " +
-        s"\n val normalized = rs . map ( r => r has $b  ( math . round ( shs . map ( s =>( m / s / $p ) *( m / s / r / $b ) *100.0 / ( benefitSum ( s ) * prioSum ) ) . sum ) . toInt ) ) . toModel " +
-        s"\n val sum = normalized . collect { case $b  ( b ) => b }. sum"
+        s"\n val hundreddollarmethod = rs . map ( r => r has $b  ( math . round ( shs . map ( s =>( m / s / $p ) *( m / s / r / $b ) *100.0 / ( benefitSum ( s ) * prioSum ) ) . sum ) . toInt ) ) . toModel " +
+        s"\n val sum = hundreddollarmethod . collect { case $b  ( b ) => b }. sum"
 
       "val m="+model+dollarMethod
     }
