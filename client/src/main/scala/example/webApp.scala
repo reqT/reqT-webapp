@@ -12,9 +12,8 @@ import scala.scalajs.js.dom._
 import scala.util.{Failure, Success}
 import diode.react.ModelProxy
 import example.Modal.ModalType
-import org.scalajs.dom
 import org.scalajs.dom.ext.{Ajax, KeyCode}
-
+import org.scalajs.dom.raw._
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
@@ -219,7 +218,37 @@ object webApp extends js.JSApp {
       Callback(window.alert("Invalid file type, only .txt is supported"))
     }
  }
+  import org.scalajs.dom
+  import scala.scalajs.js.timers._
+  def downloadModel(p: Props): Unit = {
+    var file = new Blob(js.Array(p.proxy.value.makeString), js.Dynamic.literal(`type` = "text/plain").asInstanceOf[BlobPropertyBag])
+    val a = document.createElement("a")
+    var tempURL = dom.URL.createObjectURL(file)
+//    url = dom.URL.createObjectURL(file)
+    a.setAttribute("href", tempURL)
+    a.setAttribute("download", "reqTModel.txt")
+    document.body.appendChild(a)
+    a.asInstanceOf[dom.raw.HTMLBodyElement].click()
+    setTimeout(1000) {
+      document.body.removeChild(a)
+      dom.URL.revokeObjectURL(tempURL)
+    }
 
+//    if (dom.window.navigator.msSaveOrOpenBlob) // IE10+
+//    dom.window.navigator.msSaveOrOpenBlob(file, filename)
+////    else { // Others
+//    val a = document.createElement("a")
+//    url = URL.createObjectURL(file)
+//    a.href = url
+//    a.download = filename
+//    document.body.appendChild(a)
+//    a.click()
+//    setTimeout(function() {
+//    document.body.removeChild(a)
+//    window.URL.revokeObjectURL(url)
+//  }, 0)
+//  }
+  }
 
   val buttonComponent = ReactComponentB[(String, Props)]("buttonComponent")
     .render($ =>
@@ -239,7 +268,7 @@ object webApp extends js.JSApp {
           <.button(
           Styles.navBarButton,
           "Export",
-//          ^.onClick := downloadModel()
+          ^.onClick --> Callback(downloadModel($.props._2))
           )
         case _ => <.button(
           $.props._1,
