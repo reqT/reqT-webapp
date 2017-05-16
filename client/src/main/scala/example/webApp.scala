@@ -65,6 +65,7 @@ object webApp extends js.JSApp {
     def log(line: String): State = copy(logLines = logLines :+ line)
 
     def saveTree(tree: Tree): State ={
+      println(tree.makeString)
       copy(latestRecTree = tree)
     }
 
@@ -234,7 +235,7 @@ object webApp extends js.JSApp {
         case _ => <.button(
           $.props._1,
           Styles.navBarButton,
-          ^.onClick --> Callback(Parser)
+          ^.onClick --> Callback()
         )
       }).build
 
@@ -506,7 +507,7 @@ object webApp extends js.JSApp {
         def onmessage(event: MessageEvent): Unit = {
           if(event.data.toString.startsWith("{")){
             val tree = fixInputModel(read[Model](event.data.toString).tree)
-            direct.modState(_.saveTree(tree))
+            direct.modState(_.saveTree(tree).log(tree.makeString))
           } else {
             direct.modState(_.log(s"${event.data.toString}"))
           }
