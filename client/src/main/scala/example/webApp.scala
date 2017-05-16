@@ -7,22 +7,26 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react._
+
 import scala.scalajs.js.dom._
 import scala.util.{Failure, Success}
 import diode.react.ModelProxy
 import example.Modal.ModalType
+import org.scalajs.dom
 import org.scalajs.dom.ext.{Ajax, KeyCode}
+
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
+
 import scala.scalajs.js.URIUtils._
 import scala.collection.immutable.Queue
 import shared._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @JSExport
 object webApp extends js.JSApp {
-
   //Måste ändras till hostname
 
   val url = "ws://127.0.0.1:9000/socket"
@@ -216,6 +220,7 @@ object webApp extends js.JSApp {
     }
  }
 
+
   val buttonComponent = ReactComponentB[(String, Props)]("buttonComponent")
     .render($ =>
       $.props._1 match {
@@ -230,10 +235,16 @@ object webApp extends js.JSApp {
             ^.onChange ==> importModel($.props._2.proxy.dispatchCB)
           )
         )
+        case "Export" =>
+          <.button(
+          Styles.navBarButton,
+          "Export",
+//          ^.onClick := downloadModel()
+          )
         case _ => <.button(
           $.props._1,
           Styles.navBarButton,
-          ^.onClick --> Callback(Parser)
+          ^.onClick --> Callback()
         )
       }).build
 
