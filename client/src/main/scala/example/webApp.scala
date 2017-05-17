@@ -245,7 +245,7 @@ object webApp extends js.JSApp {
     def openReleaseModal = $.modState(_.copy(isReleaseModal = true))
 
     def saveModel(P: Props, S: State): Callback = {
-      if(S.cachedModels.size > 4)
+      if(S.cachedModels.size > 5)
         $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ P.proxy.value))
       else
         $.modState(_.copy(cachedModels = S.cachedModels :+ P.proxy.value))
@@ -333,6 +333,7 @@ object webApp extends js.JSApp {
             log(S.logLines)// Display log
           )
         ),
+
         <.div(
           ^.className := "col-2",
           ^.width := "71%",
@@ -446,19 +447,24 @@ object webApp extends js.JSApp {
         ^.paddingRight := "5px",
         ^.height := "4%",
         ^.overflow := "hidden",
+        ^.position.relative,
         <.button(
+          ^.className := "glyphicon glyphicon-plus",
+          ^.color := "green",
+          ^.position.absolute,
           ^.top := "0%",
           ^.width := "5%",
           ^.height := "42px",
           ^.marginLeft := "-6px",
-          ^.marginTop := "-6px",
+          ^.marginTop := "-2px",
           Styles.navBarButton,
-          ^.className := "glyphicon glyphicon-plus",
+          ^.outline := "none",
           ^.onClick --> saveModel($.props._1,$.props._2)
         ),
         <.ul(
+          ^.position.absolute,
           ^.width := "95%",
-          ^.left := "10%",
+          ^.left := "5%",
           ^.className := "nav nav-pills",
           ^.listStyleType.none,
           $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1, $.props._2)))
@@ -469,7 +475,6 @@ object webApp extends js.JSApp {
     val listModels = ReactComponentB[(Tree, Props, State)]("listElem")
       .render(T => <.li(
 
-//        ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
         ^.marginLeft := "5px",
         ^.marginRight := "5px",
         ^.padding := "5px",
@@ -480,27 +485,29 @@ object webApp extends js.JSApp {
         ^.width := "200px",
         ^.marginTop := "-18px",
         ^.background := "#CFEADD",
-        ^.position.relative,
         <.span(
+          ^.className := "col",
           ^.position.absolute,
           ^.width := "80%",
           ^.height := "30px",
+          ^.paddingTop := "2px",
+          ^.textAlign := "center",
           "Model 1"
           //  T.props._1.toString.take(10)
         ),
         ^.onDblClick --> T.props._2.proxy.dispatchCB(SetTemplate(T.props._1)),
         <.button(
+          ^.className := "col",
           ^.position.absolute,
           ^.width := "20%",
           ^.height := "30px",
           ^.left := "80%",
           ^.top := "0%",
-
           Styles.removeButtonSimple,
+          ^.outline := "none",
           ^.onClick --> removeCachedModel(T.props._3, T.props._1)
-      )
-      ))
-      .build
+        )
+      )).build
 
     def removeCachedModel(state: State, tree: Tree): Callback = {
       val index = state.cachedModels.indexWhere(_.equals(tree))
