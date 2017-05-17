@@ -218,12 +218,16 @@ object webApp extends js.JSApp {
  }
   import org.scalajs.dom
   import scala.scalajs.js.timers._
-  def downloadModel(p: Props): Unit = {
-    var file = new Blob(js.Array(p.proxy.value.makeString), js.Dynamic.literal(`type` = "text/plain").asInstanceOf[BlobPropertyBag])
+  def downloadModel(P: Props, S: State): Unit = {
+    var file = new Blob(js.Array(P.proxy.value.makeString), js.Dynamic.literal(`type` = "text/plain").asInstanceOf[BlobPropertyBag])
     val a = document.createElement("a")
     var tempURL = dom.URL.createObjectURL(file)
     a.setAttribute("href", tempURL)
-    a.setAttribute("download", "reqTModel.txt")
+    if(S.activeModel != null){
+      a.setAttribute("download", s"${S.activeModel}.txt")
+    } else {
+      a.setAttribute("download", "reqTModel.txt")
+    }
     document.body.appendChild(a)
     a.asInstanceOf[dom.raw.HTMLBodyElement].click()
     setTimeout(1000) {
@@ -245,24 +249,45 @@ object webApp extends js.JSApp {
     def openDollarModal = $.modState(_.copy(isDollarModalOpen = true))
     def openReleaseModal = $.modState(_.copy(isReleaseModal = true))
     def openNewModelModal = $.modState(_.copy(isNewModelModal = true))
-    def setActiveModel(name: String,P: Props, S: State) = {
-      updateActiveModel(P,S) >> $.modState(_.copy(activeModel = name))
+    def setActiveModel(name: String,P: Props, S: State): Callback = {
+      if(S.activeModel != null)
+       updateActiveModel(P,S) >> $.modState(_.copy(activeModel = name))
+      else
+        $.modState(_.copy(activeModel = name))
     }
+
 
     def updateActiveModel(P: Props, S: State): Callback = {
       var newModels: Queue[(String, Tree)] = S.cachedModels.map(model => if(model._1.equals(S.activeModel)) {
         model.copy(_2 = P.proxy.value)
       } else model)
+      println("S.cachedModels: " + S.cachedModels)
+      println("newModels: " + newModels)
       $.modState(_.copy(cachedModels = newModels))
     }
 
     def saveModel(name: String, P: Props, S: State): Callback = {
       println("saveModel name:" + name)
       println("saveModel model:" + P.proxy.value)
-      if(S.cachedModels.size > 5)
-        $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, P.proxy.value)))
-      else
-        $.modState(_.copy(cachedModels = S.cachedModels :+ (name, P.proxy.value)))
+      if(S.cachedModels.size > 5){
+        if(S.activeModel == null){
+          println("1")
+          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, P.proxy.value))).thenRun(setActiveModel(name, P, S).runNow())
+        } else {
+          println("2")
+          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, P.proxy.value)))
+        }
+      }
+      else {
+        if(S.activeModel == null) {
+          println("3")
+          $.modState(_.copy(cachedModels = S.cachedModels :+ (name, P.proxy.value))).thenRun(setActiveModel(name, P, S).runNow())
+        }
+        else {
+          println("4")
+          $.modState(_.copy(cachedModels = S.cachedModels :+ (name, P.proxy.value)))
+        }
+      }
     }
 
 
@@ -379,7 +404,7 @@ object webApp extends js.JSApp {
             <.button(
               Styles.navBarButton,
               "Export",
-              ^.onClick --> Callback(downloadModel($.props._2))
+              ^.onClick --> Callback(downloadModel($.props._2, $.props._3))
             )
           case "Copy Model" =>
             <.button(
@@ -508,7 +533,7 @@ object webApp extends js.JSApp {
           ^.textAlign := "center",
           T.props._1._1
         ),
-        ^.onDblClick --> (setActiveModel(T.props._1._1, T.props._2, T.props._3) >> T.props._2.proxy.dispatchCB(SetTemplate(T.props._1._2))),
+        ^.onClick --> (setActiveModel(T.props._1._1, T.props._2, T.props._3) >> T.props._2.proxy.dispatchCB(SetTemplate(T.props._1._2))),
         <.button(
           ^.className := "col",
           ^.position.absolute,
