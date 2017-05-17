@@ -58,8 +58,8 @@ object webApp extends js.JSApp {
 
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], isModalOpen: Boolean, modalType: ModalType,
                    treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
-                   entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[Tree] = Queue(),
-                   isDollarModalOpen: Boolean = false, isReleaseModal: Boolean = false, latestRecTree: Tree = null) {
+                   entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[(String, Tree)] = Queue(), activeModel: String,
+                   isNewModelModal: Boolean = false, isDollarModalOpen: Boolean = false, isReleaseModal: Boolean = false, latestRecTree: Tree = null) {
 
     def log(line: String): State = copy(logLines = logLines :+ line)
 
@@ -237,18 +237,32 @@ object webApp extends js.JSApp {
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
     def closeDollarModal(e: ReactEvent): Callback = $.modState(_.copy(isDollarModalOpen = false))
     def closeReleaseModal(e: ReactEvent): Callback = $.modState(_.copy(isReleaseModal = false))
+    def closeNewModelModal(e: ReactEvent): Callback = $.modState(_.copy(isNewModelModal = false))
 
     def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem] ): Callback
     = $.modState(_.copy(modalType = modalType, treeItem = treeItem, isModalOpen = true, dispatch = newDispatch, path = newPath, elemToModal = newElemToAdd))
 
     def openDollarModal = $.modState(_.copy(isDollarModalOpen = true))
     def openReleaseModal = $.modState(_.copy(isReleaseModal = true))
+    def openNewModelModal = $.modState(_.copy(isNewModelModal = true))
+    def setActiveModel(name: String,P: Props, S: State) = {
+      updateActiveModel(P,S) >> $.modState(_.copy(activeModel = name))
+    }
 
-    def saveModel(P: Props, S: State): Callback = {
+    def updateActiveModel(P: Props, S: State): Callback = {
+      var newModels: Queue[(String, Tree)] = S.cachedModels.map(model => if(model._1.equals(S.activeModel)) {
+        model.copy(_2 = P.proxy.value)
+      } else model)
+      $.modState(_.copy(cachedModels = newModels))
+    }
+
+    def saveModel(name: String, P: Props, S: State): Callback = {
+      println("saveModel name:" + name)
+      println("saveModel model:" + P.proxy.value)
       if(S.cachedModels.size > 5)
-        $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ P.proxy.value))
+        $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, P.proxy.value)))
       else
-        $.modState(_.copy(cachedModels = S.cachedModels :+ P.proxy.value))
+        $.modState(_.copy(cachedModels = S.cachedModels :+ (name, P.proxy.value)))
     }
 
 
@@ -281,7 +295,6 @@ object webApp extends js.JSApp {
           None
       }
 
-
       <.div(
         ^.className := "container",
         ^.width := "100%",
@@ -292,6 +305,7 @@ object webApp extends js.JSApp {
         Modal(S.isModalOpen, closeModal, S.modalType, S.treeItem, S.dispatch, S.path, S.elemToModal),
         HundredDollarModal(isOpen = S.isDollarModalOpen, onClose = closeDollarModal, sendPrepMessage),
         ReleaseModal(isOpen = S.isReleaseModal, onClose = closeReleaseModal, sendPrepMessage, P.proxy.value),
+        NewModelModal(isOpen = S.isNewModelModal, onClose = closeNewModelModal, addToCachedModels = saveModel(_, P, S)),
         <.div(
           ^.className := "header",
           navigationBar((headerButtons, P, S))
@@ -316,9 +330,9 @@ object webApp extends js.JSApp {
               ),
               <.button(
                 ^.className := "btn btn-default",
-                ^.disabled := send.isEmpty,
-                ^.onClick -->? send,
-                "Send"),
+              ^.disabled := send.isEmpty,
+              ^.onClick -->? send,
+              "Send"),
               <.button(
                 ^.className := "btn btn-default",
                 ^.onClick --> P.proxy.dispatchCB(SetModel(S.latestRecTree.children)),
@@ -459,7 +473,7 @@ object webApp extends js.JSApp {
           ^.marginTop := "-2px",
           Styles.navBarButton,
           ^.outline := "none",
-          ^.onClick --> saveModel($.props._1,$.props._2)
+          ^.onClick --> openNewModelModal
         ),
         <.ul(
           ^.position.absolute,
@@ -472,7 +486,7 @@ object webApp extends js.JSApp {
       )
       ).build
 
-    val listModels = ReactComponentB[(Tree, Props, State)]("listElem")
+    val listModels = ReactComponentB[((String, Tree), Props, State)]("listElem")
       .render(T => <.li(
 
         ^.marginLeft := "5px",
@@ -492,10 +506,9 @@ object webApp extends js.JSApp {
           ^.height := "30px",
           ^.paddingTop := "2px",
           ^.textAlign := "center",
-          "Model 1"
-          //  T.props._1.toString.take(10)
+          T.props._1._1
         ),
-        ^.onDblClick --> T.props._2.proxy.dispatchCB(SetTemplate(T.props._1)),
+        ^.onDblClick --> (setActiveModel(T.props._1._1, T.props._2, T.props._3) >> T.props._2.proxy.dispatchCB(SetTemplate(T.props._1._2))),
         <.button(
           ^.className := "col",
           ^.position.absolute,
@@ -509,8 +522,9 @@ object webApp extends js.JSApp {
         )
       )).build
 
-    def removeCachedModel(state: State, tree: Tree): Callback = {
-      val index = state.cachedModels.indexWhere(_.equals(tree))
+    def removeCachedModel(state: State, modelToRemove: (String, Tree)): Callback = {
+      println(state.cachedModels.map(_._1.equals(modelToRemove._1)))
+      val index = state.cachedModels.indexWhere(_._1.equals(modelToRemove._1))
       val beginning = state.cachedModels.take(index)
       val end = state.cachedModels.drop(index+1)
 
@@ -625,7 +639,7 @@ object webApp extends js.JSApp {
   }
 
   val pageContent = ReactComponentB[Props]("Content")
-    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalType = Modal.EMPTY_MODAL, treeItem = null))
+    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalType = Modal.EMPTY_MODAL, treeItem = null, activeModel = null))
     .renderBackend[Backend]
     .componentDidMount(_.backend.start)
     .componentWillUnmount(_.backend.end)
