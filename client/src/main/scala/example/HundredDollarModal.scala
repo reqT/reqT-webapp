@@ -39,7 +39,7 @@ object HundredDollarModal {
 
   case class State(newSHSEntity: Option[Entity], newRSEntity: Option[Entity], newBAttribute: Option[Attribute], newPAttribute: Option[Attribute])
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => String) => Option[Callback])
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => Seq[String]) => Option[Seq[Callback]])
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
@@ -103,18 +103,20 @@ object HundredDollarModal {
         <.div()
 
 
-    def prepHundredDollar(state: State, model: String): String = {
+    def prepHundredDollar(state: State, model: String): Seq[String] = {
       val shs = state.newSHSEntity.getOrElse("Stakeholder").toString.split('(').head
       val rs = state.newRSEntity.getOrElse("Req").toString.split('(').head
       val b = state.newBAttribute.getOrElse("Benefit").toString.split('(').head
       val p = state.newPAttribute.getOrElse("Prio").toString.split('(').head
 
-      val dollarMethod =s"\n val shs = m . entitiesOfType ( $shs ) \n val rs = m . entitiesOfType ( $rs ) \n val prioSum = shs . map ( s => m / s / $p ) . sum " +
-        s"\n val benefitSum = shs . map ( s => s -> ( m / s ) . collect { case $b ( b ) => b }. sum ) . toMap " +
-        s"\n val hundreddollarmethod = rs . map ( r => r has $b  ( math . round ( shs . map ( s =>( m / s / $p ) *( m / s / r / $b ) *100.0 / ( benefitSum ( s ) * prioSum ) ) . sum ) . toInt ) ) . toModel " +
-        s"\n val sum = hundreddollarmethod . collect { case $b  ( b ) => b }. sum"
-
-      "val m="+model+dollarMethod
+      Seq(
+        s"val m = ${model.replaceAll("\n","")} \n",
+        s"val shs = m . entitiesOfType ( $shs ) \n",
+        s"val rs = m . entitiesOfType ( $rs ) \n",
+        s"val prioSum = shs . map ( s => m / s / $p ) . sum \n",
+        s"val benefitSum = shs . map ( s => s -> ( m / s ) . collect { case $b ( b ) => b }. sum ) . toMap \n",
+        s"val resultDollar = rs . map ( r => r has $b  ( math . round ( shs . map ( s =>( m / s / $p ) *( m / s / r / $b ) *100.0 / ( benefitSum ( s ) * prioSum ) ) . sum ) . toInt ) ) . toModel \n",
+        s"val sum = resultDollar . collect { case $b  ( b ) => b }. sum \n")
     }
 
     def resetState: Callback = $.setState(State(None,None,None,None))
@@ -125,11 +127,15 @@ object HundredDollarModal {
     def setNewBAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newBAttribute = attribute))
     def setNewPAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newPAttribute = attribute))
 
-    def send(P: Props, S: State)(e: ReactEvent): Callback =
+    def send(P: Props, S: State)(e: ReactEvent): Callback ={
       P.send(prepHundredDollar(state = S, _)) match {
-        case Some(callback) => callback >> onClose(P)(e)
-        case None => Callback()
+      case Some(callback) => callback.foreach(_.runNow())
+        //callbacks.head.runNow()
+//        .foreach(_.runNow()) //>> onClose(P)(e)
+      case None => Callback()
       }
+      onClose(P)(e)
+    }
 
     def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetState
 
@@ -150,7 +156,7 @@ object HundredDollarModal {
       .build
 
 
-    def apply(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => String) => Option[Callback])
+    def apply(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => Seq[String]) => Option[Seq[Callback]])
     = component.set()(Props(isOpen, onClose, send))
 
 }

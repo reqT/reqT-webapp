@@ -14,22 +14,19 @@ object WebSocketActor {
 
 
 class WebSocketActor(out: ActorRef) extends Actor {
-  //val templateHandler = new TemplateHandler
+  val templateHandler = new TemplateHandler
 
   val parser = new ExprParser
 
-//  val result = parser.parseAll(parser.Model,
-//    "Model(Goal(\"accuracy\") has Spec(\"On \"), Feature(\"quotation\") has Spec(\"Producata\"), Function(\"experienceData\") has Spec(\"Prod data\"), Design(\"screenX\") has Spec(\"Systin Fig\"))"
-//  )
-
 
   val sysRuntime = Runtime.getRuntime
-  val reqTprocess = sysRuntime.exec("java -jar reqT.jar")
+  val reqTprocess = sysRuntime.exec("java -jar reqT.jar serv")
   val (reqTis, reqTos) = (reqTprocess.getInputStream, reqTprocess.getOutputStream)
-  val buf = new Array[Byte](1024)
+  val buf = new Array[Byte](10000)
 
-  def trim(text: String): String = text.drop(text.indexOf("reqT>"))
-  def trimResponse(text: String): String = text.drop(text.indexOf("res"))
+  implicit class Regex(sc: StringContext) {
+    def r = new util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
+  }
 
   def findEndOfModel(model: List[Char]): Int = {
     def go(cs: List[Char], level: Int): Int = cs match {
@@ -37,55 +34,45 @@ class WebSocketActor(out: ActorRef) extends Actor {
       case ')' :: xs => go(xs, level-1) + 1
       case '(' :: xs => go(xs, level+1) + 1
       case _  :: xs => go(xs, level) + 1
+      case Nil if level != 0 => Int.MinValue
     }
     go(model, 0)
   }
 
-  implicit class Regex(sc: StringContext) {
-    def r = new util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
+  def trimModel(model: String): Option[String] = {
+    val end = findEndOfModel(model.toList)
+    end match {
+      case x if x < 0 => None
+      case _ => Some(model.take(end))
+    }
   }
 
   private def sendResponse(response: String) = {
     """= *Model[(].*[)]""".r.findFirstMatchIn(response.replaceAll("\n"," ")) match {
-      case Some(m) => {
-        val model = m.matched.drop(m.matched.indexOf("M")).replaceAll(" +", " ")
-        println("K:" + model)
-        out ! write[Model](parser.parseAll(parser.Model, model).get)
-      }
-      case None if response.contains(":") && !response.contains("Welcome to") => {
-        out ! ("Answer: \n" + response.replace("reqT>", "").drop(response.indexOf("res")))
-      }
-      case None => println("Not found")
+
+      case Some(m) if response.contains("problem") =>
+        println(response)
+        out ! ("Answer: \n" + response)
+
+      case Some(m) =>
+        trimModel(m.matched.drop(m.matched.indexOf("Model")).replaceAll(" +", " ")) match {
+          case Some(model) => out !  write[Model](parser.parseAll(parser.Model, model).get)
+          case _ => Unit
+        }
+        out ! ("Answer: \n" + response)
+
+      case None => out ! ("Answer: \n" + response)
+
     }
-
-
-//    if (response.contains("= Model(")) {
-//      val start = response.indexOf("= Model(") + 2
-//      val end = findEndOfModel(response.toList)
-//      val result = parser.parseAll(parser.Model, response.slice(start, end))
-//
-//      out ! write[Model](result.get)
-//    } else if (response.contains("hundreddollarmethod: reqT.Model")){
-//      val start = response.indexOf("Model(")
-//      val end = findEndOfModel(response.toList)
-//      val result = parser.parseAll(parser.Model, response.slice(start, end))
-//
-//      out ! write[Model](result.get)
-//    } else if (response.contains(":") && !response.contains("Welcome to")) {
-//      out ! ("Answer: \n" + response.replace("reqT>", "").drop(response.indexOf("res")))
-//    }
-
   }
-
 
   val readThread = new Thread(new Runnable {
     override def run() = {
       while(reqTprocess.isAlive) {
 
         if(reqTis.available() > 0){
-          val nbrOfReadBytes = reqTis.read(buf, 0, 1024)
+          val nbrOfReadBytes = reqTis.read(buf, 0, 10000)
           val response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
-
           sendResponse(response)
 
         } else {
@@ -95,21 +82,32 @@ class WebSocketActor(out: ActorRef) extends Actor {
     }
   }).start()
 
-//  testUpickle
-//  def testUpickle = {
-//    val m1 = "Model(\n Goal(\"y\") has \nSpec(\"O\"),\nFeature(\"q\") has \n Spec(\"a\"),\nFunction(\"a\") has \nSpec(\"P\"),\nDesign(\"X\") has \n Spec(\"X\"))"
-//
-//    val parser = new ExprParser
-//    val result = parser.parseAll(parser.Model, m)
-//    out ! write[Model](result.get)
-//  }
+
+
+  testUpickle
+  def testUpickle = {
+    val parser = new ExprParser
+
+    val m2 = "Model(\n  Stakeholder(\"X\") has (\n    Prio(1),\n    Feature(\"1\") has Benefit(4),\n    Feature(\"2\") has Benefit(2),\n    Feature(\"3\") has Benefit(1)),\n  Stakeholder(\"Y\") has (\n    Prio(2),\n    Feature(\"1\") has Benefit(2),\n    Feature(\"2\") has Benefit(1),\n    Feature(\"3\") has Benefit(1)),\n  Release(\"A\") precedes Release(\"B\"),  \n  Resource(\"dev\") has (\n    Feature(\"1\") has Cost(10),\n    Feature(\"2\") has Cost(70),\n    Feature(\"3\") has Cost(40),\n    Release(\"A\") has Capacity(100),\n    Release(\"B\") has Capacity(100)),\n  Resource(\"test\") has (\n    Feature(\"1\") has Cost(40),\n    Feature(\"2\") has Cost(10),\n    Feature(\"3\") has Cost(70),\n    Release(\"A\") has Capacity(100),\n    Release(\"B\") has Capacity(100)),\n  Feature(\"3\") precedes Feature(\"1\"))"
+    val result = parser.parseAll(parser.Model, m2)
+    out ! write[Model](result.get)
+
+//    for(i <- 1 to 15){
+//      print(i)
+//      val result = parser.parseAll(parser.Model, templateHandler.getTemplate(i).get.drop(12))
+//      out ! write[Model](result.get)
+//      print(" succeded\n")
+//    }
+  }
 
   def receive = {
-    case message: String =>
-      reqTos.write((trim(message) + "\n").getBytes("UTF-8"))
+    case message: String if message.contains("val OrdinalRank") =>
+      reqTos.write((message.replaceAll(" ","\n") + "\n").getBytes("UTF-8"))
       reqTos.flush()
 
-
+    case message: String =>
+      reqTos.write((message + "\n").getBytes("UTF-8"))
+      reqTos.flush()
 
 //      message match {
 //        case r"Template[1-9][0-9]*" =>

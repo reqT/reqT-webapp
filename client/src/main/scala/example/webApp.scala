@@ -60,7 +60,7 @@ object webApp extends js.JSApp {
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], isModalOpen: Boolean, modalType: ModalType,
                    treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
                    entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[Tree] = Queue(),
-                   isDollarModalOpen: Boolean = false, isReleaseModal: Boolean = false, latestRecTree: Tree = null) {
+                   isDollarModalOpen: Boolean = false, isReleaseModalOpen: Boolean = false, isOrdinalModalOpen: Boolean = false, latestRecTree: Tree = null) {
 
     def log(line: String): State = copy(logLines = logLines :+ line)
 
@@ -254,29 +254,32 @@ object webApp extends js.JSApp {
 
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
     def closeDollarModal(e: ReactEvent): Callback = $.modState(_.copy(isDollarModalOpen = false))
-    def closeReleaseModal(e: ReactEvent): Callback = $.modState(_.copy(isReleaseModal = false))
+    def closeReleaseModal(e: ReactEvent): Callback = $.modState(_.copy(isReleaseModalOpen = false))
+    def closeOrdinalModal(e: ReactEvent): Callback = $.modState(_.copy(isOrdinalModalOpen = false))
 
     def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem] ): Callback
     = $.modState(_.copy(modalType = modalType, treeItem = treeItem, isModalOpen = true, dispatch = newDispatch, path = newPath, elemToModal = newElemToAdd))
 
     def openDollarModal = $.modState(_.copy(isDollarModalOpen = true))
-    def openReleaseModal = $.modState(_.copy(isReleaseModal = true))
+    def openOrdinalModal = $.modState(_.copy(isOrdinalModalOpen = true))
+    def openReleaseModal = $.modState(_.copy(isReleaseModalOpen = true))
 
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
 
-      val send: Option[Callback] =
+      val send: Option[Callback] ={
         for (websocket <- S.websocket if S.message.nonEmpty)
           yield sendMessage(websocket, S.message)
+      }
 
       val sendVerify: Option[Callback] =
         for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
           yield sendMessage(websocket, P.proxy.value.makeString.replaceAll("\n", ""))
 
 
-      def sendPrepMessage(prepMessage: String => String): Option[Callback] =
+      def sendPrepMessage(prepMessage: String => Seq[String]): Option[Seq[Callback]] =
         for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
-          yield sendMessage(websocket, prepMessage(v1 = P.proxy.value.makeString.replaceAll("\n", "")))
+          yield sendMessages(websocket, prepMessage(v1 = P.proxy.value.makeString.replaceAll("\n", "")))
 
 //      val sendGetTemplate(templateNbr: Int): Option[Callback] =
 //        for (websocket <- state.websocket if state.message.nonEmpty)
@@ -301,7 +304,8 @@ object webApp extends js.JSApp {
       <.div(
         Modal(S.isModalOpen, closeModal, S.modalType, S.treeItem, S.dispatch, S.path, S.elemToModal),
         HundredDollarModal(isOpen = S.isDollarModalOpen, onClose = closeDollarModal, sendPrepMessage),
-        ReleaseModal(isOpen = S.isReleaseModal, onClose = closeReleaseModal, sendPrepMessage, P.proxy.value),
+        ReleaseModal(isOpen = S.isReleaseModalOpen, onClose = closeReleaseModal, sendPrepMessage, P.proxy.value),
+        OrdinalModal(isOpen = S.isOrdinalModalOpen, onClose = closeOrdinalModal, sendPrepMessage, P.proxy.value),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -360,11 +364,11 @@ object webApp extends js.JSApp {
             "100$ Dollar",
             ^.onClick --> openDollarModal
           ),
-//          <.button(
-//            ^.className := "btn btn-default",
-//            "Ordinal Ranking",
-//            ^.onClick --> openDollarModal
-//          ),
+          <.button(
+            ^.className := "btn btn-default",
+            "Ordinal Ranking",
+            ^.onClick --> openOrdinalModal
+          ),
           <.button(
             ^.className := "btn btn-default",
             "Release Planning",
@@ -490,6 +494,9 @@ object webApp extends js.JSApp {
       send >> updateState
     }
 
+    def sendMessages(websocket: WebSocket, msg: Seq[String]): Seq[Callback] = msg.map(sendMessage(websocket,_))
+
+
     def start: Callback = {
 
       // This will establish the connection and return the WebSocket
@@ -506,8 +513,7 @@ object webApp extends js.JSApp {
 
         def onmessage(event: MessageEvent): Unit = {
           if(event.data.toString.startsWith("{")){
-            val tree = fixInputModel(read[Model](event.data.toString).tree)
-            direct.modState(_.saveTree(tree).log(tree.makeString))
+            direct.modState(_.saveTree(read[Model](event.data.toString).tree))
           } else {
             direct.modState(_.log(s"${event.data.toString}"))
           }

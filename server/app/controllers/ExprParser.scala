@@ -1,6 +1,8 @@
 package controllers
 
 import shared._
+
+import scala.util.matching.Regex
 import scala.util.parsing.combinator.RegexParsers
 
 /**
@@ -8,14 +10,17 @@ import scala.util.parsing.combinator.RegexParsers
   */
 class ExprParser extends RegexParsers {
 
-  val int = "[0-9][0-9]*".r
-  val string = "[a-zA-Z0-9~!@#$^%&*|;:'{}\\[\\]\\)\\( /_<,>.+?`-][a-zA-Z0-9~!@#$^%&*|;:'{}\\[\\]\\)\\( /_<,>.+?`-]*".r
-  val reqType = "[a-zA-Z][a-zA-Z]*".r
+  val int: Regex = "[0-9][0-9]*".r
+  val string: Regex = "[a-zA-Z0-9~!@#$^%&*|;:'{}\\[\\]\\(\\) /_<,>.+?`-][a-zA-Z0-9~!@#$^%&*|;:'{}\\[\\]\\(\\) /_<,>.+?`-]*".r
+  val reqType: Regex = "[a-zA-Z][a-zA-Z]*".r
+  val lpar: Regex = " *\\( *".r
+  val rpar: Regex =" *\\) *".r
+  val entityType: Regex = "(Ent|Meta|Item|Label|Section|Term|Actor|App|Component|Domain|Module|Product|Release|Resource|Risk|Service|Stakeholder|System|User|Class|Data|Input|Member|Output|Relationship|Design|Screen|MockUp|Function|Interface|State|Event|Epic|Feature|Goal|Idea|Issue|Req|Ticket|WorkPackage|Breakpoint|Barrier|Quality|Target|Scenario|Task|Test|Story|UseCase|VariationPoint|Variant)".r
+  val intAttrType: Regex = "(Benefit|Capacity|Cost|Damage|Frequency|Min|Max|Order|Prio|Probability|Profit|Value)".r
+  val stringAttrType: Regex = "(Comment|Deprecated|Example|Expectation|FileName|Gist|Image|Spec|Text|Title|Why)".r
 
   def Model: Parser[shared.Model] = "Model(" ~ opt(rep(Elem ~ ",")) ~ Elem ~")"^^{
-    case   _ ~ Some(list) ~ elem ~ _=> {
-      new Model(Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem])))
-    }
+    case   _ ~ Some(list) ~ elem ~ _=> new Model(Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem])))
   }
 
   def Elem: Parser[shared.Elem] = Relation | Node
@@ -29,7 +34,7 @@ class ExprParser extends RegexParsers {
     case elem: shared.Elem => Tree(Seq(elem))
   }
 
-  def RelationList: Parser[shared.Tree] = "(" ~ rep(Elem ~ ",") ~ Elem ~ ")" ^^{
+  def RelationList: Parser[shared.Tree] = lpar ~ rep(Elem ~ ",") ~ Elem ~ rpar ^^{
     case _ ~ list ~ elem ~ _ => Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem]))
   }
 
@@ -39,17 +44,18 @@ class ExprParser extends RegexParsers {
     case node :Node => node
   }
 
-  def Attribute: Parser[shared.Attribute] = IntAttribute //| StringAttribute
+  def Attribute: Parser[shared.Attribute] = IntAttribute | StringAttribute
 
-  def IntAttribute: Parser[shared.IntAttribute] = reqType ~ "(" ~ opt(int) ~ ")" ^^{
+  def IntAttribute: Parser[shared.IntAttribute] = intAttrType ~ lpar ~ opt(int) ~ rpar ^^{
     case tpe ~ _ ~ Some(value) ~ _ => new IntAttribute(tpe,value.toInt)
   }
 
-  //    def StringAttribute: Parser[StringAttribute] = string ~ "(\"" ~ opt(string) ~ "\")" ^^{
-  //      case tpe ~ _ ~ Some(value) ~ _ => new StringAttribute(tpe,value)
-  //    }
+  def StringAttribute: Parser[shared.StringAttribute] = stringAttrType ~ lpar ~ "\"" ~ opt(string) ~ "\"" ~ rpar ^^{
+    case tpe ~ _ ~  _ ~ Some(id) ~ _ ~ _ => new StringAttribute(tpe,id)
+    case tpe ~ _ ~  _ ~ None ~ _ ~ _ => new StringAttribute(tpe)
+  }
 
-  def Entity: Parser[shared.Entity] = reqType ~ "(" ~ "\"" ~ opt(string) ~ "\"" ~ ")" ^^{
+  def Entity: Parser[shared.Entity] = entityType ~ lpar ~ "\"" ~ opt(string) ~ "\"" ~ rpar ^^{
     case tpe ~ _ ~  _ ~ Some(id) ~ _ ~ _ => new Entity(tpe,id)
     case tpe ~ _ ~  _ ~ None ~ _ ~ _ => new Entity(tpe)
   }

@@ -54,7 +54,7 @@ object ReleaseModal {
 
   case class State(newEntity: String, newAttribute: Option[Attribute], sortBy: Seq[String], releaseType: ReleaseType = MAX)
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => String) => Option[Callback], currentModel: Tree)
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
@@ -193,23 +193,21 @@ object ReleaseModal {
 
 
 
-    def prepRelease(state: State, model: String): String = {
-      val entity = state.newEntity
+    def prepRelease(state: State, model: String): Seq[String] = {
+      val entity = state.newEntity.replaceFirst("\\(", "(\"").reverse.replaceFirst("\\)", ")\"").reverse
       val attribute = state.newAttribute.getOrElse("Benefit").toString.split('(').head
       val problemType = state.releaseType match {
         case MAX => "maximize"
         case MIN => "minimize"
       }
-      println(state.sortBy)
 
-
-      val dollarMethod = "\n val problem = csp.releasePlan(m)\n" +
-        s"val solution = problem.$problemType($entity/$attribute)\n" +
-        s"val sortedSolution = solution.sortByTypes(${state.sortBy(0)}, ${state.sortBy(1)}, ${state.sortBy(2)}, ${state.sortBy(3)})\n" +
-        "sortedSolution"
-
-      "val m="+model+dollarMethod
-
+      Seq(
+        s"val m=$model\n",
+        "val problem = csp.releasePlan(m)\n",
+        s"val solution = problem.$problemType($entity/$attribute)\n",
+        s"val sortedSolution = solution.sortByTypes(${state.sortBy(0)}, ${state.sortBy(1)}, ${state.sortBy(2)}, ${state.sortBy(3)})\n",
+        "sortedSolution\n"
+      )
     }
 
     def resetState: Callback = $.setState(State("",None, standardList))
@@ -217,11 +215,15 @@ object ReleaseModal {
     def setNewAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newAttribute = attribute))
 
 
-    def send(P: Props, S: State)(e: ReactEvent): Callback =
+    def send(P: Props, S: State)(e: ReactEvent): Callback ={
       P.send(prepRelease(state = S, _)) match {
-        case Some(callback) => callback >> onClose(P)(e)
+        case Some(callback) => callback.foreach(_.runNow())
+        //callbacks.head.runNow()
+        //        .foreach(_.runNow()) //>> onClose(P)(e)
         case None => Callback()
       }
+      onClose(P)(e)
+    }
 
     def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetState
 
@@ -241,7 +243,7 @@ object ReleaseModal {
       .build
 
 
-    def apply(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => String) => Option[Callback], currentModel: Tree)
+    def apply(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
     = component.set()(Props(isOpen, onClose, send, currentModel))
 
 }
