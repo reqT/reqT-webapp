@@ -21,12 +21,12 @@ object Styles extends StyleSheet.Inline {
   val dragList = style(
     overflow.hidden,
     width(100.%%),
-    height(34.%%)
+    height(46.%%)
   )
   val treeView = style(
     overflow.auto,
-    width(71.%%),
-    height(100.%%),
+    width(100.%%),
+    height(87.%%),
     float.left
   )
 

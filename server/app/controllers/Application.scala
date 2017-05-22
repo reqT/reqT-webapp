@@ -29,7 +29,7 @@ class Application @Inject() (implicit system: ActorSystem, materializer: Materia
   }
 
   /**
-    * Excluded for now. Since element are needed at start of client application, the async nature of JS does not allow for sync reads.
+    * Excluded for now. Since elements are needed at start of client application, the async nature of JS does not allow for sync reads.
     */
   //  val elemListHandler = new ElementListHandler
 //  def getEntities = Action {
