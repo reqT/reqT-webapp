@@ -23,9 +23,9 @@ class TemplateHandler {
       wanted
     }
 
-    if(templateNbr > getAmountOfTemplates)
-      None
-    else
+//    if(templateNbr > getAmountOfTemplates)
+//      None
+//    else
       Some(contentIterator.filter(take).mkString("\n"))
   }
 

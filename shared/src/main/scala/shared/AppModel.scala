@@ -64,7 +64,7 @@ case class Relation(var entity: Entity, var link: RelationType, submodel:Tree) e
   isRelation = true
   entity.hasRelation = true
 
-  override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString //.replaceAll("List", "Model")
+  override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString
 
   def setLink(newLink: RelationType): Relation = {
     link = newLink
@@ -138,8 +138,9 @@ case class IntAttribute(var attrType: String, var value: Int = 0) extends Attrib
   def getValue: Int = value
   def getType : String = attrType
   override def toString(): String = s"$attrType($value)"
-
 }
+
+
 
 case class RelationType(relationType: String) {
   def getType: String = relationType
