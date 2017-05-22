@@ -188,34 +188,8 @@ object webApp extends js.JSApp {
     t
   }
 
-  def parseModel(newModel: String, dispatch: Action => Callback): Unit = {
-    Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete{
-      case Success(r) =>
-        println(read[Model](r.responseText))
-        dispatch(SetModel(fixInputModel(read[Model](r.responseText).tree).children)).runNow()
-      case Failure(e) =>
-        println(e.toString)
-    }
-  }
 
-  def importModel(dispatch: Action => Callback)(e: ReactEventI): Callback = {
-    if(e.currentTarget.files.item(0).`type` == "text/plain") {
-      println(e.currentTarget.files.item(0).`type`)
-      var newModel = "newModel empty, shouldn't happen"
-      val fileReader = new FileReader
-      println(e.currentTarget.files.item(0))
-      fileReader.readAsText(e.currentTarget.files.item(0), "UTF-8")
 
-      fileReader.onload = (_: UIEvent) => {
-        newModel = fileReader.result.asInstanceOf[String]
-        println("Kom in i FileReader")
-        parseModel(newModel.replace("\n", "").trim, dispatch)
-      }
-      Callback(e.currentTarget.value = "")
-    } else {
-      Callback(window.alert("Invalid file type, only .txt is supported"))
-    }
- }
   import org.scalajs.dom
   import scala.scalajs.js.timers._
   def downloadModel(P: Props, S: State): Unit = {
@@ -259,33 +233,31 @@ object webApp extends js.JSApp {
 
     def updateActiveModel(P: Props, S: State): Callback = {
       var newModels: Queue[(String, Tree)] = S.cachedModels.map(model => if(model._1.equals(S.activeModel)) {
-        model.copy(_2 = P.proxy.value)
+        var m = model.copy(_2 = P.proxy.value)
+        m
       } else model)
-      println("S.cachedModels: " + S.cachedModels)
-      println("newModels: " + newModels)
       $.modState(_.copy(cachedModels = newModels))
     }
 
     def saveModel(name: String, P: Props, S: State): Callback = {
-      println("saveModel name:" + name)
-      println("saveModel model:" + P.proxy.value)
+
       if(S.cachedModels.size > 5){
         if(S.activeModel == null){
-          println("1")
-          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, P.proxy.value))).thenRun(setActiveModel(name, P, S).runNow())
+          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, Tree(Seq[Elem]())))) >> setActiveModel(name, P, S)
+//            .thenRun(setActiveModel(name, P, S).runNow())
         } else {
-          println("2")
-          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, P.proxy.value)))
+          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, Tree(Seq[Elem]()))))
         }
       }
       else {
         if(S.activeModel == null) {
-          println("3")
-          $.modState(_.copy(cachedModels = S.cachedModels :+ (name, P.proxy.value))).thenRun(setActiveModel(name, P, S).runNow())
+        println("S.cachedModels: \n" + S.cachedModels)
+        println("newModel: " + name + "  " + P.proxy.value)
+          $.modState(_.copy(cachedModels = S.cachedModels :+ (name, Tree(Seq[Elem]())))) >> setActiveModel(name, P, S)
+//            .thenRun(setActiveModel(name, P, S).runNow())
         }
         else {
-          println("4")
-          $.modState(_.copy(cachedModels = S.cachedModels :+ (name, P.proxy.value)))
+          $.modState(_.copy(cachedModels = S.cachedModels :+ (name, Tree(Seq[Elem]()))))
         }
       }
     }
@@ -533,7 +505,7 @@ object webApp extends js.JSApp {
           ^.textAlign := "center",
           T.props._1._1
         ),
-        ^.onClick --> (setActiveModel(T.props._1._1, T.props._2, T.props._3) >> T.props._2.proxy.dispatchCB(SetTemplate(T.props._1._2))),
+        ^.onClick --> (setActiveModel(T.props._1._1, T.props._2, T.props._3) >> toggleActiveTab(T.props._1._1, T.props._3.cachedModels) >> T.props._2.proxy.dispatchCB(SetTemplate(T.props._1._2))),
         <.button(
           ^.className := "col",
           ^.position.absolute,
@@ -543,16 +515,50 @@ object webApp extends js.JSApp {
           ^.top := "0%",
           Styles.removeButtonSimple,
           ^.outline := "none",
-          ^.onClick --> removeCachedModel(T.props._3, T.props._1)
+          ^.onClick ==> removeCachedModel(T.props._3, T.props._1)
         )
       )).build
 
-    def removeCachedModel(state: State, modelToRemove: (String, Tree)): Callback = {
-      println(state.cachedModels.map(_._1.equals(modelToRemove._1)))
+
+    def parseModel(newModel: String, dispatch: Action => Callback): Unit = {
+      Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete{
+        case Success(r) =>
+          println(read[Model](r.responseText))
+          dispatch(SetModel(fixInputModel(read[Model](r.responseText).tree).children)).runNow()
+        case Failure(e) =>
+          println(e.toString)
+      }
+    }
+
+    def importModel(dispatch: Action => Callback)(e: ReactEventI): Callback = {
+      if(e.currentTarget.files.item(0).`type` == "text/plain") {
+        println(e.currentTarget.files.item(0).`type`)
+        var newModel = "newModel empty, shouldn't happen"
+        val fileReader = new FileReader
+        println(e.currentTarget.files.item(0))
+        fileReader.readAsText(e.currentTarget.files.item(0), "UTF-8")
+
+        fileReader.onload = (_: UIEvent) => {
+          newModel = fileReader.result.asInstanceOf[String]
+          println("Kom in i FileReader")
+          parseModel(newModel.replace("\n", "").trim, dispatch)
+          openNewModelModal.runNow()
+        }
+        Callback()
+      } else {
+        Callback(window.alert("Invalid file type, only .txt is supported"))
+      }
+    }
+
+    def toggleActiveTab(model: String, cachedModels: Queue[(String, Tree)]): Callback = {
+      Callback()
+    }
+
+    def removeCachedModel(state: State, modelToRemove: (String, Tree))(e: ReactEventI): Callback = {
+      e.stopPropagation()
       val index = state.cachedModels.indexWhere(_._1.equals(modelToRemove._1))
       val beginning = state.cachedModels.take(index)
       val end = state.cachedModels.drop(index+1)
-
       $.modState(_.copy(cachedModels = beginning ++ end))
     }
 
