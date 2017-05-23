@@ -39,7 +39,7 @@ object NewModelModal {
     ^.opacity := "0.5"
   )
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: String => Callback)
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean) => Callback)
 
   case class State(newModelName: String)
 
@@ -67,7 +67,8 @@ object NewModelModal {
               ^.display.flex,
               ^.justifyContent.spaceBetween,
               <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-              <.button("OK", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick ==> addModel(P, S))
+              <.button("Add empty model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(false, P, S)),
+              <.button("Add current model", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick ==> addModel(true,P, S))
             )
           ),
           <.div(
@@ -85,9 +86,9 @@ object NewModelModal {
       $.setState(s = S.copy(newModelName = newName))
     }
 
-    def addModel(P: Props, S: State)(e: ReactEvent): Callback = {
+    def addModel(isCurrModel: Boolean, P: Props, S: State)(e: ReactEvent): Callback = {
       println(S.newModelName)
-      P.addToCachedModels(S.newModelName) >> onClose(P)(e)
+      P.addToCachedModels(S.newModelName, isCurrModel) >> onClose(P)(e)
     }
 
     def resetState: Callback = $.setState(State(""))
@@ -109,6 +110,6 @@ object NewModelModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: String => Callback)
+  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean) => Callback)
   = component.set()(Props(isOpen, onClose, addToCachedModels))
 }

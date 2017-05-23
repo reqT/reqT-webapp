@@ -4,7 +4,7 @@ import diode.Action
 import org.scalajs.dom._
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.js.annotation.{JSExport, JSImport}
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react._
 
@@ -14,15 +14,21 @@ import diode.react.ModelProxy
 import example.Modal.ModalType
 import org.scalajs.dom.ext.{Ajax, KeyCode}
 import org.scalajs.dom.raw._
+
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
+import org.scalajs.jquery.JQueryStatic
 
 import scala.scalajs.js.URIUtils._
 import scala.collection.immutable.Queue
 import shared._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+
+@js.native
+@JSImport("jquery", JSImport.Namespace)
+object jquery extends JQueryStatic
 
 @JSExport
 object webApp extends js.JSApp {
@@ -56,11 +62,13 @@ object webApp extends js.JSApp {
 
   case class Props(proxy: ModelProxy[Tree])
 
+  case class CachedModel(name: String, model: Tree, selected: Boolean)
+
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], isModalOpen: Boolean, modalType: ModalType,
                    treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
-                   entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[(String,Tree)] = Queue(), activeModel: String,
-                   isNewModelModalOpen: Boolean = false, saveModelState : String = "rec",
-                   isDollarModalOpen: Boolean = false, isReleaseModalOpen: Boolean = false, isOrdinalModalOpen: Boolean = false, latestRecTree: Tree = Tree(Seq())) {
+                   entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", Tree(Seq()), selected = true)),
+                   isNewModelModalOpen: Boolean = false, saveModelState : String = "rec", isDollarModalOpen: Boolean = false, isReleaseModalOpen: Boolean = false,
+                   isOrdinalModalOpen: Boolean = false, latestRecTree: Tree = Tree(Seq())) {
 
 
     def log(line: String): State = copy(logLines = logLines :+ line)
@@ -71,7 +79,6 @@ object webApp extends js.JSApp {
     }
 
   }
-
 
 
   def dragStart(elem: Elem)(event: ReactDragEvent): Callback = {
@@ -199,8 +206,9 @@ object webApp extends js.JSApp {
     val a = document.createElement("a")
     var tempURL = dom.URL.createObjectURL(file)
     a.setAttribute("href", tempURL)
-    if(S.activeModel != null){
-      a.setAttribute("download", s"${S.activeModel}.txt")
+
+    if(S.cachedModels.exists(x => x.selected)){
+      a.setAttribute("download", s"${S.cachedModels.find(x => x.selected).get.name}.txt")
     } else {
       a.setAttribute("download", "reqTModel.txt")
     }
@@ -229,48 +237,47 @@ object webApp extends js.JSApp {
     def openReleaseModal = $.modState(_.copy(isReleaseModalOpen = true))
     def openNewModelModal(newSaveModelState: String) = $.modState(_.copy(isNewModelModalOpen = true, saveModelState = newSaveModelState))
 
-    def setActiveModel(name: String,P: Props, S: State): Callback = {
-      if(S.activeModel != null)
-       updateActiveModel(P,S) >> $.modState(_.copy(activeModel = name))
-      else
-        $.modState(_.copy(activeModel = name))
+    def setActiveModel(model: CachedModel,P: Props, S: State): Callback = {
+        updateActiveModel(model, P,S)
+
     }
 
 
-    def updateActiveModel(P: Props, S: State): Callback = {
-      var newModels: Queue[(String, Tree)] = S.cachedModels.map(model => if(model._1.equals(S.activeModel)) {
-        var m = model.copy(_2 = P.proxy.value)
+    def updateActiveModel(model: CachedModel, P: Props, S: State): Callback = {
+      var newModels: Queue[CachedModel] = S.cachedModels.map(mo => if(mo.selected) {
+        println("Found active model: \n" + mo)
+        println("P.proxy.value: " + P.proxy.value)
+        var m = mo.copy(model = P.proxy.value, selected = false)
         m
-      } else model)
+      } else if(mo.equals(model)){
+        var m = mo.copy(selected = true)
+        m
+      } else mo)
+      println("newModels: \n" + newModels)
       $.modState(_.copy(cachedModels = newModels))
     }
 
-    def saveModel(name: String, P: Props, S: State): Callback = {
+    def saveModel(name: String, isCurrModel: Boolean, P: Props, S: State): Callback = {
       S.saveModelState match {
         case "rec" if S.latestRecTree != null =>
-          $.modState(_.copy(cachedModels = S.cachedModels :+ (name, S.latestRecTree)))
+          if(isCurrModel) {
+            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, S.latestRecTree, selected = false)))
 
-        case "save" | "imp" =>
-          if(S.cachedModels.size > 5){
-            if(S.activeModel == null){
-              $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, Tree(Seq[Elem]())))) >> setActiveModel(name, P, S)
-            } else {
-              $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, Tree(Seq[Elem]()))))
-            }
           }
-          else {
-            if(S.activeModel == null) {
-              println("S.cachedModels: \n" + S.cachedModels)
-              println("newModel: " + name + "  " + P.proxy.value)
-              $.modState(_.copy(cachedModels = S.cachedModels :+ (name, Tree(Seq[Elem]())))) >> setActiveModel(name, P, S)
-              //            .thenRun(setActiveModel(name, P, S).runNow())
-            }
-            else {
-              $.modState(_.copy(cachedModels = S.cachedModels :+ (name, Tree(Seq[Elem]()))))
-            }
-          }
+          else
+            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false)))
 
+        case "save" =>
+          if(isCurrModel)
+            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, P.proxy.value, selected = false)))
+          else
+            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false)))
 
+        case "imp" =>
+          if(isCurrModel)
+            $.modState(_.copy(cachedModels = S.cachedModels:+ CachedModel(name, P.proxy.value, selected = false)))
+          else
+            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false)))
         case _ => Callback()
 
       }
@@ -311,7 +318,7 @@ object webApp extends js.JSApp {
         HundredDollarModal(isOpen = S.isDollarModalOpen, onClose = closeDollarModal, sendPrepMessage),
         ReleaseModal(isOpen = S.isReleaseModalOpen, onClose = closeReleaseModal, sendPrepMessage, P.proxy.value),
         OrdinalModal(isOpen = S.isOrdinalModalOpen, onClose = closeOrdinalModal, sendPrepMessage, P.proxy.value),
-        NewModelModal(isOpen = S.isNewModelModalOpen, onClose = closeNewModelModal, addToCachedModels = saveModel(_, P, S)),
+        NewModelModal(isOpen = S.isNewModelModalOpen, onClose = closeNewModelModal, addToCachedModels = saveModel(_, _, P, S)),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -478,7 +485,7 @@ object webApp extends js.JSApp {
       .render($ => <.pre(
         ^.padding := "5px",
         ^.paddingRight := "5px",
-        ^.height := "4%",
+        ^.height := "5%",
         ^.overflow := "hidden",
         ^.position.relative,
         <.button(
@@ -487,37 +494,54 @@ object webApp extends js.JSApp {
           ^.position.absolute,
           ^.top := "0%",
           ^.width := "5%",
-          ^.height := "42px",
+          ^.height := "105%",
           ^.marginLeft := "-6px",
           ^.marginTop := "-2px",
           Styles.navBarButton,
           ^.outline := "none",
           ^.onClick --> openNewModelModal("save")
         ),
-        <.ul(
-          ^.position.absolute,
-          ^.width := "95%",
+        <.div(
+          ^.overflowX.auto,
           ^.left := "5%",
-          ^.className := "nav nav-pills",
-          ^.listStyleType.none,
-          $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1, $.props._2)))
+          ^.height := "91%",
+          ^.overflowX.auto,
+          ^.overflowY.hidden,
+          ^.width := "95%",
+          ^.position.absolute,
+          <.div(
+            ^.whiteSpace := "nowrap",
+            ^.position.absolute,
+            ^.className := "clickable-row",
+              <.ul(
+                ^.display.flex,
+                ^.height := "0px",
+                ^.className := "nav nav-pills",
+                ^.listStyleType.none,
+                $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1, $.props._2)))
+
+              )
+          )
         )
       )
       ).build
 
-    val listModels = ReactComponentB[((String, Tree), Props, State)]("listElem")
+    val listModels = ReactComponentB[(CachedModel, Props, State)]("listElem")
       .render(T => <.li(
-
+        ^.className := "navpill",
+        ^.display := "inline",
+        ^.whiteSpace := "nowrap",
+        ^.position.relative,
         ^.marginLeft := "5px",
         ^.marginRight := "5px",
         ^.padding := "5px",
+        ^.float.left,
         ^.overflow := "hidden",
         ^.borderRadius := "5px",
         ^.height := "30px",
         ^.top := "0px",
         ^.width := "200px",
-        ^.marginTop := "-18px",
-        ^.background := "#CFEADD",
+        ^.background := {if(T.props._1.selected) "#CFEADD" else "#a5bbb0"},
         <.span(
           ^.className := "col",
           ^.position.absolute,
@@ -525,11 +549,10 @@ object webApp extends js.JSApp {
           ^.height := "30px",
           ^.paddingTop := "2px",
           ^.textAlign := "center",
-          T.props._1._1
+          T.props._1.name
         ),
-        ^.onClick -->
-          (setActiveModel(T.props._1._1, T.props._2, T.props._3) >>
-          toggleActiveTab(T.props._1._1, T.props._3.cachedModels) >> T.props._2.proxy.dispatchCB(SetModel(T.props._1._2.children))),
+        ^.onClick --> (setActiveModel(T.props._1, T.props._2, T.props._3) >> T.props._2.proxy.dispatchCB(SetModel(T.props._1.model.children))),
+
         <.button(
           ^.className := "col",
           ^.position.absolute,
@@ -543,6 +566,19 @@ object webApp extends js.JSApp {
         )
       )).build
 
+    def activeModel(activeModel: CachedModel, cachedModels: Queue[CachedModel]): Callback ={
+
+      $.modState(_.copy(cachedModels = cachedModels.map(x => if(x.name.equals(activeModel.name)){
+        println("New active: " +x.name)
+        var newX = x.copy(selected = true)
+        newX
+      } else {
+        var newX = x.copy(selected = false)
+        newX
+      }
+        )))
+
+    }
 
     def parseModel(newModel: String, dispatch: Action => Callback): Unit = {
       Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete{
@@ -568,19 +604,19 @@ object webApp extends js.JSApp {
           parseModel(newModel.replace("\n", "").trim, dispatch)
           openNewModelModal("imp").runNow()
         }
-        Callback()
+        Callback(e.currentTarget.value = "")
       } else {
         Callback(window.alert("Invalid file type, only .txt is supported"))
       }
     }
 
-    def toggleActiveTab(model: String, cachedModels: Queue[(String, Tree)]): Callback = {
+    def toggleActiveTab(model: CachedModel, cachedModels: Queue[CachedModel]): Callback = {
       Callback()
     }
 
-    def removeCachedModel(state: State, modelToRemove: (String, Tree))(e: ReactEventI): Callback = {
+    def removeCachedModel(state: State, modelToRemove: CachedModel)(e: ReactEventI): Callback = {
       e.stopPropagation()
-      val index = state.cachedModels.indexWhere(_._1.equals(modelToRemove._1))
+      val index = state.cachedModels.indexWhere(_.equals(modelToRemove))
       val beginning = state.cachedModels.take(index)
       val end = state.cachedModels.drop(index+1)
       $.modState(_.copy(cachedModels = beginning ++ end))
@@ -697,7 +733,7 @@ object webApp extends js.JSApp {
   }
 
   val pageContent = ReactComponentB[Props]("Content")
-    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalType = Modal.EMPTY_MODAL, treeItem = null, activeModel = null))
+    .initialState(State(None, Vector.empty, message = "", elems, isModalOpen = false, modalType = Modal.EMPTY_MODAL, treeItem = null))
     .renderBackend[Backend]
     .componentDidMount(_.backend.start)
     .componentWillUnmount(_.backend.end)
