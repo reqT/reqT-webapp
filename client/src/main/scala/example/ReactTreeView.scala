@@ -11,6 +11,7 @@ import scalacss.ScalaCssReact._
 import scala.scalajs.js
 import shared._
 import diode.NoAction
+import org.scalajs.dom.ext.KeyCode
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def linkToString: String = link match {
@@ -52,7 +53,12 @@ object ReactTreeView {
       ^.paddingLeft := "20px"
     )
 
-    def selectedTreeItemContent = Seq(^.color := "darkblue")
+    def selectedTreeItemContent = Seq(
+      ^.color := "darkblue",
+      ^.border := "5px",
+      ^.borderColor := "darkblue",
+      ^.borderRadius := "5px"
+    )
 
     def treeItemBefore = Seq(
       ^.position := "absolute",
@@ -146,20 +152,22 @@ object ReactTreeView {
     def render(P: Props, S: State) =
       <.div(
         P.style.reactTreeView)(
-        P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
-        TreeNode.withKey("root")(NodeProps(
-          root = P.root,
-          open = P.open,
-          onNodeSelect = onNodeSelect(P),
-          onNodeDrag = onNodeDrag(P),
-          onNodeDrop = onNodeDrop(P),
-          filterText = S.filterText,
-          style = P.style,
-          filterMode = S.filterMode,
-          modelProxy = P.modelProxy,
-          setModalContent = P.setModalContent
-        ))
-      )
+          P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
+          TreeNode.withKey("root")(
+            NodeProps(
+              root = P.root,
+              open = P.open,
+              onNodeSelect = onNodeSelect(P),
+              onNodeDrag = onNodeDrag(P),
+              onNodeDrop = onNodeDrop(P),
+              filterText = S.filterText,
+              style = P.style,
+              filterMode = S.filterMode,
+              modelProxy = P.modelProxy,
+              setModalContent = P.setModalContent
+            )
+          )
+        )
   }
 
   case class NodeBackend($: BackendScope[NodeProps, NodeState]) {
@@ -265,6 +273,7 @@ object ReactTreeView {
         case _ => dispatch(NoAction)
       }
     }
+
 
     def dragOver(P:NodeProps)(e: ReactDragEvent): Callback = {
       e.preventDefaultCB >> Callback(e.dataTransfer.dropEffect = "move")

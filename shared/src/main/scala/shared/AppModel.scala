@@ -3,7 +3,9 @@ package shared
 import diode.Action
 
 
-case class Model(tree: Tree)
+case class Model(tree: Tree){
+
+}
 
 case class Tree(children: Seq[Elem]){
   override def toString: String =  {
@@ -13,6 +15,7 @@ case class Tree(children: Seq[Elem]){
       children.map(_.toString).toString.replace("List", "").replace("Vector","")
     }
   }
+
   def makeString: String = "Model"+this.toString
 }
 
@@ -64,6 +67,8 @@ case class Relation(var entity: Entity, var link: RelationType, submodel:Tree) e
   isRelation = true
   entity.hasRelation = true
 
+
+  def modelString = "Relation("+entity.modelString+","+link.modelString+","+submodel.toString+")"
   override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString
 
   def setLink(newLink: RelationType): Relation = {
@@ -97,6 +102,8 @@ case class Entity(var entityType: String, var id : String ="") extends Node {
 
   def getID: String = id
   def getType: String = entityType
+
+  def modelString = "Entity(\""+entityType+"\",\""+id+"\")"
   override def toString(): String = entityType+"(\""+id+"\")"
 }
 
@@ -118,6 +125,8 @@ case class StringAttribute(var attrType: String, var value: String = "") extends
 
   def getValue: String = value
   def getType: String = attrType
+
+  def modelString = "StringAttribute(\""+attrType+"\",\""+value+"\")"
   override def toString(): String = attrType+"(\""+value+"\")"
 }
 
@@ -137,6 +146,8 @@ case class IntAttribute(var attrType: String, var value: Int = 0) extends Attrib
 
   def getValue: Int = value
   def getType : String = attrType
+
+   def modelString = "IntAttribute(\""+attrType+"\","+value+")"
   override def toString(): String = s"$attrType($value)"
 }
 
@@ -144,6 +155,7 @@ case class IntAttribute(var attrType: String, var value: Int = 0) extends Attrib
 
 case class RelationType(relationType: String) {
   def getType: String = relationType
+  def modelString = "RelationType(\""+relationType+"\")"
   override def toString: String = relationType
 }
 
@@ -488,13 +500,9 @@ case class UpdateRelation(path: Seq[String], newId: String, newRelationType: Opt
 
 case class UpdateEntireRelation(path: Seq[String], newEntity: Entity, newRelationType: Option[RelationType]) extends Action
 
-case class SetTemplate(tree : Tree) extends  Action
-
 case class SetModel(treeItem : Seq[Elem]) extends  Action
 
-case object SetTemplate extends Action
-
-case object SetTemplate1 extends Action
+case class SetTemplate(nbr: Int) extends  Action
 
 //case object NoAction extends Action
 

@@ -58,8 +58,9 @@ object webApp extends js.JSApp {
 
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], isModalOpen: Boolean, modalType: ModalType,
                    treeItem: TreeItem, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
-                   entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[(String,Tree)] = Queue(), activeModel: String, isNewModelModalOpen: Boolean = false,
-                   isDollarModalOpen: Boolean = false, isReleaseModalOpen: Boolean = false, isOrdinalModalOpen: Boolean = false, latestRecTree: Tree = null) {
+                   entityChecked : Boolean = false, attributeChecked: Boolean = false, cachedModels: Queue[(String,Tree)] = Queue(), activeModel: String,
+                   isNewModelModalOpen: Boolean = false, saveModelState : String = "rec",
+                   isDollarModalOpen: Boolean = false, isReleaseModalOpen: Boolean = false, isOrdinalModalOpen: Boolean = false, latestRecTree: Tree = Tree(Seq())) {
 
 
     def log(line: String): State = copy(logLines = logLines :+ line)
@@ -214,7 +215,7 @@ object webApp extends js.JSApp {
   class Backend($: BackendScope[Props, State]) {
 
     def closeModal(e: ReactEvent): Callback = $.modState(_.copy(isModalOpen = false))
-    def closeDollarModal(e: ReactEvent): Callback = $.modState(_.copy(isDollarModalOpen = false))
+    def closeDollarModal(e: ReactEvent): Callback =  $.modState(_.copy(isDollarModalOpen = false))
     def closeReleaseModal(e: ReactEvent): Callback = $.modState(_.copy(isReleaseModalOpen = false))
     def closeOrdinalModal(e: ReactEvent): Callback = $.modState(_.copy(isOrdinalModalOpen = false))
     def closeNewModelModal(e: ReactEvent): Callback = $.modState(_.copy(isNewModelModalOpen = false))
@@ -226,7 +227,7 @@ object webApp extends js.JSApp {
     def openDollarModal = $.modState(_.copy(isDollarModalOpen = true))
     def openOrdinalModal = $.modState(_.copy(isOrdinalModalOpen = true))
     def openReleaseModal = $.modState(_.copy(isReleaseModalOpen = true))
-    def openNewModelModal = $.modState(_.copy(isNewModelModalOpen = true))
+    def openNewModelModal(newSaveModelState: String) = $.modState(_.copy(isNewModelModalOpen = true, saveModelState = newSaveModelState))
 
     def setActiveModel(name: String,P: Props, S: State): Callback = {
       if(S.activeModel != null)
@@ -245,25 +246,33 @@ object webApp extends js.JSApp {
     }
 
     def saveModel(name: String, P: Props, S: State): Callback = {
+      S.saveModelState match {
+        case "rec" if S.latestRecTree != null =>
+          $.modState(_.copy(cachedModels = S.cachedModels :+ (name, S.latestRecTree)))
 
-      if(S.cachedModels.size > 5){
-        if(S.activeModel == null){
-          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, Tree(Seq[Elem]())))) >> setActiveModel(name, P, S)
-//            .thenRun(setActiveModel(name, P, S).runNow())
-        } else {
-          $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, Tree(Seq[Elem]()))))
-        }
-      }
-      else {
-        if(S.activeModel == null) {
-        println("S.cachedModels: \n" + S.cachedModels)
-        println("newModel: " + name + "  " + P.proxy.value)
-          $.modState(_.copy(cachedModels = S.cachedModels :+ (name, Tree(Seq[Elem]())))) >> setActiveModel(name, P, S)
-//            .thenRun(setActiveModel(name, P, S).runNow())
-        }
-        else {
-          $.modState(_.copy(cachedModels = S.cachedModels :+ (name, Tree(Seq[Elem]()))))
-        }
+        case "save" | "imp" =>
+          if(S.cachedModels.size > 5){
+            if(S.activeModel == null){
+              $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, Tree(Seq[Elem]())))) >> setActiveModel(name, P, S)
+            } else {
+              $.modState(_.copy(cachedModels = S.cachedModels.dequeue._2 :+ (name, Tree(Seq[Elem]()))))
+            }
+          }
+          else {
+            if(S.activeModel == null) {
+              println("S.cachedModels: \n" + S.cachedModels)
+              println("newModel: " + name + "  " + P.proxy.value)
+              $.modState(_.copy(cachedModels = S.cachedModels :+ (name, Tree(Seq[Elem]())))) >> setActiveModel(name, P, S)
+              //            .thenRun(setActiveModel(name, P, S).runNow())
+            }
+            else {
+              $.modState(_.copy(cachedModels = S.cachedModels :+ (name, Tree(Seq[Elem]()))))
+            }
+          }
+
+
+        case _ => Callback()
+
       }
     }
 
@@ -339,7 +348,8 @@ object webApp extends js.JSApp {
               <.button(
                 ^.className := "btn btn-default",
                 ^.onClick --> P.proxy.dispatchCB(SetModel(S.latestRecTree.children)),
-                "asdf"),
+                S.latestRecTree.toString.take(5)
+              ),
               <.button(
                 ^.disabled := sendVerify.isEmpty,
                 ^.className := "btn btn-default",
@@ -482,7 +492,7 @@ object webApp extends js.JSApp {
           ^.marginTop := "-2px",
           Styles.navBarButton,
           ^.outline := "none",
-          ^.onClick --> openNewModelModal
+          ^.onClick --> openNewModelModal("save")
         ),
         <.ul(
           ^.position.absolute,
@@ -517,7 +527,9 @@ object webApp extends js.JSApp {
           ^.textAlign := "center",
           T.props._1._1
         ),
-        ^.onClick --> (setActiveModel(T.props._1._1, T.props._2, T.props._3) >> toggleActiveTab(T.props._1._1, T.props._3.cachedModels) >> T.props._2.proxy.dispatchCB(SetTemplate(T.props._1._2))),
+        ^.onClick -->
+          (setActiveModel(T.props._1._1, T.props._2, T.props._3) >>
+          toggleActiveTab(T.props._1._1, T.props._3.cachedModels) >> T.props._2.proxy.dispatchCB(SetModel(T.props._1._2.children))),
         <.button(
           ^.className := "col",
           ^.position.absolute,
@@ -554,7 +566,7 @@ object webApp extends js.JSApp {
           newModel = fileReader.result.asInstanceOf[String]
           println("Kom in i FileReader")
           parseModel(newModel.replace("\n", "").trim, dispatch)
-          openNewModelModal.runNow()
+          openNewModelModal("imp").runNow()
         }
         Callback()
       } else {
@@ -645,6 +657,7 @@ object webApp extends js.JSApp {
         def onmessage(event: MessageEvent): Unit = {
           if(event.data.toString.startsWith("{")){
             direct.modState(_.saveTree(read[Model](event.data.toString).tree))
+            openNewModelModal("rec").runNow()
           } else {
             direct.modState(_.log(s"${event.data.toString}"))
           }

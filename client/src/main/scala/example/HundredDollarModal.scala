@@ -110,12 +110,12 @@ object HundredDollarModal {
       val p = state.newPAttribute.getOrElse("Prio").toString.split('(').head
 
       Seq(
-        s"val m = ${model.replaceAll("\n","")} \n",
-        s"val shs = m . entitiesOfType ( $shs ) \n",
-        s"val rs = m . entitiesOfType ( $rs ) \n",
-        s"val prioSum = shs . map ( s => m / s / $p ) . sum \n",
-        s"val benefitSum = shs . map ( s => s -> ( m / s ) . collect { case $b ( b ) => b }. sum ) . toMap \n",
-        s"val resultDollar = rs . map ( r => r has $b  ( math . round ( shs . map ( s =>( m / s / $p ) *( m / s / r / $b ) *100.0 / ( benefitSum ( s ) * prioSum ) ) . sum ) . toInt ) ) . toModel \n",
+        s"val dollarMethod = ${model.replaceAll("\n","")} \n",
+        s"val shs = dollarMethod . entitiesOfType ( $shs ) \n",
+        s"val rs = dollarMethod . entitiesOfType ( $rs ) \n",
+        s"val prioSum = shs . map ( s => dollarMethod / s / $p ) . sum \n",
+        s"val benefitSum = shs . map ( s => s -> ( dollarMethod / s ) . collect { case $b ( b ) => b }. sum ) . toMap \n",
+        s"val resultDollar = rs . map ( r => r has $b  ( math . round ( shs . map ( s =>( dollarMethod / s / $p ) *( dollarMethod / s / r / $b ) *100.0 / ( benefitSum ( s ) * prioSum ) ) . sum ) . toInt ) ) . toModel \n",
         s"val sum = resultDollar . collect { case $b  ( b ) => b }. sum \n")
     }
 

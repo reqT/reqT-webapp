@@ -42,7 +42,7 @@ object OrdinalModal {
     val Less, Equal, Great = Value
   }
 
-  case class State(rankings: Seq[(Seq[Entity], Int)], deviation: Int = 0)
+  case class State(rankings: Seq[Int] = Seq(), pairs: Seq[Seq[Entity]], deviation: Int = 0)
 
   case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
 
@@ -80,7 +80,7 @@ object OrdinalModal {
               ^.textAlign.center
             ),
             <.div(
-              generatePairs(getReq(P.currentModel.children)).zipWithIndex.map(pair => pairSelect(pairProps(S, pair = pair._1, index = pair._2)))
+              S.pairs.zipWithIndex.map(pairs => pairSelect(pairProps(S, pair = pairs._1, index = pairs._2)))
             ),
             <.div(
               "Deviation:",
@@ -159,35 +159,35 @@ object OrdinalModal {
     }
 
 
-    def setRanking(pair: Seq[Entity], newRank: Int, index: Int): Callback = $.modState(S => S.copy(rankings = S.rankings.updated(index,(pair,newRank))))
+    def setRanking(pair: Seq[Entity], newRank: Int, index: Int): Callback = $.modState(S => S.copy(rankings = S.rankings.updated(index,newRank)))
 
-    def generateRankingList(pairsWithRank: Seq[(Seq[Entity], Int)]): String = {
-      val rank = pairsWithRank.map(p => p._2 match{
-        case 0 => (p._1.head.id,"<", p._1.last.id)
-        case 1 => (p._1.head.id,"<>", p._1.last.id)
-        case 2 => (p._1.head.id,">", p._1.last.id)
-      } )
-      "\""+rank.map(s => s._1 ++ s._2 ++ s._3).mkString(" ")+"\""
-    }
+//    def generateRankingList(ranks: Seq[Int], pairs: Seq[Entity]): String = {
+//      val rank = pairsWithRank.map(p => p._2 match{
+//        case 0 => (p._1.head.id,"<", p._1.last.id)
+//        case 1 => (p._1.head.id,"<>", p._1.last.id)
+//        case 2 => (p._1.head.id,">", p._1.last.id)
+//      } )
+//      "\""+rank.map(s => s._1 ++ s._2 ++ s._3).mkString(" ")+"\""
+//    }
 
     def prepOrdinal(state: State, model: String, trams : String): Seq[String] = {
-      Seq(s"val OrdinalRanks =$model",
-      s"val ranked = reqT.parse.comparisonParser.parseAndSolve(OrdinalRanks,allowedDeviation=${state.deviation})")
+      Seq(s"val ordinalMethod =$model",
+      s"val ranked = reqT.parse.comparisonParser.parseAndSolve(ordinalMethod,allowedDeviation=${state.deviation})")
     }
 
-    def resetState: Callback = $.setState(State(Seq()))
+//    def resetState: Callback = $.setState(State(Seq()))
 
     def send(P: Props, S: State)(e: ReactEvent): Callback ={
-      val list = generateRankingList(S.rankings)
+//      val list = generateRankingList(S.rankings, S.pairs)
 
-      P.send(prepOrdinal(state = S, list, _)) match {
+      P.send(prepOrdinal(state = S, "hej", _)) match {
         case Some(callback) => callback.foreach(_.runNow())
         case None => Callback()
       }
       onClose(P)(e)
     }
 
-    def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetState
+    def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) //>> resetState
 
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
       if (e.nativeEvent.keyCode == KeyCode.Escape) {
@@ -200,7 +200,7 @@ object OrdinalModal {
 
 
   val component = ReactComponentB[Props]("Modal")
-    .initialState_P(P => State(rankings = generatePairs(getReq(P.currentModel.children)).map(pair => (pair,1))))
+    .initialState_P(P => State(pairs = generatePairs(getReq(P.currentModel.children)) ))
     .renderBackend[Backend]
     .build
 

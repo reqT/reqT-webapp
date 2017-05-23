@@ -50,11 +50,13 @@ class WebSocketActor(out: ActorRef) extends Actor {
   private def sendResponse(response: String) = {
     """= *Model[(].*[)]""".r.findFirstMatchIn(response.replaceAll("\n"," ")) match {
 
-      case Some(m) if response.contains("problem") =>
-        println(response)
+      case _ if response.contains("dollarMethod") | response.contains("releaseMethod") | response.contains("ordinalMethod")  =>
         out ! ("Answer: \n" + response)
 
-      case Some(m) =>
+      case Some(m) if response.contains("problem") =>
+        out ! ("Answer: \n" + response)
+
+      case Some(m)  =>
         trimModel(m.matched.drop(m.matched.indexOf("Model")).replaceAll(" +", " ")) match {
           case Some(model) => out !  write[Model](parser.parseAll(parser.Model, model).get)
           case _ => Unit
@@ -84,21 +86,21 @@ class WebSocketActor(out: ActorRef) extends Actor {
 
 
 
-  testUpickle
-  def testUpickle = {
-    val parser = new ExprParser
-
-    val m2 = "Model(\n  Stakeholder(\"X\") has (\n    Prio(1),\n    Feature(\"1\") has Benefit(4),\n    Feature(\"2\") has Benefit(2),\n    Feature(\"3\") has Benefit(1)),\n  Stakeholder(\"Y\") has (\n    Prio(2),\n    Feature(\"1\") has Benefit(2),\n    Feature(\"2\") has Benefit(1),\n    Feature(\"3\") has Benefit(1)),\n  Release(\"A\") precedes Release(\"B\"),  \n  Resource(\"dev\") has (\n    Feature(\"1\") has Cost(10),\n    Feature(\"2\") has Cost(70),\n    Feature(\"3\") has Cost(40),\n    Release(\"A\") has Capacity(100),\n    Release(\"B\") has Capacity(100)),\n  Resource(\"test\") has (\n    Feature(\"1\") has Cost(40),\n    Feature(\"2\") has Cost(10),\n    Feature(\"3\") has Cost(70),\n    Release(\"A\") has Capacity(100),\n    Release(\"B\") has Capacity(100)),\n  Feature(\"3\") precedes Feature(\"1\"))"
-    val result = parser.parseAll(parser.Model, m2)
-    out ! write[Model](result.get)
-
+//  testUpickle
+//  def testUpickle = {
+//    val parser = new ExprParser
+//
+//    val m2 = "Model(\n  Stakeholder(\"X\") has (\n    Prio(1),\n    Feature(\"1\") has Benefit(4),\n    Feature(\"2\") has Benefit(2),\n    Feature(\"3\") has Benefit(1)),\n  Stakeholder(\"Y\") has (\n    Prio(2),\n    Feature(\"1\") has Benefit(2),\n    Feature(\"2\") has Benefit(1),\n    Feature(\"3\") has Benefit(1)),\n  Release(\"A\") precedes Release(\"B\"),  \n  Resource(\"dev\") has (\n    Feature(\"1\") has Cost(10),\n    Feature(\"2\") has Cost(70),\n    Feature(\"3\") has Cost(40),\n    Release(\"A\") has Capacity(100),\n    Release(\"B\") has Capacity(100)),\n  Resource(\"test\") has (\n    Feature(\"1\") has Cost(40),\n    Feature(\"2\") has Cost(10),\n    Feature(\"3\") has Cost(70),\n    Release(\"A\") has Capacity(100),\n    Release(\"B\") has Capacity(100)),\n  Feature(\"3\") precedes Feature(\"1\"))"
+//    val result = parser.parseAll(parser.Model, m2)
+//    out ! write[Model](result.get)
+//
 //    for(i <- 1 to 15){
 //      print(i)
 //      val result = parser.parseAll(parser.Model, templateHandler.getTemplate(i).get.drop(12))
 //      out ! write[Model](result.get)
 //      print(" succeded\n")
 //    }
-  }
+//  }
 
   def receive = {
     case message: String if message.contains("val OrdinalRank") =>
@@ -109,9 +111,5 @@ class WebSocketActor(out: ActorRef) extends Actor {
       reqTos.write((message + "\n").getBytes("UTF-8"))
       reqTos.flush()
 
-//      message match {
-//        case r"Template[1-9][0-9]*" =>
-//          out ! templateHandler.getTemplate(message)
-//      }
   }
 }
