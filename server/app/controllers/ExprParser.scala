@@ -19,14 +19,15 @@ class ExprParser extends RegexParsers {
   val intAttrType: Regex = "(Benefit|Capacity|Cost|Damage|Frequency|Min|Max|Order|Prio|Probability|Profit|Value)".r
   val stringAttrType: Regex = "(Comment|Deprecated|Example|Expectation|FileName|Gist|Image|Spec|Text|Title|Why)".r
 
-  def Model: Parser[shared.Model] = "Model(" ~ opt(rep(Elem ~ ",")) ~ Elem ~")"^^{
-    case   _ ~ Some(list) ~ elem ~ _=> new Model(Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem])))
+  def Model: Parser[shared.Model] = "Model(" ~ opt( opt(rep(Elem ~ ",")) ~ Elem )~")"^^{
+    case _ ~Some( Some(list) ~ elem) ~_=> shared.Model(Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem])))
+    case none => shared.Model(Tree(Seq()))
   }
 
   def Elem: Parser[shared.Elem] = Relation | Node
 
   def Relation: Parser[shared.Relation] = Entity ~ RelationType ~ RelationModel ^^{
-    case ent ~ reltype ~ relationModel => new Relation(ent,reltype, relationModel)
+    case ent ~ reltype ~ relationModel => shared.Relation(ent,reltype, relationModel)
   }
 
   def RelationModel : Parser[shared.Tree] = RelationList | Elem  ^^ {
@@ -38,7 +39,7 @@ class ExprParser extends RegexParsers {
     case _ ~ list ~ elem ~ _ => Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem]))
   }
 
-  def RelationType: Parser[shared.RelationType] = reqType ^^{new RelationType(_)}
+  def RelationType: Parser[shared.RelationType] = reqType ^^{shared.RelationType}
 
   def Node: Parser[shared.Node] = (Attribute | Entity) ^^{
     case node :Node => node
@@ -47,16 +48,16 @@ class ExprParser extends RegexParsers {
   def Attribute: Parser[shared.Attribute] = IntAttribute | StringAttribute
 
   def IntAttribute: Parser[shared.IntAttribute] = intAttrType ~ lpar ~ opt(int) ~ rpar ^^{
-    case tpe ~ _ ~ Some(value) ~ _ => new IntAttribute(tpe,value.toInt)
+    case tpe ~ _ ~ Some(value) ~ _ => shared.IntAttribute(tpe,value.toInt)
   }
 
   def StringAttribute: Parser[shared.StringAttribute] = stringAttrType ~ lpar ~ "\"" ~ opt(string) ~ "\"" ~ rpar ^^{
-    case tpe ~ _ ~  _ ~ Some(id) ~ _ ~ _ => new StringAttribute(tpe,id)
-    case tpe ~ _ ~  _ ~ None ~ _ ~ _ => new StringAttribute(tpe)
+    case tpe ~ _ ~  _ ~ Some(id) ~ _ ~ _ => shared.StringAttribute(tpe,id)
+    case tpe ~ _ ~  _ ~ None ~ _ ~ _ => shared.StringAttribute(tpe)
   }
 
   def Entity: Parser[shared.Entity] = entityType ~ lpar ~ "\"" ~ opt(string) ~ "\"" ~ rpar ^^{
-    case tpe ~ _ ~  _ ~ Some(id) ~ _ ~ _ => new Entity(tpe,id)
-    case tpe ~ _ ~  _ ~ None ~ _ ~ _ => new Entity(tpe)
+    case tpe ~ _ ~  _ ~ Some(id) ~ _ ~ _ => shared.Entity(tpe,id)
+    case tpe ~ _ ~  _ ~ None ~ _ ~ _ => shared.Entity(tpe)
   }
 }

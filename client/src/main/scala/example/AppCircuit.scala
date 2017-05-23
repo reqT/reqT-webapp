@@ -161,43 +161,10 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
             case None => noChange
           }
 
-      case SetTemplate =>
-        val model = Tree(Seq(
-          Relation(Entity("Goal", "accuracy"), RelationType("has"), Tree(Seq( StringAttribute("Spec","Our pre-calculations shall hit within 5%")))),
-          Relation(Entity("Feature","quotation"), RelationType("has"), Tree(Seq( StringAttribute("Spec","Product shall support cost recording and quotation with experience data")))),
-          Relation(Entity("Function","experienceData"), RelationType("has"), Tree(Seq( StringAttribute("Spec","Product shall have recording and retrieval functions for experience data")))),
-          Relation(Entity("Design","screenX"), RelationType("has"), Tree(Seq( StringAttribute("Spec","System shall have screen pictures as shown in Fig. X"))))
-        ))
-        updated(model)
-
       case SetModel(treeItem: Seq[Elem]) =>
         val model = Tree(treeItem)
         updated(model)
 
-
-      case SetTemplate(templateNbr: Int) =>
-        val model = Tree(Seq(
-          Relation(Entity("Stakeholder","a"), RelationType("has"), Tree(Seq(
-            IntAttribute("Prio",2),
-            Relation(Entity("Req","1"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",5)))),
-            Relation(Entity("Req","2"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(300))))),
-            Relation(Entity("Req","3"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(8))))),
-            Relation(Entity("Req","4"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(9))))),
-            Relation(Entity("Req","5"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(100))))),
-            Relation(Entity("Req","6"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(10))))),
-            Relation(Entity("Req","7"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(20)))))
-            ))),
-          Relation(Entity("Stakeholder","b"), RelationType("has") ,Tree(Seq(
-            IntAttribute("Prio",4),
-            Relation(Entity("Req","1"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(100))))),
-            Relation(Entity("Req","2"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(7))))),
-            Relation(Entity("Req","3"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(20))))),
-            Relation(Entity("Req","4"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(80))))),
-            Relation(Entity("Req","5"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(10))))),
-            Relation(Entity("Req","6"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(90))))),
-            Relation(Entity("Req","7"), RelationType("has"),Tree(Seq(IntAttribute("Benefit",(20))))))))))
-
-        updated(model)
 
       case UpdateEntity(path:Seq[String], newEntity: Entity) =>
         val elemID = path.last
