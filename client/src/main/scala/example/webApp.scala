@@ -247,8 +247,14 @@ object webApp extends js.JSApp {
       var newModels: Queue[CachedModel] = S.cachedModels.map(mo => if(mo.selected) {
         println("Found active model: \n" + mo)
         println("P.proxy.value: " + P.proxy.value)
-        var m = mo.copy(model = P.proxy.value, selected = false)
-        m
+        if(mo.equals(model)){
+          var m = mo.copy(model = P.proxy.value, selected = true)
+          m
+        } else {
+          var m = mo.copy(model = P.proxy.value, selected = false)
+          m
+        }
+
       } else if(mo.equals(model)){
         var m = mo.copy(selected = true)
         m
