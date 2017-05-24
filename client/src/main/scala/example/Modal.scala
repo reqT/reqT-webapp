@@ -18,6 +18,7 @@ object Modal {
   case object COPY_MODAL extends ModalType
 
   def modalStyle = Seq(
+    ^.width:= "400px",
     ^.padding := "5px",
     ^.position := "absolute",
     ^.border := "1px solid #CCC",
@@ -151,7 +152,6 @@ object Modal {
     def setNewAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newAttribute = attribute))
 
     def addElemModalStyle(P : Props, S: State) = Seq(
-      ^.width:= "400px",
       <.h4(
         "Do you want to add the following?",
         ^.textAlign.center
@@ -224,7 +224,6 @@ object Modal {
     )
 
     def editModalStyle(P: Props, S: State) = Seq(
-      ^.width:= "400px",
       <.h4(
         "Edit element",
         ^.textAlign.center
@@ -312,7 +311,6 @@ object Modal {
     def deleteElemModalStyle(P : Props, S: State) =
       if(P.treeItem.item != "Model") {
         Seq(
-          ^.width := "400px",
           <.h4(
             "Do you want to delete the following?",
             ^.textAlign.center
@@ -367,7 +365,6 @@ object Modal {
         )
       } else {
         Seq(
-          ^.width := "400px",
           <.h4(
             "Do you want to delete the entire model?",
             ^.textAlign.center
@@ -384,7 +381,6 @@ object Modal {
       }
 
     def copyModalStyle(P: Props, S: State) = Seq(
-      ^.width:= "400px",
       <.h4(
         "Copy",
         ^.textAlign.center

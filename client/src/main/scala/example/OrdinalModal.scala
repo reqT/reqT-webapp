@@ -1,5 +1,6 @@
 package example
 
+import japgolly.scalajs.react.ReactComponentC.ReqProps
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, ReactKeyboardEventI}
 import org.scalajs.dom.ext.KeyCode
@@ -10,6 +11,7 @@ import shared._
 object OrdinalModal {
 
   def modalStyle = Seq(
+    ^.width := "400px",
     ^.padding := "5px",
     ^.position := "absolute",
     ^.border := "1px solid #CCC",
@@ -37,7 +39,7 @@ object OrdinalModal {
     ^.opacity := "0.5"
   )
 
-  def selectStyle() = Seq(
+  def selectStyle = Seq(
     ^.className := "form-control pull-right",
     ^.width := "155px",
     ^.height :=  "100%",
@@ -47,7 +49,14 @@ object OrdinalModal {
     ^.textAlignLast.center
   )
 
-  case class State(rankings: Seq[Int] = Seq(), pairs: Seq[Seq[Entity]] = Seq(), deviation: Int = 0, typeToRank: String = "Req", readyForRanking: Boolean = false)
+  def buttonDivStyle = Seq(
+    ^.width := "95%",
+    ^.padding := "20px",
+    ^.display.flex,
+    ^.justifyContent.spaceBetween
+  )
+
+  case class State(rankings: Seq[Int] = Seq(), pairs: Seq[Seq[Entity]] = Seq(), deviation: Int = 0, typeToRank: String = "", readyForRanking: Boolean = false)
 
   case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
 
@@ -65,17 +74,16 @@ object OrdinalModal {
 
 
   def getAllEntities(elems: Seq[Elem]): Seq[Entity] = {
-    if (elems.isEmpty){
+    if (elems.isEmpty)
       Seq()
-    }else{
-      val noAttr = elems.filter(_.isEntity).asInstanceOf[Seq[Entity]]
-      val relations = elems.filter(_.isRelation)
+    else{
+      val entities = elems.filter(_.isEntity).asInstanceOf[Seq[Entity]]
+      val relations = elems.filter(_.isRelation).map(_.asInstanceOf[Relation].entity)
       val children = relations.flatMap(_.asInstanceOf[Relation].submodel.children)
 
-      noAttr ++ relations.map(_.asInstanceOf[Relation].entity) ++ getAllEntities(children)
+      entities ++ relations ++ getAllEntities(children)
     }
   }
-
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
@@ -85,13 +93,12 @@ object OrdinalModal {
             ^.onKeyDown ==> handleKeyDown(P, S),
             <.div(
               modalStyle,
-              ^.width := "400px",
               <.h4(
                 "Ordinal Ranking",
                 ^.textAlign.center
               ),
               <.div(
-                S.pairs.zipWithIndex.map(pairs => pairSelect(pairProps(S, pair = pairs._1, index = pairs._2)))
+                S.pairs.zipWithIndex.map(pairs => pairSelect(pairProps(S, pair = pairs._1, index = pairs._2, 0)))
               ),
               <.div(
                 "Deviation:",
@@ -106,12 +113,8 @@ object OrdinalModal {
                 )
               ),
               <.div(
-                ^.width := "95%",
-                ^.padding := "20px",
-                ^.display.flex,
-                ^.justifyContent.spaceBetween,
+                buttonDivStyle,
                 <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-                <.button("ta", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> tell(S)),
                 <.button("OK", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick ==> send(P, S))
               )),
             <.div(
@@ -124,7 +127,6 @@ object OrdinalModal {
             ^.onKeyDown ==> handleKeyDown(P, S),
             <.div(
               modalStyle,
-              ^.width := "400px",
               <.h4(
                 "Ordinal Ranking",
                 ^.textAlign.center
@@ -132,13 +134,9 @@ object OrdinalModal {
               <.div(
                 "Choose type to rank",
                 entitySelect(P)
-
               ),
               <.div(
-                ^.width := "95%",
-                ^.padding := "20px",
-                ^.display.flex,
-                ^.justifyContent.spaceBetween,
+                buttonDivStyle,
                 <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
                 <.button("Rank", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> setState(P,S))
               )),
@@ -152,58 +150,50 @@ object OrdinalModal {
         <.div()
 
     def setState(P: Props, S:State):  Callback ={
-      println("type: " + S.typeToRank)
       val newPairs = generatePairs($, getReq(P.currentModel.children, S.typeToRank))
 
       $.modState(_.copy(rankings = List.fill(newPairs.size)(1), pairs = newPairs, readyForRanking = true))
     }
 
-    case class pairProps(state: State, pair: Seq[Entity], index: Int)
+    case class pairProps(state: State, pair: Seq[Entity], index: Int, nbr: Int)
 
     val pairSelect = ReactComponentB[pairProps]("pairSelect")
       .render($ =>
         <.div(
-          ^.id := $.props.pair.hashCode(),
           ^.className := "btn-group btn-group-justified",
-          <.div(
-            ^.className :="btn-group",
-            <.button(
-              ^.backgroundColor := {if ($.props.state.rankings($.props.index) == 0) "green" else "white" },
-              ^.`type`:="button",
-              ^.className:="btn btn-default",
-              ^.onClick --> setRanking(0, $.props.index), // tell($.props.index)
-              $.props.pair.head.toString()
-            )
-          ),
-          <.div(
-            ^.className :="btn-group",
-            <.button(
-              ^.backgroundColor := {if ($.props.state.rankings($.props.index) == 1) "green" else "white" },
-              ^.`type`:="button",
-              ^.className:="btn btn-default",
-              ^.onClick --> setRanking(1, $.props.index),
-              "Equal"
-            )
-          ),
-          <.div(
-            ^.className :="btn-group",
-            <.button(
-              ^.backgroundColor := {if ($.props.state.rankings($.props.index) == 2) "green" else "white" },
-              ^.`type`:="button",
-              ^.className:="btn btn-default",
-              ^.onClick --> setRanking(2, $.props.index),
-              $.props.pair.last.toString()
-            )
-          )
+          entityButton($.props.copy(nbr = 0)),
+          entityButton($.props.copy(nbr = 1)),
+          entityButton($.props.copy(nbr = 2))
         )
       )
       .build
 
 
+    def entityButton = ReactComponentB[pairProps]("entityButton")
+      .render($ =>
+        <.div(
+          ^.className :="btn-group",
+          <.button(
+            ^.backgroundColor := {if ($.props.state.rankings($.props.index) == $.props.nbr) "green" else "white" },
+            ^.`type`:="button",
+            ^.className:="btn btn-default",
+            ^.onClick --> setRanking($.props.nbr, $.props.index),
+            {
+              $.props.nbr match{
+              case 0 => $.props.pair.head.toString()
+              case 1 => "Equal"
+              case 2 => $.props.pair.last.toString()
+              }
+            }
+          )
+        )
+      )
+      .build
+
     val entitySelect = ReactComponentB[Props]("entitySelect")
       .render($ =>
         <.select(
-          selectStyle(),
+          selectStyle,
           ^.onChange ==> setTypeToRank
         )(
           createOptions($.props)
@@ -240,11 +230,11 @@ object OrdinalModal {
 
       val rank = pairsWithRank.map(p => p._2 match{
         case 0 =>  p._1.head.id + " < " + p._1.last.id
-        case 1 =>  p._1.head.id +  " <> "  + p._1.last.id
+        case 1 =>  ""
         case 2 =>  p._1.head.id +  " > "  + p._1.last.id
       } )
 
-      "\""+rank.mkString(";")+ "\""
+      "\""+rank.filterNot(_ == "").mkString(";")+ "\""
     }
 
     def prepOrdinal(state: State, model: String, trams : String): Seq[String] = {
@@ -277,7 +267,7 @@ object OrdinalModal {
 
 
   val component = ReactComponentB[Props]("Modal")
-    .initialState(State(typeToRank = ""))
+    .initialState(State(  ))
     .renderBackend[Backend]
     .build
 

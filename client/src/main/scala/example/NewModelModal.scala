@@ -12,6 +12,7 @@ import shared.{Attribute, Entity}
   */
 object NewModelModal {
   def modalStyle = Seq(
+    ^.width:= "400px",
     ^.padding := "5px",
     ^.position := "absolute",
     ^.border := "1px solid #CCC",
@@ -50,7 +51,6 @@ object NewModelModal {
           ^.onKeyDown ==> handleKeyDown(P, S),
           <.div(
             modalStyle,
-            ^.width:= "400px",
             <.h4(
               "Specify name of the new model"
             ),

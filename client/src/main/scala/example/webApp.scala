@@ -14,6 +14,7 @@ import diode.react.ModelProxy
 import example.Modal.ModalType
 import org.scalajs.dom.ext.{Ajax, KeyCode}
 import org.scalajs.dom.raw._
+
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
@@ -53,6 +54,8 @@ object webApp extends js.JSApp {
 
   val attributes = intAttribute ++ stringAttribute
   val elems = entities ++ attributes
+
+//  case class modelProps(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem])
 
   case class Props(proxy: ModelProxy[Tree])
 
@@ -346,11 +349,6 @@ object webApp extends js.JSApp {
               ^.onClick -->? send,
               "Send"),
               <.button(
-                ^.className := "btn btn-default",
-                ^.onClick --> P.proxy.dispatchCB(SetModel(S.latestRecTree.children)),
-                S.latestRecTree.toString.take(5)
-              ),
-              <.button(
                 ^.disabled := sendVerify.isEmpty,
                 ^.className := "btn btn-default",
                 "Verify Model",
@@ -507,7 +505,6 @@ object webApp extends js.JSApp {
 
     val listModels = ReactComponentB[((String, Tree), Props, State)]("listElem")
       .render(T => <.li(
-
         ^.marginLeft := "5px",
         ^.marginRight := "5px",
         ^.padding := "5px",
@@ -639,6 +636,10 @@ object webApp extends js.JSApp {
 
     def sendMessages(websocket: WebSocket, msg: Seq[String]): Seq[Callback] = msg.map(sendMessage(websocket,_))
 
+    def receiveModel(tree: Tree) = {
+        openNewModelModal("rec").runNow()
+    }
+
 
     def start: Callback = {
 
@@ -656,8 +657,9 @@ object webApp extends js.JSApp {
 
         def onmessage(event: MessageEvent): Unit = {
           if(event.data.toString.startsWith("{")){
-            direct.modState(_.saveTree(read[Model](event.data.toString).tree))
-            openNewModelModal("rec").runNow()
+            val tree = read[Model](event.data.toString).tree
+            receiveModel(tree)
+            direct.modState(_.saveTree(tree))
           } else {
             direct.modState(_.log(s"${event.data.toString}"))
           }

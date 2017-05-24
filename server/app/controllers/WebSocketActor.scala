@@ -53,7 +53,7 @@ class WebSocketActor(out: ActorRef) extends Actor {
       case _ if response.contains("dollarMethod") | response.contains("releaseMethod") | response.contains("ordinalMethod")  =>
         out ! ("Answer: \n" + response)
 
-      case Some(m) if response.contains("problem") =>
+      case Some(_) if response.contains("CSPproblem") =>
         out ! ("Answer: \n" + response)
 
       case Some(m)  =>

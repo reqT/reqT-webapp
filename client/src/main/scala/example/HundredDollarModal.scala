@@ -10,6 +10,7 @@ import shared._
 object HundredDollarModal {
 
   def modalStyle = Seq(
+    ^.width:= "400px",
     ^.padding := "5px",
     ^.position := "absolute",
     ^.border := "1px solid #CCC",
@@ -48,7 +49,6 @@ object HundredDollarModal {
           ^.onKeyDown ==> handleKeyDown(P, S),
           <.div(
             modalStyle,
-            ^.width:= "400px",
             <.h4(
               "100 Dollar Method",
               ^.textAlign.center
