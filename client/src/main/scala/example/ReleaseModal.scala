@@ -204,7 +204,7 @@ object ReleaseModal {
       Seq(
         s"val releaseMethod=$model\n",
         "val CSPproblem = csp.releasePlan(releaseMethod)\n",
-        s"val solution = problem.$problemType($entity/$attribute)\n",
+        s"val solution = CSPproblem.$problemType($entity/$attribute)\n",
         s"val sortedSolution = solution.sortByTypes(${state.sortBy(0)}, ${state.sortBy(1)}, ${state.sortBy(2)}, ${state.sortBy(3)})\n",
         "sortedSolution\n"
       )

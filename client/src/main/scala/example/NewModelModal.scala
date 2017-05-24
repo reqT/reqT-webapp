@@ -12,7 +12,7 @@ import shared.{Attribute, Entity}
   */
 object NewModelModal {
   def modalStyle = Seq(
-    ^.width:= "400px",
+    ^.width := "400px",
     ^.padding := "5px",
     ^.position := "absolute",
     ^.border := "1px solid #CCC",
@@ -40,7 +40,14 @@ object NewModelModal {
     ^.opacity := "0.5"
   )
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean) => Callback)
+  def buttonStyle = Seq(
+    ^.width := "95%",
+    ^.padding := "20px",
+    ^.display.flex,
+    ^.justifyContent.spaceBetween
+  )
+
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean) => Callback, tree: shared.Tree, resultModel: Boolean)
 
   case class State(newModelName: String)
 
@@ -51,25 +58,39 @@ object NewModelModal {
           ^.onKeyDown ==> handleKeyDown(P, S),
           <.div(
             modalStyle,
-            <.h4(
-              "Specify name of the new model"
-            ),
-            <.input(
-              ^.`type` := "text",
-              ^.className := "form-control",
-              ^.placeholder := "Enter name",
-              ^.value := S.newModelName,
-              ^.onChange ==> onChange(P,S)
-            ),
-            <.div(
-              ^.width := "95%",
-              ^.padding := "20px",
-              ^.display.flex,
-              ^.justifyContent.spaceBetween,
-              <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-              <.button("Add empty model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(false, P, S)),
-              <.button("Add current model", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick ==> addModel(true,P, S))
-            )
+            if (P.resultModel) {
+              <.div(
+                <.h3("Result"),
+                <.div(
+                  <.textarea(
+                    ^.className := "form-control",
+                    ^.rows := 6,
+                    ^.maxWidth := "100%",
+                    ^.maxHeight := "200px",
+                    ^.border := "1px solid #CCC",
+                    ^.borderRadius := "5px",
+                    ^.background := "#FFF",
+                    ^.autoFocus := "true",
+                    ^.readOnly := "true",
+                    ^.value := s"Model(${P.tree})"
+                  )
+                ),
+                InputComponent(S),
+                <.div(
+                  buttonStyle,
+                  <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
+                  <.button("Save Result", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(true, P, S))
+                ))
+            } else {
+              <.div(
+                InputComponent(S),
+                <.div(
+                  buttonStyle,
+                  <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
+                  <.button("Add empty model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(false, P, S)),
+                  <.button("Add current model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(true, P, S))
+                ))
+            }
           ),
           <.div(
             backdropStyle,
@@ -80,14 +101,30 @@ object NewModelModal {
       } else
         <.div()
 
-    def onChange(P: Props, S: State)(e: ReactEventI): Callback = {
+    def InputComponent = ReactComponentB[State]("InputComponent")
+      .render($ =>
+        <.div(
+          <.h4(
+            "Specify name of the new model"
+          ),
+          <.input(
+            ^.autoFocus := "true",
+            ^.`type` := "text",
+            ^.className := "form-control",
+            ^.placeholder := "Enter name",
+            ^.value := $.props.newModelName,
+            ^.onChange ==> onChange($.props)
+          )
+        )
+      ).build
+
+    def onChange(S: State)(e: ReactEventI): Callback = {
       e.preventDefault()
-      val newName= e.target.value
+      val newName = e.target.value
       $.setState(s = S.copy(newModelName = newName))
     }
 
     def addModel(isCurrModel: Boolean, P: Props, S: State)(e: ReactEvent): Callback = {
-      println(S.newModelName)
       P.addToCachedModels(S.newModelName, isCurrModel) >> onClose(P)(e)
     }
 
@@ -110,6 +147,6 @@ object NewModelModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean) => Callback)
-  = component.set()(Props(isOpen, onClose, addToCachedModels))
+  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean) => Callback, tree: shared.Tree, resultModel: Boolean)
+  = component.set()(Props(isOpen, onClose, addToCachedModels, tree, resultModel))
 }

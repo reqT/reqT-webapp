@@ -75,7 +75,6 @@ class WebSocketActor(out: ActorRef) extends Actor {
         if(reqTis.available() > 0){
           val nbrOfReadBytes = reqTis.read(buf, 0, 10000)
           val response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
-          println(response)
           sendResponse(response)
 
         } else {
@@ -106,7 +105,6 @@ class WebSocketActor(out: ActorRef) extends Actor {
 
   def receive = {
     case message: String if message.contains("val ordinalMethod") =>
-      println(message+".replace(\";\", \"\\n\")")
       reqTos.write((message+".replace(\";\", \"\\n\")" + "\n").getBytes("UTF-8"))
       reqTos.flush()
 

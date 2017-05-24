@@ -11,6 +11,7 @@ import scalacss.ScalaCssReact._
 import scala.scalajs.js
 import shared._
 import diode.NoAction
+import org.scalajs.dom.document
 import org.scalajs.dom.ext.KeyCode
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
@@ -88,7 +89,8 @@ object ReactTreeView {
   case class State(filterText: String,
                    filterMode: Boolean,
                    selectedNode: js.UndefOr[NodeC],
-                   dragOverNode: js.UndefOr[NodeC])
+                   dragOverNode: js.UndefOr[NodeC]
+                  )
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -288,9 +290,10 @@ object ReactTreeView {
 
     def dragOverStyle(P: NodeProps): Seq[TagMod] = {
       Seq(^.opacity := 0.5,
+        ^.border := "1px solid",
+        ^.borderColor := "black",
         P.root.item.isInstanceOf[Attribute] ?= Seq(
           ^.color := "#FF3636",
-          ^.border := "1px solid",
           ^.borderColor := "#FF3636"
         )
       )
