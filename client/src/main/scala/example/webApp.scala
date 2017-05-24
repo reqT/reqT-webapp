@@ -7,23 +7,19 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSImport}
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react._
-
 import scala.util.{Failure, Success}
 import diode.react.ModelProxy
 import example.Modal.ModalType
 import org.scalajs.dom.ext.{Ajax, KeyCode}
 import org.scalajs.dom.raw._
-
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import upickle.default._
-import org.scalajs.jquery.JQueryStatic
-
 import scala.scalajs.js.URIUtils._
 import scala.collection.immutable.Queue
 import shared._
-
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.scalajs.jquery.JQueryStatic
 
 @js.native
 @JSImport("jquery", JSImport.Namespace)
@@ -63,14 +59,13 @@ object webApp extends js.JSApp {
 
   case class Props(proxy: ModelProxy[Tree])
 
-  case class CachedModel(name: String, model: Tree, selected: Boolean)
+  case class CachedModel(name: String, model: Tree, selected: Boolean, uUID: UUID)
 
   case class OpenModals(isModalOpen: Boolean = false, isNewModelModalOpen: Boolean = false, isDollarModalOpen: Boolean = false,
                         isReleaseModalOpen: Boolean = false, isOrdinalModalOpen: Boolean = false)
-
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], modalType: ModalType, treeItem: TreeItem,
                    dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None, entityChecked : Boolean = false,
-                   attributeChecked: Boolean = false, cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", Tree(Seq()), selected = true)),
+                   attributeChecked: Boolean = false, cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", Tree(Seq()), selected = true, uUID = UUID.random())),
                    openModals: OpenModals = OpenModals(), saveModelState : String = "rec", latestRecTree: Tree = Tree(Seq()), isMethodStarted: Boolean = false,
                    waitingForModel: Boolean = false, resultModel: Boolean = false, scrollPosition: Double = 0
                   ) {
@@ -261,7 +256,7 @@ object webApp extends js.JSApp {
       var newModels: Queue[CachedModel] = S.cachedModels.map(mo => if(mo.selected) {
         println("Found active model: \n" + mo)
         println("P.proxy.value: " + P.proxy.value)
-        if(mo.equals(model)){
+        if(mo.uUID.equals(model.uUID)){
           var m = mo.copy(model = P.proxy.value, selected = true)
           m
         } else {
@@ -269,7 +264,7 @@ object webApp extends js.JSApp {
           m
         }
 
-      } else if(mo.equals(model)){
+      } else if(mo.uUID.equals(model.uUID)){
         var m = mo.copy(selected = true)
         m
       } else mo)
@@ -278,25 +273,27 @@ object webApp extends js.JSApp {
     }
 
     def saveModel(name: String, isCurrModel: Boolean, P: Props, S: State): Callback = {
+
+
       S.saveModelState match {
         case "rec" if S.latestRecTree != null =>
           if(isCurrModel) {
-            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, S.latestRecTree, selected = false)))
+            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, S.latestRecTree, selected = false, UUID.random())))
           }
           else
-            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false)))
+            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
 
         case "save" =>
           if(isCurrModel)
-            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, P.proxy.value, selected = false)))
+            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
           else
-            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false)))
+            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
 
         case "imp" =>
           if(isCurrModel)
-            $.modState(_.copy(cachedModels = S.cachedModels:+ CachedModel(name, P.proxy.value, selected = false)))
+            $.modState(_.copy(cachedModels = S.cachedModels:+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
           else
-            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false)))
+            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
         case _ => Callback()
 
       }
@@ -562,7 +559,9 @@ object webApp extends js.JSApp {
         ^.height := "30px",
         ^.top := "0px",
         ^.width := "200px",
-        ^.background := {if($.props._1.selected) "#CFEADD" else "#a5bbb0"},
+        ^.background := "#CFEADD",
+        ^.opacity := {if($.props._1.selected) "1" else "0.5"},
+
         <.span(
           ^.className := "col",
           ^.position.absolute,
@@ -581,6 +580,7 @@ object webApp extends js.JSApp {
           ^.height := "30px",
           ^.left := "80%",
           ^.top := "0%",
+          ^.paddingTop := "5px",
           Styles.removeButtonSimple,
           ^.outline := "none",
           ^.onClick ==> removeCachedModel($.props._3, $.props._1)
@@ -589,7 +589,7 @@ object webApp extends js.JSApp {
 
     def activeModel(activeModel: CachedModel, cachedModels: Queue[CachedModel]): Callback ={
 
-      $.modState(_.copy(cachedModels = cachedModels.map(x => if(x.name.equals(activeModel.name)){
+      $.modState(_.copy(cachedModels = cachedModels.map(x => if(x.uUID.equals(activeModel.uUID)){
         println("New active: " +x.name)
         var newX = x.copy(selected = true)
         newX
@@ -662,16 +662,29 @@ object webApp extends js.JSApp {
 
     val log = ReactComponentB[Vector[String]]("log")
       .render($ =>
+
         <.pre(
           ^.className := "form-control",
+          ^.id := "reqTLog",
           ^.width := "auto",
+          ^.contentEditable := "true",
           ^.height := "80%",
           ^.marginTop := "5px",
           ^.overflowY.auto,
+          ^.overflowX.hidden,
           ^.whiteSpace.`pre-line`,
           $.props.map(<.p(_)))
       )
+      .componentDidUpdate(_ => updateScroll)
       .build
+
+    def updateScroll: Callback = {
+      var reqtLog = document.getElementById("reqTLog").asInstanceOf[dom.html.Pre]
+      Callback({
+        reqtLog
+        reqtLog.scrollTop = reqtLog.scrollHeight
+      })
+    }
 
     def onTextChange(event: ReactEventI): Callback =
       event.extract(_.target.value.toLowerCase) {
@@ -776,7 +789,6 @@ object webApp extends js.JSApp {
 
   def main(): Unit = {
     Styles.addToDocument()
-//    ReactDOM.render(dc(proxy => navigationBar((headerButtons, Props(proxy)))), document.getElementById("header"))
     ReactDOM.render(dc(proxy => pageContent(Props(proxy))), document.getElementById("content"))
   }
 }
