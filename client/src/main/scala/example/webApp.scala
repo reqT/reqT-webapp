@@ -649,16 +649,29 @@ object webApp extends js.JSApp {
 
     val log = ReactComponentB[Vector[String]]("log")
       .render($ =>
+
         <.pre(
           ^.className := "form-control",
+          ^.id := "reqTLog",
           ^.width := "auto",
+          ^.contentEditable := "true",
           ^.height := "80%",
           ^.marginTop := "5px",
           ^.overflowY.auto,
+          ^.overflowX.hidden,
           ^.whiteSpace.`pre-line`,
           $.props.map(<.p(_)))
       )
+      .componentDidUpdate(_ => updateScroll)
       .build
+
+    def updateScroll: Callback = {
+      var reqtLog = document.getElementById("reqTLog").asInstanceOf[dom.html.Pre]
+      Callback({
+        reqtLog
+        reqtLog.scrollTop = reqtLog.scrollHeight
+      })
+    }
 
     def onTextChange(event: ReactEventI): Callback =
       event.extract(_.target.value.toLowerCase) {
@@ -750,7 +763,6 @@ object webApp extends js.JSApp {
 
   def main(): Unit = {
     Styles.addToDocument()
-//    ReactDOM.render(dc(proxy => navigationBar((headerButtons, Props(proxy)))), document.getElementById("header"))
     ReactDOM.render(dc(proxy => pageContent(Props(proxy))), document.getElementById("content"))
   }
 }
