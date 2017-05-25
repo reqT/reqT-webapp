@@ -28,7 +28,6 @@ object jquery extends JQueryStatic
 @JSExport
 object webApp extends js.JSApp {
   //Måste ändras till hostname
-
   val url = "ws://127.0.0.1:9000/socket"
 
   val entities = List("Ent", "Meta", "Item", "Label", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release", "Resource", "Risk", "Service",
@@ -222,7 +221,7 @@ object webApp extends js.JSApp {
 
     val treeView = ReactComponentB[(ModelProxy[Tree], (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback)]("treeView")
       .render(P => <.pre(
-//        ^.onScroll --> getScroll(),
+//        ^.onScroll --> getScroll,
         Styles.treeView,
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
@@ -239,9 +238,7 @@ object webApp extends js.JSApp {
           )
         )
       )
-      ).componentWillUpdate(_ => Callback(println(document.getElementById("treeView").scrollTop)))
-      .componentDidUpdate(_ => Callback(println("tja bro")))
-      .build
+      ).build
 
     def setScroll(position : Double): Callback = {
       var temp = document.getElementById("treeView").asInstanceOf[dom.html.Pre]
@@ -670,7 +667,6 @@ object webApp extends js.JSApp {
           ^.className := "form-control",
           ^.id := "reqTLog",
           ^.width := "auto",
-          ^.contentEditable := "true",
           ^.height := "80%",
           ^.marginTop := "5px",
           ^.overflowY.auto,
@@ -679,12 +675,15 @@ object webApp extends js.JSApp {
           $.props.map(<.p(_)))
       )
       .componentDidUpdate(_ => updateScroll)
+        .componentDidMount(_ => Callback({
+          var reqtLog = document.getElementById("reqTLog").asInstanceOf[dom.html.Pre]
+          reqtLog.setAttribute("style", "user-select:text;" + reqtLog.style.cssText)
+        }))
       .build
 
     def updateScroll: Callback = {
-      var reqtLog = document.getElementById("reqTLog").asInstanceOf[dom.html.Pre]
       Callback({
-        reqtLog
+        var reqtLog = document.getElementById("reqTLog").asInstanceOf[dom.html.Pre]
         reqtLog.scrollTop = reqtLog.scrollHeight
       })
     }
