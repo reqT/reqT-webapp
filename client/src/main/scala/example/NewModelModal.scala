@@ -47,7 +47,19 @@ object NewModelModal {
     ^.justifyContent.spaceBetween
   )
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean, String) => Callback, tree: shared.Tree, resultModel: String)
+  def textAreaStyle = Seq(
+    ^.className := "form-control",
+    ^.rows := 6,
+    ^.maxWidth := "100%",
+    ^.maxHeight := "200px",
+    ^.border := "1px solid #CCC",
+    ^.borderRadius := "5px",
+    ^.background := "#FFF",
+    ^.autoFocus := "true",
+    ^.readOnly := "true"
+  )
+
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, resultModel: String)
 
   case class State(newModelName: String)
 
@@ -63,15 +75,7 @@ object NewModelModal {
                 <.h3("Result"),
                 <.div(
                   <.textarea(
-                    ^.className := "form-control",
-                    ^.rows := 6,
-                    ^.maxWidth := "100%",
-                    ^.maxHeight := "200px",
-                    ^.border := "1px solid #CCC",
-                    ^.borderRadius := "5px",
-                    ^.background := "#FFF",
-                    ^.autoFocus := "true",
-                    ^.readOnly := "true",
+                    textAreaStyle,
                     ^.value := s"Model(${P.tree})"
                   )
                 ),
@@ -79,25 +83,28 @@ object NewModelModal {
                 <.div(
                   buttonStyle,
                   <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-                  <.button("Save Result", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(true, P, S))
-                ))
-            } else if(P.resultModel == "temp") {
+                  <.button("Save Result", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(S.newModelName, P.tree, P))
+                )
+              )
+            } else if(P.resultModel == "save") {
               <.div(
                 InputComponent(S),
                 <.div(
                   buttonStyle,
                   <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-                  <.button("Add Template", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(true, P, S))
-                ))
+                  <.button("Add empty model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(S.newModelName, shared.Tree(Seq()),P)),
+                  <.button("Add current model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(S.newModelName, P.tree, P))
+                )
+              )
             } else {
               <.div(
                 InputComponent(S),
                 <.div(
                   buttonStyle,
                   <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-                  <.button("Add empty model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(false, P, S)),
-                  <.button("Add current model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(true, P, S))
-                ))
+                  <.button("Add Model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(S.newModelName, P.tree, P))
+                )
+              )
             }
           ),
           <.div(
@@ -132,10 +139,7 @@ object NewModelModal {
       $.setState(s = S.copy(newModelName = newName))
     }
 
-    def addModel(isCurrModel: Boolean, P: Props, S: State)(e: ReactEvent): Callback = {
-      println("asdf")
-      P.addToCachedModels(S.newModelName, isCurrModel, P.resultModel) >> onClose(P)(e)
-    }
+    def addModel(newName: String, tree: shared.Tree, P: Props)(e: ReactEvent): Callback = P.saveModel(newName,tree) >> onClose(P)(e)
 
     def resetState: Callback = $.setState(State(""))
 
@@ -156,6 +160,6 @@ object NewModelModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean, String) => Callback, tree: shared.Tree, resultModel: String)
-  = component.set()(Props(isOpen, onClose, addToCachedModels, tree, resultModel))
+  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, resultModel: String)
+  = component.set()(Props(isOpen, onClose, saveModel, tree, resultModel))
 }

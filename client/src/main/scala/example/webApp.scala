@@ -63,6 +63,7 @@ object webApp extends js.JSApp {
 
   case class OpenModals(isModalOpen: Boolean = false, isNewModelModalOpen: Boolean = false, isDollarModalOpen: Boolean = false,
                         isReleaseModalOpen: Boolean = false, isOrdinalModalOpen: Boolean = false)
+
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], modalType: ModalType, treeItem: TreeItem,
                    dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None, entityChecked : Boolean = false,
                    attributeChecked: Boolean = false, cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", Tree(Seq()), selected = true, uUID = UUID.random())),
@@ -213,8 +214,8 @@ object webApp extends js.JSApp {
     def openDollarModal = $.modState(_.copy(openModals = OpenModals(isDollarModalOpen = true)))
     def openOrdinalModal = $.modState(_.copy(openModals = OpenModals(isOrdinalModalOpen = true)))
     def openReleaseModal = $.modState(_.copy(openModals = OpenModals(isReleaseModalOpen = true)))
-    def openNewModelModal(newSaveModelState: String) = $.modState(_.copy(openModals = OpenModals(isNewModelModalOpen = true),
-      saveModelType = newSaveModelState))
+    def openNewModelModal(newSaveModelType: String) = $.modState(_.copy(openModals = OpenModals(isNewModelModalOpen = true),
+      saveModelType = newSaveModelType))
 
     def setActiveModel(model: CachedModel,P: Props, S: State): Callback = {
       updateActiveModel(model, P,S)
@@ -222,7 +223,6 @@ object webApp extends js.JSApp {
 
     val treeView = ReactComponentB[(ModelProxy[Tree], (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback)]("treeView")
       .render(P => <.pre(
-//        ^.onScroll --> getScroll(),
         Styles.treeView,
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
@@ -239,8 +239,7 @@ object webApp extends js.JSApp {
           )
         )
       )
-      ).componentWillUpdate(_ => Callback(println(document.getElementById("treeView").scrollTop)))
-      .componentDidUpdate(_ => Callback(println("tja bro")))
+      )
       .build
 
     def setScroll(position : Double): Callback = {
@@ -253,54 +252,53 @@ object webApp extends js.JSApp {
 
 
     def updateActiveModel(model: CachedModel, P: Props, S: State): Callback = {
-      var newModels: Queue[CachedModel] = S.cachedModels.map(mo => if(mo.selected) {
-        println("Found active model: \n" + mo)
-        println("P.proxy.value: " + P.proxy.value)
-        if(mo.uUID.equals(model.uUID)){
-          var m = mo.copy(model = P.proxy.value, selected = true)
-          m
-        } else {
-          var m = mo.copy(model = P.proxy.value, selected = false)
-          m
-        }
+      val newModels: Queue[CachedModel] = S.cachedModels.map(mo =>
+        if(mo.selected) {
+          if(mo.uUID.equals(model.uUID))
+            mo.copy(model = P.proxy.value, selected = true)
+          else
+            mo.copy(model = P.proxy.value, selected = false)
+        } else if(mo.uUID.equals(model.uUID))
+          mo.copy(selected = true)
+        else mo
+      )
 
-      } else if(mo.uUID.equals(model.uUID)){
-        var m = mo.copy(selected = true)
-        m
-      } else mo)
-      println("newModels: \n" + newModels)
       $.modState(_.copy(cachedModels = newModels))
     }
 
-    def saveModel(name: String, isCurrModel: Boolean, saveModelType: String, P: Props): Callback = {
+    def saveModel(name: String, model: Tree, P: Props): Callback =
+      $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, model, selected = false, UUID.random())))
 
-      saveModelType match {
-        case "rec"  =>
-          if(isCurrModel)
-            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, s.latestRecTree, selected = false, UUID.random())))
-          else
-            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
 
-        case "save" =>
-          if(isCurrModel)
-            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
-          else
-            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
-
-        case "imp" =>
-          if(isCurrModel)
-            $.modState(s => s.copy(cachedModels = s.cachedModels:+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
-          else
-            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
-        case _ => Callback()
-
-        case "temp" =>{
-          println("asdf")
-          $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, P.proxy.value, selected = true, UUID.random())))
-        }
-
-      }
-    }
+//    def saveModel(name: String, isCurrModel: Boolean, saveModelType: String, P: Props): Callback = {
+//      println(name + "  " + saveModelType)
+//
+//      saveModelType match {
+//        case "rec"  =>
+//          if(isCurrModel)
+//            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, s.latestRecTree, selected = false, UUID.random())))
+//          else
+//            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
+//
+//        case "save" =>
+//          if(isCurrModel)
+//            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
+//          else
+//            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
+//
+//        case "imp" =>
+//          if(isCurrModel)
+//            $.modState(s => s.copy(cachedModels = s.cachedModels:+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
+//          else
+//            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
+//
+//        case "temp" => $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
+//
+//        case _ => Callback()
+//
+//
+//      }
+//    }
 
 
 
@@ -329,7 +327,6 @@ object webApp extends js.JSApp {
 
       def setMethodStarted: Callback = $.modState(_.copy(isMethodStarted = true))
 
-
       def handleKeyDown(event: ReactKeyboardEventI): Option[Callback] = {
         if (event.nativeEvent.keyCode == KeyCode.Enter)
           send
@@ -342,7 +339,8 @@ object webApp extends js.JSApp {
         HundredDollarModal(isOpen = S.openModals.isDollarModalOpen, onClose = closeDollarModal, sendPrepMessage),
         ReleaseModal(isOpen = S.openModals.isReleaseModalOpen, onClose = closeReleaseModal, sendPrepMessage, P.proxy.value),
         OrdinalModal(isOpen = S.openModals.isOrdinalModalOpen, onClose = closeOrdinalModal, sendPrepMessage, P.proxy.value),
-        NewModelModal(isOpen = S.openModals.isNewModelModalOpen, onClose = closeNewModelModal, addToCachedModels = saveModel(_, _, _,P), S.latestRecTree, S.saveModelType),
+        NewModelModal(isOpen = S.openModals.isNewModelModalOpen, onClose = closeNewModelModal, saveModel = saveModel(_, _, P),
+          {if (S.saveModelType.equals("rec") || S.saveModelType.equals("temp")) S.latestRecTree else P.proxy.value}, S.saveModelType),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -402,6 +400,7 @@ object webApp extends js.JSApp {
     }
 
     val headerButtons = Seq("Import", "Export", "Copy Model", "Templates", "100$", "Ordinal", "Release", "Help")
+
     val buttonComponent = ReactComponentB[(String, Props, State)]("buttonComponent")
       .render($ =>
         $.props._1 match {
@@ -429,7 +428,7 @@ object webApp extends js.JSApp {
               ^.onClick --> openModalWithContent(Modal.COPY_MODAL,
                 elemToTreeItem($.props._2.proxy.value.children), $.props._2.proxy.dispatchCB, Seq($.props._2.proxy.value.makeString), None)
             )
-          case "Templates" => TemplateSelect($.props._2.proxy.dispatchCB, openNewModelModal)
+          case "Templates" => TemplateSelect(setTemplate, openNewModelModal)
           case "100$" =>
             <.button(
               Styles.navBarButton,
@@ -459,6 +458,8 @@ object webApp extends js.JSApp {
             ^.onClick --> Callback()
           )
         }).build
+
+    def setTemplate(child: Seq[Elem]): Callback = $.modState(_.copy(latestRecTree = Tree(child)))
 
 
     val navigationBar = ReactComponentB[(Seq[String], Props, State)]("navigationBar")
@@ -590,19 +591,8 @@ object webApp extends js.JSApp {
         )
       )).build
 
-    def activeModel(activeModel: CachedModel, cachedModels: Queue[CachedModel]): Callback ={
-
-      $.modState(_.copy(cachedModels = cachedModels.map(x => if(x.uUID.equals(activeModel.uUID)){
-        println("New active: " +x.name)
-        var newX = x.copy(selected = true)
-        newX
-      } else {
-        var newX = x.copy(selected = false)
-        newX
-      }
-        )))
-
-    }
+    def activeModel(activeModel: CachedModel, cachedModels: Queue[CachedModel]): Callback = $.modState(_.copy(cachedModels = cachedModels.map(
+      x => if(x.uUID.equals(activeModel.uUID)) x.copy(selected = true) else x.copy(selected = false))))
 
     def parseModel(newModel: String, dispatch: Action => Callback): Unit = {
       Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete{
@@ -615,15 +605,12 @@ object webApp extends js.JSApp {
 
     def importModel(dispatch: Action => Callback)(e: ReactEventI): Callback = {
       if(e.currentTarget.files.item(0).`type` == "text/plain") {
-        println(e.currentTarget.files.item(0).`type`)
         var newModel = "newModel empty, shouldn't happen"
         val fileReader = new FileReader
-        println(e.currentTarget.files.item(0))
         fileReader.readAsText(e.currentTarget.files.item(0), "UTF-8")
 
         fileReader.onload = (_: UIEvent) => {
           newModel = fileReader.result.asInstanceOf[String]
-          println("Kom in i FileReader")
           parseModel(newModel.replace("\n", "").trim, dispatch)
           openNewModelModal("imp").runNow()
         }

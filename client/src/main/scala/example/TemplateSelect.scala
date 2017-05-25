@@ -12,7 +12,7 @@ object TemplateSelect {
 
   case class State(isOpen: Boolean = false)
 
-  case class Props(dispatch: Action => Callback, openNewModelModal: String => Callback)
+  case class Props(saveTree: Seq[Elem] => Callback, openNewModelModal: String => Callback)
 
   def contentStyle = Seq(
     ^.marginTop := "11px",
@@ -95,23 +95,23 @@ object TemplateSelect {
       val template = e.target.textContent.toString
 
      val setTemplate = template match {
-        case "Goal-Design scale" => P.dispatch(SetModel(m1))
-        case "Why + Spec + Example" => P.dispatch(SetModel(m2))
-        case "Context Diagram I" => P.dispatch(SetModel(m3))
-        case "Context Diagram II" => P.dispatch(SetModel(m4))
-        case "Data dictionary" => P.dispatch(SetModel(m5))
-        case "State transition model" => P.dispatch(SetModel(m6))
-        case "Model with section" => P.dispatch(SetModel(m7))
-        case "Prioritization $100 method" => P.dispatch(SetModel(m8))
-        case "Prioritization Ordinal Ranking" => P.dispatch(SetModel(m9))
-        case "Hotel Reception" => P.dispatch(SetModel(m10))
-        case "Quper" => P.dispatch(SetModel(m11))
-        case "Quality Requirements" => P.dispatch(SetModel(m12))
-        case "Variability Modelling" => P.dispatch(SetModel(m13))
-        case "Release Planning I" => P.dispatch(SetModel(m14))
-        case "Release Planning II" => P.dispatch(SetModel(m15))
+        case "Goal-Design scale" => P.saveTree(m1)
+        case "Why + Spec + Example" => P.saveTree(m2)
+        case "Context Diagram I" => P.saveTree(m3)
+        case "Context Diagram II" => P.saveTree(m4)
+        case "Data dictionary" => P.saveTree(m5)
+        case "State transition model" => P.saveTree(m6)
+        case "Model with section" => P.saveTree(m7)
+        case "Prioritization $100 method" => P.saveTree(m8)
+        case "Prioritization Ordinal Ranking" => P.saveTree(m9)
+        case "Hotel Reception" => P.saveTree(m10)
+        case "Quper" => P.saveTree(m11)
+        case "Quality Requirements" => P.saveTree(m12)
+        case "Variability Modelling" => P.saveTree(m13)
+        case "Release Planning I" => P.saveTree(m14)
+        case "Release Planning II" =>P.saveTree(m15)
       }
-      setTemplate >> P.openNewModelModal("temp")
+       setTemplate >> P.openNewModelModal("temp")
     }
   }
 
@@ -120,10 +120,10 @@ object TemplateSelect {
     .renderBackend[Backend]
     .build
 
-  def apply(dispatch: Action => Callback, openNewModelModal: String => Callback) = component.set()(Props(dispatch, openNewModelModal))
+  def apply(saveTree: Seq[Elem] => Callback, openNewModelModal: String => Callback) = component.set()(Props(saveTree, openNewModelModal))
 
 
-  val m1 = Seq(Relation(Entity("Goal", "accuracy"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Our pre-calculations shall hit within 5%")))), Relation(Entity("Feature", "quotation"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Product shall support cost recording and quotation with experience data")))), Relation(Entity("Function", "experienceData"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Product shall have recording and retrieval functions for experience data")))), Relation(Entity("Design", "screenX"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "System shall have screen pictures as shown in Fig. X")))))
+  val m1 = Vector(Relation(Entity("Goal", "accuracy"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Our pre-calculations shall hit within 5%")))), Relation(Entity("Feature", "quotation"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Product shall support cost recording and quotation with experience data")))), Relation(Entity("Function", "experienceData"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Product shall have recording and retrieval functions for experience data")))), Relation(Entity("Design", "screenX"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "System shall have screen pictures as shown in Fig. X")))))
 
   val m2 = Vector(Relation(Entity("Feature","navigate"),RelationType("has"),Tree(Vector(StringAttribute("Why","Measuring neural response is a bit painful to the  patient. Electrodes must be kept in place ... So both hands should be at the patient during a measurement."), StringAttribute("Spec","It shall be possible to perform the commands start, stop, ... with both hands at the patient."), StringAttribute("Example","Might be done with mini keyboard (wrist keys), foot pedal, voice recognition, etc.")))))
 
