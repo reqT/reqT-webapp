@@ -241,11 +241,12 @@ object webApp extends js.JSApp {
       ))
       .build
 
+//
+//    def setScroll(position : Double): Callback = {
+//      var temp = document.getElementById("treeView").asInstanceOf[dom.html.Pre]
+//      Callback(temp.scrollTop = temp.scrollHeight)
+//    }
 
-    def setScroll(position : Double): Callback = {
-      var temp = document.getElementById("treeView").asInstanceOf[dom.html.Pre]
-      Callback(temp.scrollTop = temp.scrollHeight)
-    }
     def getScroll: Callback ={
       $.modState(_.copy(scrollPosition = document.getElementById("treeView").scrollTop))
     }
@@ -652,7 +653,6 @@ object webApp extends js.JSApp {
 
     val log = ReactComponentB[Vector[String]]("log")
       .render($ =>
-
         <.pre(
           ^.className := "form-control",
           ^.id := "reqTLog",
@@ -775,6 +775,13 @@ object webApp extends js.JSApp {
     .renderBackend[Backend]
     .componentDidMount(_.backend.start)
     .componentWillUnmount(_.backend.end)
+    .componentWillReceiveProps( x => {
+      x.$.backend.getScroll
+    }
+    )
+//    .componentDidUpdate( x =>
+//      Callback(document.getElementById("treeView").scrollTop = x.currentState.scrollPosition)
+//    )
     .build
 
   val dc = AppCircuit.connect(_.tree)

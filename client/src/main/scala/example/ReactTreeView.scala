@@ -89,7 +89,8 @@ object ReactTreeView {
   case class State(filterText: String,
                    filterMode: Boolean,
                    selectedNode: js.UndefOr[NodeC],
-                   dragOverNode: js.UndefOr[NodeC]
+                   dragOverNode: js.UndefOr[NodeC],
+                   scrollPosition: Double
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -111,6 +112,8 @@ object ReactTreeView {
 
       removeSelection >> updateThis >> setSelection
     }
+
+    def saveScrollPosition(position: Double): Callback =  $.modState(s => s.copy(scrollPosition = position))
 
     def onNodeDrag(P: Props)(draggedOver: NodeC): Callback = {
       val removeCurrent: Callback =
@@ -185,10 +188,10 @@ object ReactTreeView {
         Callback()
     }
 
-    //def toggleOpen(P: NodeProps): NodeProps = P.copy(open = !P.open)
+    def toggleOpen(P: NodeProps): Callback = $.modState(S => S.copy(open = !S.open))
 
     def onTreeMenuToggle(P: NodeProps)(e: ReactEventH): Callback =
-      childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
+      toggleOpen(P) >> childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
 
     def onItemSelect(P: NodeProps)(e: ReactEventH): Callback =
       P.onNodeSelect($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
@@ -199,9 +202,9 @@ object ReactTreeView {
     def onItemDrop(P: NodeProps)(e: ReactDragEvent): Callback =
       P.onNodeDrop($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
 
-    def childrenFromProps(P: NodeProps): CallbackTo[Option[Unit]] =
-      $.modState(S => S.copy(children = if (S.children.isEmpty) P.root.children else Nil))
-        .when(P.root.children.nonEmpty)
+    def childrenFromProps(P: NodeProps):  Callback = //CallbackTo[Option[Unit]] =
+      $.modState(S => S.copy(children = if (S.open) P.root.children else Nil))
+        //.when($.accessDirect.state.open)
 
 
     def matchesFilterText(filterText: String, data: TreeItem): Boolean = {
@@ -494,7 +497,7 @@ object ReactTreeView {
   }
 
 
-  case class NodeState(children: Seq[TreeItem], selected: Boolean = false, draggedOver: Boolean = false)
+  case class NodeState(children: Seq[TreeItem],open: Boolean, selected: Boolean = false, draggedOver: Boolean = false, scrollPosition: Double = 0)
 
   case class NodeProps(root: TreeItem,
                        open: Boolean,
@@ -513,19 +516,52 @@ object ReactTreeView {
 
 
   lazy val TreeNode = ReactComponentB[NodeProps]("ReactTreeNode")
-    .initialState_P(P => if (P.open) NodeState(P.root.children) else NodeState(Nil))
+    .initialState_P(P => if (P.open) NodeState(P.root.children,open = true) else NodeState(Nil,open =  false))
     .renderBackend[NodeBackend]
-    .componentWillReceiveProps {
-      case ComponentWillReceiveProps(_$, newProps) =>
-        _$.modState(_.copy(children = if (newProps.open) newProps.root.children else Nil))
-          .when(newProps.filterMode)
-          .void
-    }
+//    .componentWillReceiveProps {
+//      case ComponentWillReceiveProps(_$, newProps) =>
+//        _$.modState(_.copy(children = if (newProps.open) newProps.root.children else Nil))
+//          .when(newProps.filterMode)
+//          .void
+//    }
+//    .componentWillReceiveProps( x => {
+//      if(x.$.state.scrollPosition != document.getElementById("treeView").scrollTop){
+//        x.$.modState(_.copy(scrollPosition = document.getElementById("treeView").scrollTop))
+//      }
+//      else
+//        Callback()
+//    })
+//
     .build
 
   val component = ReactComponentB[Props]("ReactTreeView")
-    .initialState(State("", filterMode = false, js.undefined, js.undefined))
+    .initialState(State("", filterMode = false, js.undefined, js.undefined, scrollPosition = 0))
     .renderBackend[Backend]
+    .componentWillReceiveProps(x => Callback(println("ReactTreeView")))
+//      .componentWillReceiveProps(x =>{
+//        println("He")
+//        x.$.backend.saveScrollPosition(document.getElementById("treeView").scrollTop)
+//      }
+//      )
+//    .componentWillUpdate(x =>
+//      Callback({
+//        x.nextProps.copy(scrollPosition = document.getElementById("treeView").scrollTop)
+//        println(document.getElementById("treeView").scrollTop)
+//        println(x.nextProps.scrollPosition)
+//      })
+//        Callback({
+//        println(document.getElementById("treeView").scrollTop)
+////        x.$.state.copy(scrollPosition = document.getElementById("treeView").scrollTop)
+//        println(x.nextState)
+//      })
+//    )
+//  .componentDidUpdate(x =>
+//
+//      Callback({
+//        println(x.prevState.scrollPosition)
+//        println(x.currentState.scrollPosition)
+//        document.getElementById("treeView").scrollTop = 200
+//      })
     .build
 
   case class Props(root: TreeItem,
