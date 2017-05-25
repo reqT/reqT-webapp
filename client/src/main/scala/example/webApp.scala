@@ -66,8 +66,8 @@ object webApp extends js.JSApp {
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, elems: Seq[String], modalType: ModalType, treeItem: TreeItem,
                    dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None, entityChecked : Boolean = false,
                    attributeChecked: Boolean = false, cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", Tree(Seq()), selected = true, uUID = UUID.random())),
-                   openModals: OpenModals = OpenModals(), saveModelState : String = "rec", latestRecTree: Tree = Tree(Seq()), isMethodStarted: Boolean = false,
-                   waitingForModel: Boolean = false, resultModel: Boolean = false, scrollPosition: Double = 0
+                   openModals: OpenModals = OpenModals(), saveModelType : String = "rec", latestRecTree: Tree = Tree(Seq()), isMethodStarted: Boolean = false,
+                   waitingForModel: Boolean = false, scrollPosition: Double = 0
                   ) {
 
 
@@ -213,8 +213,8 @@ object webApp extends js.JSApp {
     def openDollarModal = $.modState(_.copy(openModals = OpenModals(isDollarModalOpen = true)))
     def openOrdinalModal = $.modState(_.copy(openModals = OpenModals(isOrdinalModalOpen = true)))
     def openReleaseModal = $.modState(_.copy(openModals = OpenModals(isReleaseModalOpen = true)))
-    def openNewModelModal(newSaveModelState: String, resultModel: Boolean) = $.modState(_.copy(openModals = OpenModals(isNewModelModalOpen = true),
-      saveModelState = newSaveModelState, resultModel = resultModel))
+    def openNewModelModal(newSaveModelState: String) = $.modState(_.copy(openModals = OpenModals(isNewModelModalOpen = true),
+      saveModelType = newSaveModelState))
 
     def setActiveModel(model: CachedModel,P: Props, S: State): Callback = {
       updateActiveModel(model, P,S)
@@ -272,29 +272,32 @@ object webApp extends js.JSApp {
       $.modState(_.copy(cachedModels = newModels))
     }
 
-    def saveModel(name: String, isCurrModel: Boolean, P: Props, S: State): Callback = {
+    def saveModel(name: String, isCurrModel: Boolean, saveModelType: String, P: Props): Callback = {
 
-
-      S.saveModelState match {
-        case "rec" if S.latestRecTree != null =>
-          if(isCurrModel) {
-            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, S.latestRecTree, selected = false, UUID.random())))
-          }
+      saveModelType match {
+        case "rec"  =>
+          if(isCurrModel)
+            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, s.latestRecTree, selected = false, UUID.random())))
           else
-            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
+            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
 
         case "save" =>
           if(isCurrModel)
-            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
+            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
           else
-            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
+            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
 
         case "imp" =>
           if(isCurrModel)
-            $.modState(_.copy(cachedModels = S.cachedModels:+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
+            $.modState(s => s.copy(cachedModels = s.cachedModels:+ CachedModel(name, P.proxy.value, selected = false, UUID.random())))
           else
-            $.modState(_.copy(cachedModels = S.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
+            $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, Tree(Seq[Elem]()), selected = false, UUID.random())))
         case _ => Callback()
+
+        case "temp" =>{
+          println("asdf")
+          $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, P.proxy.value, selected = true, UUID.random())))
+        }
 
       }
     }
@@ -339,7 +342,7 @@ object webApp extends js.JSApp {
         HundredDollarModal(isOpen = S.openModals.isDollarModalOpen, onClose = closeDollarModal, sendPrepMessage),
         ReleaseModal(isOpen = S.openModals.isReleaseModalOpen, onClose = closeReleaseModal, sendPrepMessage, P.proxy.value),
         OrdinalModal(isOpen = S.openModals.isOrdinalModalOpen, onClose = closeOrdinalModal, sendPrepMessage, P.proxy.value),
-        NewModelModal(isOpen = S.openModals.isNewModelModalOpen, onClose = closeNewModelModal, addToCachedModels = saveModel(_, _, P, S), S.latestRecTree, S.resultModel),
+        NewModelModal(isOpen = S.openModals.isNewModelModalOpen, onClose = closeNewModelModal, addToCachedModels = saveModel(_, _, _,P), S.latestRecTree, S.saveModelType),
         ^.className := "container",
         ^.width := "100%",
         ^.height := "100%",
@@ -426,7 +429,7 @@ object webApp extends js.JSApp {
               ^.onClick --> openModalWithContent(Modal.COPY_MODAL,
                 elemToTreeItem($.props._2.proxy.value.children), $.props._2.proxy.dispatchCB, Seq($.props._2.proxy.value.makeString), None)
             )
-          case "Templates" => TemplateSelect($.props._2.proxy.dispatchCB)
+          case "Templates" => TemplateSelect($.props._2.proxy.dispatchCB, openNewModelModal)
           case "100$" =>
             <.button(
               Styles.navBarButton,
@@ -517,7 +520,7 @@ object webApp extends js.JSApp {
           ^.marginTop := "-2px",
           Styles.navBarButton,
           ^.outline := "none",
-          ^.onClick --> openNewModelModal("save", false)
+          ^.onClick --> openNewModelModal("save")
         ),
         <.div(
           ^.overflowX.auto,
@@ -622,7 +625,7 @@ object webApp extends js.JSApp {
           newModel = fileReader.result.asInstanceOf[String]
           println("Kom in i FileReader")
           parseModel(newModel.replace("\n", "").trim, dispatch)
-          openNewModelModal("imp", false).runNow()
+          openNewModelModal("imp").runNow()
         }
         Callback(e.currentTarget.value = "")
       } else {
@@ -716,7 +719,7 @@ object webApp extends js.JSApp {
       $.accessDirect.modState(_.saveTree(tree))
 
       if (S.isMethodStarted || S.waitingForModel){
-        openNewModelModal("rec", true).runNow()
+        openNewModelModal("rec").runNow()
         $.accessDirect.modState(_.copy(isMethodStarted = false))
       }
     }

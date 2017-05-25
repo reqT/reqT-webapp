@@ -70,6 +70,15 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
       }
   }
 
+  def copyElem(elem: Elem): Elem = elem match {
+    case relation: Relation => Relation(copyElem(relation.entity).asInstanceOf[Entity], relation.link, copyTree(relation.submodel))
+    case entity: Entity => Entity(entity.entityType, entity.id)
+    case intAttr: IntAttribute => IntAttribute(intAttr.attrType, intAttr.value)
+    case stringAttr: StringAttribute => StringAttribute(stringAttr.attrType, stringAttr.value)
+  }
+
+  def copyTree(tree: Tree): Tree = Tree(tree.children.map(copyElem))
+
   def retrieveEntity(elem: Elem): Elem = elem match {
     case relation: Relation => relation.entity
     case node: Node => node
@@ -122,28 +131,27 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
       }
 
       case RemoveElem(path: Seq[String]) =>
-        println(path)
         if (path.isEmpty)
           noChange
         else if (path.size == 1)
           updated(Tree(Seq()))
         else {
-          val elemToRemove = path.last
+          val pathToElem = path.last
 
           zoomToChildren(modelRW, path.init.tail) match {
-            case Some(modelRW) => updated(modelRW.updated(modelRW.value.filterNot(retrieveEntity(_).uuid.toString == elemToRemove)).tree)
+            case Some(modelRW) => updated(modelRW.updated(modelRW.value.filterNot(retrieveEntity(_).uuid.toString == pathToElem)).tree)
 
             case None => noChange
           }
         }
 
       case MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) =>
-          var element: Elem = Entity("Error", "404")
-          val elemToRemove = oldPath.last
+          var elemToMove: Elem = Entity("Error", "404")
+          val pathToElem = oldPath.last
 
           zoomToChildren(modelRW, oldPath.init.tail) match {
             case Some(modelRW) =>
-              element = modelRW.value.find(retrieveEntity(_).uuid.toString == elemToRemove).get
+              elemToMove = modelRW.value.find(retrieveEntity(_).uuid.toString == pathToElem).get
             case None => noChange
           }
 
@@ -154,12 +162,38 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
                   updated(rw.updated(rw.value.map(
                     elem => if (elem == foundElem) Relation(elem.asInstanceOf[Entity],
                       relationType,
-                      Tree(Seq(element))) else elem
+                      Tree(Seq(elemToMove))) else elem
                   )).tree)
-                case None => updated(rw.updated(rw.value :+ element).tree)
+                case None => updated(rw.updated(rw.value :+ elemToMove).tree)
               }
             case None => noChange
           }
+
+      case CopyElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) =>
+        var elemToCopy: Elem = Entity("Error", "404")
+        val pathToElem = oldPath.last
+
+        zoomToChildren(modelRW, oldPath.init.tail) match {
+          case Some(modelRW) =>
+            elemToCopy = modelRW.value.find(retrieveEntity(_).uuid.toString == pathToElem).get
+          case None => noChange
+        }
+
+        val copiedElem = copyElem(elemToCopy)
+
+        zoomToChildren(modelRW, newPath.tail) match {
+          case Some(rw) =>
+            rw.value.find(_.uuid.toString == newPath.last) match {
+              case Some(foundElem) =>
+                updated(rw.updated(rw.value.map(
+                  elem => if (elem == foundElem) Relation(elem.asInstanceOf[Entity],
+                    relationType,
+                    Tree(Seq(copiedElem))) else elem
+                )).tree)
+              case None => updated(rw.updated(rw.value :+ copiedElem).tree)
+            }
+          case None => noChange
+        }
 
       case SetModel(treeItem: Seq[Elem]) =>
         val model = Tree(treeItem)

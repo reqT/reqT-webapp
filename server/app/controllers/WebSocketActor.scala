@@ -47,23 +47,25 @@ class WebSocketActor(out: ActorRef) extends Actor {
     }
   }
 
-  private def sendResponse(response: String) = {
+  private def sendResponse(resp: String) = {
+    val response = s"Answer:\n$resp\n"
+
     """= *Model[(].*[)]""".r.findFirstMatchIn(response.replaceAll("\n"," ")) match {
 
       case _ if response.contains("dollarMethod") | response.contains("releaseMethod") | response.contains("ordinalMethod")  =>
-        out ! ("Answer: \n" + response)
+        out ! response
 
       case Some(_) if response.contains("CSPproblem") =>
-        out ! ("Answer: \n" + response)
+        out ! response
 
       case Some(m)  =>
         trimModel(m.matched.drop(m.matched.indexOf("Model")).replaceAll(" +", " ")) match {
           case Some(model) => out !  write[Model](parser.parseAll(parser.Model, model).get)
           case _ => Unit
         }
-        out ! ("Answer: \n" + response)
+        out ! response
 
-      case None => out ! ("Answer: \n" + response)
+      case None => out ! response
 
     }
   }
@@ -75,7 +77,8 @@ class WebSocketActor(out: ActorRef) extends Actor {
         if(reqTis.available() > 0){
           val nbrOfReadBytes = reqTis.read(buf, 0, 10000)
           val response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
-          sendResponse(response)
+
+          sendResponse(response.replaceAll("<!-- reqT server ready for input -->","").replaceAll("[\r\n]+", "\n"))
 
         } else {
           Thread.sleep(500)
@@ -108,7 +111,7 @@ class WebSocketActor(out: ActorRef) extends Actor {
       reqTos.write((message+".replace(\";\", \"\\n\")" + "\n").getBytes("UTF-8"))
       reqTos.flush()
 
-    case message: String =>
+    case message: String  =>
       reqTos.write((message + "\n").getBytes("UTF-8"))
       reqTos.flush()
 

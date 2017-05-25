@@ -47,7 +47,7 @@ object NewModelModal {
     ^.justifyContent.spaceBetween
   )
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean) => Callback, tree: shared.Tree, resultModel: Boolean)
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean, String) => Callback, tree: shared.Tree, resultModel: String)
 
   case class State(newModelName: String)
 
@@ -58,7 +58,7 @@ object NewModelModal {
           ^.onKeyDown ==> handleKeyDown(P, S),
           <.div(
             modalStyle,
-            if (P.resultModel) {
+            if (P.resultModel == "rec") {
               <.div(
                 <.h3("Result"),
                 <.div(
@@ -80,6 +80,14 @@ object NewModelModal {
                   buttonStyle,
                   <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
                   <.button("Save Result", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(true, P, S))
+                ))
+            } else if(P.resultModel == "temp") {
+              <.div(
+                InputComponent(S),
+                <.div(
+                  buttonStyle,
+                  <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
+                  <.button("Add Template", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(true, P, S))
                 ))
             } else {
               <.div(
@@ -125,7 +133,8 @@ object NewModelModal {
     }
 
     def addModel(isCurrModel: Boolean, P: Props, S: State)(e: ReactEvent): Callback = {
-      P.addToCachedModels(S.newModelName, isCurrModel) >> onClose(P)(e)
+      println("asdf")
+      P.addToCachedModels(S.newModelName, isCurrModel, P.resultModel) >> onClose(P)(e)
     }
 
     def resetState: Callback = $.setState(State(""))
@@ -147,6 +156,6 @@ object NewModelModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean) => Callback, tree: shared.Tree, resultModel: Boolean)
+  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, addToCachedModels: (String, Boolean, String) => Callback, tree: shared.Tree, resultModel: String)
   = component.set()(Props(isOpen, onClose, addToCachedModels, tree, resultModel))
 }

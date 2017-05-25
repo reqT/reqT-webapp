@@ -160,7 +160,35 @@ case class RelationType(relationType: String) {
 }
 
 
+/**
+  * Actions
+  */
 
+case class AddElem(path: Seq[String], elem: Elem, relationType: RelationType) extends Action
+
+case class RemoveElem(path: Seq[String]) extends Action
+
+case class RemoveEmptyRelation(path: Seq[String]) extends Action
+
+case class MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) extends Action
+
+case class CopyElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) extends Action
+
+case class UpdateEntity(path: Seq[String], newEntity: Entity) extends Action
+
+case class UpdateIntAttribute(path: Seq[String], newStringAttribute: IntAttribute) extends  Action
+
+case class UpdateStringAttribute(path: Seq[String], newIntAttribute: StringAttribute) extends  Action
+
+case class UpdateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) extends  Action
+
+case class UpdateEntireRelation(path: Seq[String], newEntity: Entity, newRelationType: Option[RelationType]) extends Action
+
+case class SetModel(treeItem : Seq[Elem]) extends  Action
+
+case class SetTemplate(nbr: Int) extends  Action
+
+//case object NoAction extends Action
 //sealed trait Attribute[T] extends Node {
 //  def value: T
 //  isAttribute = true
@@ -478,33 +506,6 @@ case class RelationType(relationType: String) {
 //case object verifies extends RelationType
 
 
-/**
-  * Actions
-  */
-
-case class AddElem(path: Seq[String], elem: Elem, relationType: RelationType) extends Action
-
-case class RemoveElem(path: Seq[String]) extends Action
-
-case class RemoveEmptyRelation(path: Seq[String]) extends Action
-
-case class MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) extends Action
-
-case class UpdateEntity(path: Seq[String], newEntity: Entity) extends Action
-
-case class UpdateIntAttribute(path: Seq[String], newStringAttribute: IntAttribute) extends  Action
-
-case class UpdateStringAttribute(path: Seq[String], newIntAttribute: StringAttribute) extends  Action
-
-case class UpdateRelation(path: Seq[String], newId: String, newRelationType: Option[RelationType]) extends  Action
-
-case class UpdateEntireRelation(path: Seq[String], newEntity: Entity, newRelationType: Option[RelationType]) extends Action
-
-case class SetModel(treeItem : Seq[Elem]) extends  Action
-
-case class SetTemplate(nbr: Int) extends  Action
-
-//case object NoAction extends Action
 
 
 

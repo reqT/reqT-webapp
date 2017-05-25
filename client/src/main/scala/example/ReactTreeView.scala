@@ -228,18 +228,21 @@ object ReactTreeView {
     }
 
     def onDrop(P: NodeProps)(event: ReactDragEvent): Callback = {
+
       val pathFrom = event.dataTransfer.getData("path").split("/")
       val pathTo = (if (P.parent.isEmpty) P.root.uuid.toString
       else P.parent + "/" + P.root.uuid).split("/")
 
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
 
-      val existingElem = event.dataTransfer.getData("existing") == "false"
+      val ctrlHeld = event.ctrlKey
+      val notExistingElem = event.dataTransfer.getData("existing") == "false"
       val isModel = P.root.item.toString == "Model"
       val dropOnSelf = pathFrom.diff(pathTo).isEmpty
       val dropOnItsChildren = pathFrom.init.corresponds(pathTo)(_ == _)
       val droppingAttribute = event.dataTransfer.getData("type") == "stringAttr" || event.dataTransfer.getData("type") == "intAttr"
       var isAttribute = false
+
 
       if (!isModel)
         isAttribute = P.root.item.asInstanceOf[Elem].isAttribute
@@ -253,16 +256,20 @@ object ReactTreeView {
 
       if (isModel && droppingAttribute || isAttribute || dropOnSelf || dropOnItsChildren) {
         dispatch(NoAction)
-      }else if (existingElem) {
+      } else if (notExistingElem) {
         getElem(event) match {
           case entity: Entity => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(entity))
           case intAttr: IntAttribute => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(intAttr))
           case stringAttr: StringAttribute => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(stringAttr))
           case _ => Callback()
         }
-      }else{
+      }else if (ctrlHeld) {
+        dispatch(CopyElem(pathFrom, pathTo, RelationType("has")))
+      } else {
         dispatch(MoveElem(pathFrom, pathTo, RelationType("has"))) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))
       }
+
+
     }
 
 

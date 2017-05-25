@@ -12,7 +12,7 @@ object TemplateSelect {
 
   case class State(isOpen: Boolean = false)
 
-  case class Props(dispatch: Action => Callback)
+  case class Props(dispatch: Action => Callback, openNewModelModal: String => Callback)
 
   def contentStyle = Seq(
     ^.marginTop := "11px",
@@ -94,7 +94,7 @@ object TemplateSelect {
       e.preventDefault()
       val template = e.target.textContent.toString
 
-      template match {
+     val setTemplate = template match {
         case "Goal-Design scale" => P.dispatch(SetModel(m1))
         case "Why + Spec + Example" => P.dispatch(SetModel(m2))
         case "Context Diagram I" => P.dispatch(SetModel(m3))
@@ -111,6 +111,7 @@ object TemplateSelect {
         case "Release Planning I" => P.dispatch(SetModel(m14))
         case "Release Planning II" => P.dispatch(SetModel(m15))
       }
+      setTemplate >> P.openNewModelModal("temp")
     }
   }
 
@@ -119,7 +120,7 @@ object TemplateSelect {
     .renderBackend[Backend]
     .build
 
-  def apply(dispatch: Action => Callback) = component.set()(Props(dispatch))
+  def apply(dispatch: Action => Callback, openNewModelModal: String => Callback) = component.set()(Props(dispatch, openNewModelModal))
 
 
   val m1 = Seq(Relation(Entity("Goal", "accuracy"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Our pre-calculations shall hit within 5%")))), Relation(Entity("Feature", "quotation"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Product shall support cost recording and quotation with experience data")))), Relation(Entity("Function", "experienceData"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Product shall have recording and retrieval functions for experience data")))), Relation(Entity("Design", "screenX"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "System shall have screen pictures as shown in Fig. X")))))
