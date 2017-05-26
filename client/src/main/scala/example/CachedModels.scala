@@ -109,7 +109,7 @@ object CachedModels {
 
     def openModal(newModelType: String) = $.modState(_.copy(isModalOpen = true, modalType = newModelType))
 
-    def closeModal(e: ReactEvent): Callback = $.modState(S => S.copy(isModalOpen = false))
+    def closeModal(): Callback = $.modState(S => S.copy(isModalOpen = false))
 
     def setActiveModel(model: CachedModel,P: Props, S: State): Callback = {
       updateActiveModel(model, P,S)

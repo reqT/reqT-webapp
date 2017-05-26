@@ -33,8 +33,8 @@ object ElementList {
   val intAttribute = List("Benefit", "Capacity", "Cost", "Damage", "Frequency", "Min", "Max", "Order", "Prio", "Probability", "Profit", "Value")
   val stringAttribute = List("Comment", "Deprecated", "Example", "Expectation", "FileName", "Gist", "Image", "Spec", "Text", "Title", "Why")
 
-  val attributes = intAttribute ++ stringAttribute
-  val elems = entities ++ attributes
+  val attributes: List[String] = intAttribute ++ stringAttribute
+  val elems: List[String] = entities ++ attributes
 
   case class State(elems: Seq[String], entityChecked : Boolean = false,
                    attributeChecked: Boolean = false)
@@ -92,8 +92,8 @@ object ElementList {
 
 
 
-  class Backend($: BackendScope[Props, State]) {
-    def render(P: Props, S: State) = {
+  class Backend($: BackendScope[Unit, State]) {
+    def render(S: State) = {
       <.pre(
         dragListStyle,
         searchBox(),
@@ -152,14 +152,13 @@ object ElementList {
       }
   }
 
-  val component = ReactComponentB[Props]("Modal")
+  val component = ReactComponentB[Unit]("ElementList")
     .initialState(State(elems = elems))
     .renderBackend[Backend]
     .build
 
 
-  def apply()
-  = component.set()(Props())
+  def apply() = component.set()()
 
 }
 

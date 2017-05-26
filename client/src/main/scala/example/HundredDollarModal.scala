@@ -40,7 +40,7 @@ object HundredDollarModal {
 
   case class State(newSHSEntity: Option[Entity], newRSEntity: Option[Entity], newBAttribute: Option[Attribute], newPAttribute: Option[Attribute])
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => Seq[String]) => Option[Seq[Callback]])
+  case class Props(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]])
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
@@ -91,12 +91,12 @@ object HundredDollarModal {
               ^.padding := "20px",
               ^.display.flex,
               ^.justifyContent.spaceBetween,
-              <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
+              <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
               <.button("OK", ^.className := "btn btn-success pull-right",  ^.autoFocus := "true", ^.bottom := "0px", ^.onClick ==> send(P,S))
             )),
           <.div(
             backdropStyle,
-            ^.onClick ==> onClose(P)
+            ^.onClick --> onClose(P)
           )
         )
       } else
@@ -134,14 +134,14 @@ object HundredDollarModal {
 //        .foreach(_.runNow()) //>> onClose(P)(e)
       case None => Callback()
       }
-      onClose(P)(e)
+      onClose(P)
     }
 
-    def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetState
+    def onClose(P: Props): Callback = P.onClose() >> resetState
 
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
       if (e.nativeEvent.keyCode == KeyCode.Escape) {
-        onClose(P)(e)
+        onClose(P)
       }
       else
         Callback()
@@ -156,7 +156,7 @@ object HundredDollarModal {
       .build
 
 
-    def apply(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => Seq[String]) => Option[Seq[Callback]])
+    def apply(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]])
     = component.set()(Props(isOpen, onClose, send))
 
 }

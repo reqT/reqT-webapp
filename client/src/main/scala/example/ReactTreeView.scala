@@ -267,7 +267,9 @@ object ReactTreeView {
       }
 
 
-      if (isModel && droppingAttribute || isAttribute || dropOnSelf || dropOnItsChildren) {
+      if (ctrlHeld)
+        dispatch(CopyElem(pathFrom, pathTo, RelationType("has")))
+      else if (isModel && droppingAttribute || isAttribute || dropOnSelf || dropOnItsChildren) {
         dispatch(NoAction)
       } else if (notExistingElem) {
         getElem(event) match {
@@ -276,8 +278,6 @@ object ReactTreeView {
           case stringAttr: StringAttribute => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(stringAttr))
           case _ => Callback()
         }
-      }else if (ctrlHeld) {
-        dispatch(CopyElem(pathFrom, pathTo, RelationType("has")))
       } else {
         dispatch(MoveElem(pathFrom, pathTo, RelationType("has"))) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))
       }

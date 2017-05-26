@@ -16,7 +16,6 @@ object Modal {
   case object ADD_ELEM_MODAL extends ModalType
   case object EDIT_MODAL extends ModalType
   case object DELETE_MODAL extends ModalType
-  case object COPY_MODAL extends ModalType
 
   def modalStyle = Seq(
     ^.width:= "400px",
@@ -110,7 +109,6 @@ object Modal {
         case EDIT_MODAL => editModalStyle(P, S)
         case ADD_ELEM_MODAL => addElemModalStyle(P, S)
         case DELETE_MODAL => deleteElemModalStyle(P, S)
-        case COPY_MODAL => copyModalStyle(P,S)
         case EMPTY_MODAL => Seq("Error 404")
       }
     }
@@ -130,7 +128,6 @@ object Modal {
         case EDIT_MODAL => onSave(P, S)(e)
         case ADD_ELEM_MODAL => addElem(P,S)(e)
         case DELETE_MODAL => onDelete(P)(e)
-        case COPY_MODAL => onClose(P)(e)
         case EMPTY_MODAL => onClose(P)(e)
       }
     }
@@ -381,34 +378,6 @@ object Modal {
         )
       }
 
-    def copyModalStyle(P: Props, S: State) = Seq(
-      <.h4(
-        "Copy",
-        ^.textAlign.center
-      ),
-       <.dd(
-            <.textarea(
-              ^.className := "form-control",
-              ^.rows := 6,
-//              ^.width := "95%",
-              ^.maxWidth := "100%",
-              ^.maxHeight := "200px",
-              ^.border := "1px solid #CCC",
-              ^.borderRadius := "5px",
-              ^.background := "#FFF",
-              ^.autoFocus := "true",
-              ^.readOnly := "true",
-              ^.selected := "true",
-              ^.value := P.path.head
-            )
-      ),
-      <.div(
-        ^.padding := "5px",
-        ^.display.flex,
-        ^.justifyContent.spaceBetween,
-        <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P))
-      )
-    )
 
     def onDelete(P: Props)(event: ReactEvent): Callback = {
       P.treeItem.item match {

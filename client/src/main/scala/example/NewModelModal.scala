@@ -59,7 +59,7 @@ object NewModelModal {
     ^.readOnly := "true"
   )
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, modalType: String)
+  case class Props(isOpen: Boolean, onClose: () => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, modalType: String)
 
   case class State(newModelName: String)
 
@@ -82,8 +82,8 @@ object NewModelModal {
                 InputComponent(S),
                 <.div(
                   buttonStyle,
-                  <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-                  <.button("Save Result", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(S.newModelName, P.tree, P))
+                  <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
+                  <.button("Save Result", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, P.tree, P))
                 )
               )
             } else if(P.modalType == "save") {
@@ -91,9 +91,9 @@ object NewModelModal {
                 InputComponent(S),
                 <.div(
                   buttonStyle,
-                  <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-                  <.button("Add empty model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(S.newModelName, shared.Tree(Seq()),P)),
-                  <.button("Add current model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(S.newModelName, P.tree, P))
+                  <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
+                  <.button("Add empty model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, shared.Tree(Seq()),P)),
+                  <.button("Add current model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, P.tree, P))
                 )
               )
             } else {
@@ -101,15 +101,15 @@ object NewModelModal {
                 InputComponent(S),
                 <.div(
                   buttonStyle,
-                  <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
-                  <.button("Add Model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(S.newModelName, P.tree, P))
+                  <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
+                  <.button("Add Model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, P.tree, P))
                 )
               )
             }
           ),
           <.div(
             backdropStyle,
-            ^.onClick ==> onClose(P)
+            ^.onClick --> onClose(P)
           )
         )
 
@@ -139,15 +139,15 @@ object NewModelModal {
       $.setState(s = S.copy(newModelName = newName))
     }
 
-    def addModel(newName: String, tree: shared.Tree, P: Props)(e: ReactEvent): Callback = P.saveModel(newName,tree) >> onClose(P)(e)
+    def addModel(newName: String, tree: shared.Tree, P: Props): Callback = P.saveModel(newName,tree) >> onClose(P)
 
     def resetState: Callback = $.setState(State(""))
 
-    def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetState
+    def onClose(P: Props): Callback = P.onClose() >> resetState
 
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
       if (e.nativeEvent.keyCode == KeyCode.Escape) {
-        onClose(P)(e)
+        onClose(P)
       }
       else
         Callback()
@@ -160,6 +160,6 @@ object NewModelModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, modalType: String)
+  def apply(isOpen: Boolean, onClose: () => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, modalType: String)
   = component.set()(Props(isOpen, onClose, saveModel, tree, modalType))
 }

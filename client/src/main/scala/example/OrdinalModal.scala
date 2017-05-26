@@ -57,7 +57,7 @@ object OrdinalModal {
 
   case class State(rankings: Seq[Int] = Seq(), pairs: Seq[Seq[Entity]] = Seq(), deviation: Int = 0, typeToRank: String = "", readyForRanking: Boolean = false)
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
+  case class Props(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
 
 
   def generatePairs($: BackendScope[Props, State], entities: Seq[Entity]): Seq[Seq[Entity]] = {
@@ -113,12 +113,12 @@ object OrdinalModal {
               ),
               <.div(
                 buttonDivStyle,
-                <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
+                <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
                 <.button("OK", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick ==> send(P, S))
               )),
             <.div(
               backdropStyle,
-              ^.onClick ==> onClose(P)
+              ^.onClick --> onClose(P)
             )
           )
         }else{
@@ -136,12 +136,12 @@ object OrdinalModal {
               ),
               <.div(
                 buttonDivStyle,
-                <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick ==> onClose(P)),
+                <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
                 <.button("Rank", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> setState(P,S))
               )),
             <.div(
               backdropStyle,
-              ^.onClick ==> onClose(P)
+              ^.onClick --> onClose(P)
             )
           )
         }
@@ -250,14 +250,14 @@ object OrdinalModal {
         case Some(callback) => callback.foreach(_.runNow())
         case None => Callback()
       }
-      onClose(P)(e)
+      onClose(P)
     }
 
-    def onClose(P: Props)(e: ReactEvent): Callback = P.onClose(e) >> resetState
+    def onClose(P: Props): Callback = P.onClose() >> resetState
 
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
       if (e.nativeEvent.keyCode == KeyCode.Escape) {
-        onClose(P)(e)
+        onClose(P)
       }
       else
         Callback()
@@ -271,7 +271,7 @@ object OrdinalModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
+  def apply(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
   = component.set()(Props(isOpen, onClose, send, currentModel))
 
 }
