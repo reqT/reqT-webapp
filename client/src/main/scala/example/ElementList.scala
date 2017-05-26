@@ -152,6 +152,7 @@ object ElementList {
       }
   }
 
+
   val component = ReactComponentB[Unit]("ElementList")
     .initialState(State(elems = elems))
     .renderBackend[Backend]

@@ -197,7 +197,7 @@ object Header {
     .build
 
 
-  def apply(modelProxy: ModelProxy[Tree], openCachedModelModal: (String, Tree) => Callback, get)
+  def apply(modelProxy: ModelProxy[Tree], openCachedModelModal: (String, Tree) => Callback)
   = component.set()(Props(modelProxy, openCachedModelModal))
 
 }
