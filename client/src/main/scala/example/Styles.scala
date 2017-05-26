@@ -30,10 +30,6 @@ object Styles extends StyleSheet.Inline {
     float.left
   )
 
-  val listElem = style(
-
-  )
-
   val bootstrapButton = style(
     addClassName("btn")
   )

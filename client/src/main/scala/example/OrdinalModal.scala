@@ -1,6 +1,5 @@
 package example
 
-import japgolly.scalajs.react.ReactComponentC.ReqProps
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, ReactKeyboardEventI}
 import org.scalajs.dom.ext.KeyCode

@@ -59,7 +59,7 @@ object NewModelModal {
     ^.readOnly := "true"
   )
 
-  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, resultModel: String)
+  case class Props(isOpen: Boolean, onClose: ReactEvent => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, modalType: String)
 
   case class State(newModelName: String)
 
@@ -70,7 +70,7 @@ object NewModelModal {
           ^.onKeyDown ==> handleKeyDown(P, S),
           <.div(
             modalStyle,
-            if (P.resultModel == "rec") {
+            if (P.modalType == "rec") {
               <.div(
                 <.h3("Result"),
                 <.div(
@@ -86,7 +86,7 @@ object NewModelModal {
                   <.button("Save Result", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> addModel(S.newModelName, P.tree, P))
                 )
               )
-            } else if(P.resultModel == "save") {
+            } else if(P.modalType == "save") {
               <.div(
                 InputComponent(S),
                 <.div(
@@ -160,6 +160,6 @@ object NewModelModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, resultModel: String)
-  = component.set()(Props(isOpen, onClose, saveModel, tree, resultModel))
+  def apply(isOpen: Boolean, onClose: ReactEvent => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, modalType: String)
+  = component.set()(Props(isOpen, onClose, saveModel, tree, modalType))
 }

@@ -8,27 +8,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
   def initialModel: Model = Model(Tree(Seq()))
 
-//    Model(Tree(Seq(
-//    Entity("Req", "R1"),
-//    Entity("Req", "R2"),
-//    Entity("Stakeholder", "BOSS"),
-//    Relation(
-//      Entity("Req", "R3"),
-//      RelationType("has"),
-//      Tree(Seq(Relation(
-//        Entity("Req", "R3.1"),
-//        RelationType("has"),
-//        Tree(Seq(IntAttribute("Prio", 1)))
-//      )))),
-//    Relation(
-//      Entity("Req", "R4"),
-//      RelationType("has"),
-//      Tree(Seq(IntAttribute("Prio", 2)))
-//    )
-//
-//  )))
-
-
   def zoomToChildren(modelRW: ModelRW[Model, Tree], path: Seq[String]): Option[ModelRW[Model, Seq[Elem]]] = {
     if (path.isEmpty) {
       Some(modelRW.zoomTo(_.children))
@@ -86,7 +65,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
   class TreeHandler[M](modelRW: ModelRW[Model, Tree]) extends ActionHandler(modelRW) {
     override def handle = {
-      //case Reset => updated(Tree(Seq()))
 
       case AddElem(path: Seq[String], newElem: Elem, relationType: RelationType) =>
         zoomToChildren(modelRW, path.tail) match {

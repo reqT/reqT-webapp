@@ -11,8 +11,6 @@ import scalacss.ScalaCssReact._
 import scala.scalajs.js
 import shared._
 import diode.NoAction
-import org.scalajs.dom.document
-import org.scalajs.dom.ext.KeyCode
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def linkToString: String = link match {
@@ -52,6 +50,21 @@ object ReactTreeView {
       ^.listStyleType := "none",
       ^.marginTop := "10px",
       ^.paddingLeft := "20px"
+    )
+
+    def treeItemDiv = Seq(
+      ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
+      ^.overflow.visible,
+      ^.position.relative,
+      ^.borderRadius := "5px",
+      ^.padding := "5px",
+      ^.marginBottom := "10px",
+      ^.marginRight := "0",
+      ^.marginLeft := "0",
+      ^.width := "500px",
+      ^.key := "toggle",
+      ^.className := "container",
+      ^.draggable := true
     )
 
     def selectedTreeItemContent = Seq(
@@ -326,7 +339,6 @@ object ReactTreeView {
     def render(P: NodeProps, S: NodeState): ReactTag = {
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
 
-
       val depth = P.depth + 1
 
       val parent = if (P.parent.isEmpty) P.root.uuid.toString
@@ -358,33 +370,21 @@ object ReactTreeView {
       <.li(
         P.style.treeItem,
         <.div(
-          ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
-          ^.overflow.visible,
-          ^.position.relative,
-          ^.borderRadius := "5px",
+          P.style.treeItemDiv,
           ^.borderBottomRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
           ^.borderTopRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
           ^.backgroundColor := { if (P.root.item.isInstanceOf[Entity]) "#CEDBE7" else "#CFEADD" },
-          ^.padding := "5px",
-          ^.marginBottom := "10px",
-          ^.marginRight := "0",
-          ^.marginLeft := "0",
-          ^.width := "500px",
           treeMenuToggle,
-          ^.key := "toggle",
-          ^.cursor := "pointer",
-          ^.className := "container",
           ^.onClick ==> onItemSelect(P),
           ^.onDrop ==> onDrop(P),
-          ^.draggable := true,
           ^.onDragStart ==> dragStart(P),
           ^.onDragEnd ==> onItemDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
           ^.onDblClick ==> onDoubleClickTreeItem(P,S),
           S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= dragOverStyle(P),
+
           <.div(
-            ^.id := P.root.itemToString,
             ^.className := "row",
             ^.overflow.hidden,
             ^.unselectable := "true",
@@ -396,6 +396,7 @@ object ReactTreeView {
             ^.paddingLeft := "0px",
             ^.paddingRight := "0px",
             ^.fontSize := "medium",
+            ^.id := P.root.itemToString,
             if (P.root.item.isInstanceOf[Elem]) {
               Seq(
                 <.div(
@@ -411,7 +412,6 @@ object ReactTreeView {
                   ^.paddingLeft := "3%",
                   ^.fontSize := { if(P.root.entityToString.length > 12) "small" else "medium" },
                   P.root.entityToString
-
                 ),
                 <.div(
                   ^.width := "0px",
@@ -430,7 +430,6 @@ object ReactTreeView {
                   ^.width := "70%",
                   ^.top := "0px",
                   ^.bottom := "0px",
-                  ^.paddingTop := { if(P.root.contentToString.length >= 38 || P.root.contentToString.contains("\n")) "1.8%" else "3%" },
                   ^.paddingLeft := "3%",
                   ^.position := "absolute",
                   ^.left := "30%",
@@ -438,12 +437,11 @@ object ReactTreeView {
                   ^.textAlign.justify,
                   ^.wordWrap.`break-word`,
                   ^.fontSize.small,
+                  ^.paddingTop := { if(P.root.contentToString.length >= 38 || P.root.contentToString.contains("\n")) "1.8%" else "3%" },
                   setContentDivSize(P.root.contentToString)
                 )
               )
-
             } else{
-
               <.div(
                 ^.className := "col",
                 ^.height := "100%",
@@ -471,7 +469,6 @@ object ReactTreeView {
                 ^.top := "0%",
                 ^.height := "100%",
                 ^.left := "100%",
-
                 RelationSelect(relation, dispatch, Some(updateRel), isModelValue = true, None)
               )
             case None =>

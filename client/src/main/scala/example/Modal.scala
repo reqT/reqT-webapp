@@ -9,6 +9,7 @@ import shared._
 
 
 object Modal {
+
   sealed trait ModalType
 
   case object EMPTY_MODAL extends ModalType
