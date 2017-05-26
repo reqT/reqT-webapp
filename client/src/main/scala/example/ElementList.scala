@@ -152,7 +152,7 @@ object ElementList {
       }
   }
 
-  val component = ReactComponentB[Props]("Modal")
+  val component = ReactComponentB[Props]("ElementList")
     .initialState(State(elems = elems))
     .renderBackend[Backend]
     .build
