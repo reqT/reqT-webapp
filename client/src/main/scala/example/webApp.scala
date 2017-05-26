@@ -19,11 +19,6 @@ import scala.scalajs.js.URIUtils._
 import scala.collection.immutable.Queue
 import shared._
 import scala.concurrent.ExecutionContext.Implicits.global
-import org.scalajs.jquery.JQueryStatic
-
-@js.native
-@JSImport("jquery", JSImport.Namespace)
-object jquery extends JQueryStatic
 
 @JSExport
 object webApp extends js.JSApp {
@@ -778,11 +773,11 @@ object webApp extends js.JSApp {
     .componentWillReceiveProps( x => {
       x.$.backend.getScroll
     }
-    )
-//    .componentDidUpdate( x =>
-//      Callback(document.getElementById("treeView").scrollTop = x.currentState.scrollPosition)
-//    )
-    .build
+    ).componentWillUpdate(x => {
+    Callback(println("updated"))
+    })
+      .build
+
 
   val dc = AppCircuit.connect(_.tree)
 

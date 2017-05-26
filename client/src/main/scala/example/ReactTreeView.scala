@@ -524,44 +524,20 @@ object ReactTreeView {
 //          .when(newProps.filterMode)
 //          .void
 //    }
-//    .componentWillReceiveProps( x => {
-//      if(x.$.state.scrollPosition != document.getElementById("treeView").scrollTop){
-//        x.$.modState(_.copy(scrollPosition = document.getElementById("treeView").scrollTop))
-//      }
-//      else
-//        Callback()
-//    })
-//
+    .componentWillReceiveProps( x => {
+      if(x.$.state.scrollPosition != document.getElementById("treeView").scrollTop){
+        x.$.modState(_.copy(scrollPosition = document.getElementById("treeView").scrollTop))
+      }
+      else
+        Callback()
+    })
+
     .build
 
   val component = ReactComponentB[Props]("ReactTreeView")
     .initialState(State("", filterMode = false, js.undefined, js.undefined, scrollPosition = 0))
     .renderBackend[Backend]
     .componentWillReceiveProps(x => Callback(println("ReactTreeView")))
-//      .componentWillReceiveProps(x =>{
-//        println("He")
-//        x.$.backend.saveScrollPosition(document.getElementById("treeView").scrollTop)
-//      }
-//      )
-//    .componentWillUpdate(x =>
-//      Callback({
-//        x.nextProps.copy(scrollPosition = document.getElementById("treeView").scrollTop)
-//        println(document.getElementById("treeView").scrollTop)
-//        println(x.nextProps.scrollPosition)
-//      })
-//        Callback({
-//        println(document.getElementById("treeView").scrollTop)
-////        x.$.state.copy(scrollPosition = document.getElementById("treeView").scrollTop)
-//        println(x.nextState)
-//      })
-//    )
-//  .componentDidUpdate(x =>
-//
-//      Callback({
-//        println(x.prevState.scrollPosition)
-//        println(x.currentState.scrollPosition)
-//        document.getElementById("treeView").scrollTop = 200
-//      })
     .build
 
   case class Props(root: TreeItem,
