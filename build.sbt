@@ -35,7 +35,6 @@ lazy val client = (project in file("client")).settings(
     "io.suzaku" %%% "diode" % "1.1.1",
     "io.suzaku" % "diode-react_sjs0.6_2.11" % "1.1.1",
     "com.lihaoyi" %%% "upickle" % "0.4.3",
-    "be.doeraene" %%% "scalajs-jquery" % "0.9.1"
   ),
   jsDependencies ++=Seq(
     "org.webjars.bower" % "react" % "15.3.2" / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",

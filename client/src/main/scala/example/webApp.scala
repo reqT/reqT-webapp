@@ -18,11 +18,6 @@ import scala.scalajs.js.URIUtils._
 import scala.collection.immutable.Queue
 import shared._
 import scala.concurrent.ExecutionContext.Implicits.global
-import org.scalajs.jquery.JQueryStatic
-
-@js.native
-@JSImport("jquery", JSImport.Namespace)
-object jquery extends JQueryStatic
 
 @JSExport
 object webApp extends js.JSApp {
