@@ -11,6 +11,7 @@ import scalacss.ScalaCssReact._
 import scala.scalajs.js
 import shared._
 import diode.NoAction
+import org.scalajs.dom.document
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def linkToString: String = link match {
@@ -175,7 +176,8 @@ object ReactTreeView {
               style = P.style,
               filterMode = S.filterMode,
               modelProxy = P.modelProxy,
-              setModalContent = P.setModalContent
+              setModalContent = P.setModalContent,
+              saveScrollPosition = P.saveScrollPosition
             )
           )
         )
@@ -498,7 +500,8 @@ object ReactTreeView {
                        style: Style,
                        filterMode: Boolean,
                        modelProxy: ModelProxy[Tree],
-                       setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback
+                       setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback,
+                       saveScrollPosition: Double => Callback
                       )
 
 
@@ -511,7 +514,12 @@ object ReactTreeView {
         _$.modState(_.copy(children = if (newProps.open) newProps.root.children else Nil))
           .when(newProps.filterMode)
           .void
+
     }
+      .componentWillUpdate(x => {
+        println("TreeNode Will Update")
+        x.$.props.saveScrollPosition(document.getElementById("treeView").scrollTop)
+      })
     .shouldComponentUpdate(x => if(x.nextState.selected || x.currentState.draggedOver) true else false)
     .build
 
@@ -526,7 +534,8 @@ object ReactTreeView {
                    showSearchBox: Boolean,
                    style: Style,
                    modelProxy: ModelProxy[Tree],
-                   setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback
+                   setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback,
+                   saveScrollPosition: Double => Callback
                   )
 
   def apply(root: TreeItem,
@@ -537,8 +546,9 @@ object ReactTreeView {
             key: js.UndefOr[js.Any] = js.undefined,
             style: Style = new Style {},
             modelProxy: ModelProxy[Tree],
-            setModalContent: (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback
+            setModalContent: (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback,
+            saveScrollPosition: Double => Callback
            ) =
-    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, setModalContent))
+    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, setModalContent, saveScrollPosition))
 
 }
