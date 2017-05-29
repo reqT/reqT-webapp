@@ -102,10 +102,13 @@ object ReactTreeView {
   case class State(filterText: String,
                    filterMode: Boolean,
                    selectedNode: js.UndefOr[NodeC],
-                   dragOverNode: js.UndefOr[NodeC]
+                   dragOverNode: js.UndefOr[NodeC],
+                   scrollPosition: Double
                   )
 
   class Backend($: BackendScope[Props, State]) {
+
+    def saveScrollPosition(position: Double): Callback =  $.modState(s => s.copy(scrollPosition = position))
 
     def onNodeSelect(P: Props)(selected: NodeC): Callback = {
       val removeSelection: Callback =
@@ -369,6 +372,7 @@ object ReactTreeView {
 
       <.li(
         P.style.treeItem,
+        ^.key := {if(depth == 1) P.root.uuid.toString else P.root.item.asInstanceOf[Elem].uuid.toString},
         <.div(
           P.style.treeItemDiv,
           ^.borderBottomRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
@@ -489,9 +493,7 @@ object ReactTreeView {
       )
     }
   }
-
-
-  case class NodeState(children: Seq[TreeItem], selected: Boolean = false, draggedOver: Boolean = false)
+  case class NodeState(children: Seq[TreeItem], selected: Boolean = false, draggedOver: Boolean = false, scrollPosition: Double = 0)
 
   case class NodeProps(root: TreeItem,
                        open: Boolean,
@@ -518,10 +520,11 @@ object ReactTreeView {
           .when(newProps.filterMode)
           .void
     }
+    .shouldComponentUpdate(x => if(x.currentState.selected || x.currentState.draggedOver) true else false)
     .build
 
   val component = ReactComponentB[Props]("ReactTreeView")
-    .initialState(State("", filterMode = false, js.undefined, js.undefined))
+    .initialState(State("", filterMode = false, js.undefined, js.undefined, scrollPosition = 0))
     .renderBackend[Backend]
     .build
 

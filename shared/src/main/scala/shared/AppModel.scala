@@ -16,7 +16,12 @@ case class Tree(children: Seq[Elem]){
     }
   }
 
-  def makeString: String = "Model"+this.toString
+  def makeString: String = {
+    if(this.toString.startsWith("(") && this.toString.endsWith(")"))
+      "Model" + this.toString
+    else
+      "Model("+this.toString + ")"
+  }
 }
 
 case class UUID(x1: Int, x2: Int, x3: Int, x4: Int)
