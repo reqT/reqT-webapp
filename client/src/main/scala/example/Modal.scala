@@ -274,7 +274,7 @@ object Modal {
           ^.color := "#FF3636",
           ^.position.relative,
           if(P.treeItem.children.nonEmpty) {
-            RelationSelect(P.treeItem.linkToString, P.dispatch, None, isModelValue = false, Some(setNewRelation))
+            RelationSelect(P.treeItem.linkToString, P.dispatch, None, isModelValue = false, Some(setNewRelation), None)
           } else {
             <.div()
           }

@@ -4,7 +4,7 @@ import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, _}
 import diode.Action
 import shared._
-
+import org.scalajs.dom.document
 
 /**
   * Created by johan on 4/4/17.
@@ -26,7 +26,7 @@ object RelationSelect {
     ^.textAlignLast.center
   )
 
-  case class Props(value: String, dispatch: Action => Callback, updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback])
+  case class Props(value: String, dispatch: Action => Callback, updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback], saveScrollPosition: Option[Double => Callback])
 
   case class State(value: String)
 
@@ -48,6 +48,14 @@ object RelationSelect {
         relationList.map(x => <.option(x))
       )
 
+    def saveScrollPos(P: Props): Callback = {
+      P.saveScrollPosition match {
+        case Some(saveScrollPosition) =>
+          saveScrollPosition(document.getElementById("treeView").scrollTop)
+        case None =>
+          Callback()
+      }
+    }
 
     def onChange(P: Props, S: State)(e: ReactEventI): Callback = {
       e.preventDefault()
@@ -55,11 +63,11 @@ object RelationSelect {
       val newRel = e.target.value
 
       if(P.isModelValue)
-        P.dispatch(P.updateRel.get(Some(RelationType(newRel))))
+        P.dispatch(P.updateRel.get(Some(RelationType(newRel)))) >> saveScrollPos(P)
       else
         P.setNewRelation match {
-          case Some(setRelation) => setRelation(Some(RelationType(newRel))) >> $.setState(s = S.copy(value = e.target.value))
-          case None => Callback(println("missing setNewRelation method"))
+          case Some(setRelation) => setRelation(Some(RelationType(newRel))) >> $.setState(s = S.copy(value = e.target.value)) >> saveScrollPos(P)
+          case None => Callback(println("missing setNewRelation method")) >> saveScrollPos(P)
         }
     }
 
@@ -74,7 +82,7 @@ object RelationSelect {
 
 
 
-  def apply(value: String, dispatch: Action => Callback, updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback])
-  = component.set()(Props(value, dispatch, updateRel, isModelValue, setNewRelation))
+  def apply(value: String, dispatch: Action => Callback, updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback], saveScrollPosition: Option[Double => Callback])
+  = component.set()(Props(value, dispatch, updateRel, isModelValue, setNewRelation, saveScrollPosition))
 
 }
