@@ -278,7 +278,7 @@ object webApp extends js.JSApp {
     val pageContent = ReactComponentB[Props]("Content")
       .initialState(State(None, Vector.empty, message = "", modalType = Modal.EMPTY_MODAL, treeItem = null))
       .renderBackend[Backend]
-        .componentWillReceiveProps( x => x.$.backend.getScroll)
+        .componentWillReceiveProps( x => x.$.backend.setScroll(x.currentState.scrollPosition))
       .build
 
     val dc = AppCircuit.connect(_.tree)
