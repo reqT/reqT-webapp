@@ -55,7 +55,7 @@ object ReleaseModal {
 
   case class State(newEntity: String, newAttribute: Option[Attribute], sortBy: Seq[String], releaseType: ReleaseType = MAX)
 
-  case class Props(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
+  case class Props(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, currentModel: Tree)
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
@@ -117,7 +117,7 @@ object ReleaseModal {
               ^.display.flex,
               ^.justifyContent.spaceBetween,
               <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
-              <.button("OK", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick ==> send(P,S))
+              <.button("OK", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> sendMethod(P,S))
             )),
           <.div(
             backdropStyle,
@@ -211,19 +211,10 @@ object ReleaseModal {
     }
 
     def resetState: Callback = $.setState(State("",None, standardList))
-//    def setNewEntity(entity: Option[Entity]): Callback = $.modState(_.copy(newEntity = entity))
+
     def setNewAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newAttribute = attribute))
 
-
-    def send(P: Props, S: State)(e: ReactEvent): Callback ={
-      P.send(prepRelease(state = S, _)) match {
-        case Some(callback) => callback.foreach(_.runNow())
-        //callbacks.head.runNow()
-        //        .foreach(_.runNow()) //>> onClose(P)(e)
-        case None => Callback()
-      }
-      onClose(P)
-    }
+    def sendMethod(P: Props, S: State): Callback = P.sendMethod(prepRelease(S, P.currentModel.makeString)) >> onClose(P)
 
     def onClose(P: Props): Callback = P.onClose() >> resetState
 
@@ -236,14 +227,13 @@ object ReleaseModal {
   }
 
 
-
     val component = ReactComponentB[Props]("Modal")
       .initialState(State("", None, standardList))
       .renderBackend[Backend]
       .build
 
 
-    def apply(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
-    = component.set()(Props(isOpen, onClose, send, currentModel))
+    def apply(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback , currentModel: Tree)
+    = component.set()(Props(isOpen, onClose, sendMethod, currentModel))
 
 }

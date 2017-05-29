@@ -57,7 +57,7 @@ object OrdinalModal {
 
   case class State(rankings: Seq[Int] = Seq(), pairs: Seq[Seq[Entity]] = Seq(), deviation: Int = 0, typeToRank: String = "", readyForRanking: Boolean = false)
 
-  case class Props(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
+  case class Props(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, currentModel: Tree)
 
 
   def generatePairs($: BackendScope[Props, State], entities: Seq[Entity]): Seq[Seq[Entity]] = {
@@ -114,7 +114,7 @@ object OrdinalModal {
               <.div(
                 buttonDivStyle,
                 <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
-                <.button("OK", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick ==> send(P, S))
+                <.button("OK", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> sendMethod(P, S))
               )),
             <.div(
               backdropStyle,
@@ -236,22 +236,14 @@ object OrdinalModal {
       "\""+rank.filterNot(_ == "").mkString(";")+ "\""
     }
 
-    def prepOrdinal(state: State, model: String, trams : String): Seq[String] = {
+    def prepOrdinal(state: State, model: String): Seq[String] = {
       Seq(s"val ordinalMethod =$model",
       s"val ranked = reqT.parse.comparisonParser.parseAndSolve(ordinalMethod,allowedDeviation=${state.deviation})")
     }
 
     def resetState: Callback = $.setState(State())
 
-    def send(P: Props, S: State)(e: ReactEvent): Callback ={
-      val list = generateRankingList(S.rankings, S.pairs)
-
-      P.send(prepOrdinal(state = S, list, _)) match {
-        case Some(callback) => callback.foreach(_.runNow())
-        case None => Callback()
-      }
-      onClose(P)
-    }
+    def sendMethod(P: Props, S: State): Callback = P.sendMethod(prepOrdinal(S, generateRankingList(S.rankings, S.pairs))) >> onClose(P)
 
     def onClose(P: Props): Callback = P.onClose() >> resetState
 
@@ -271,7 +263,7 @@ object OrdinalModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
-  = component.set()(Props(isOpen, onClose, send, currentModel))
+  def apply(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, currentModel: Tree)
+  = component.set()(Props(isOpen, onClose, sendMethod, currentModel))
 
 }

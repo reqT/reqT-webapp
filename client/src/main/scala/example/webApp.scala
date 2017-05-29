@@ -3,12 +3,11 @@ package example
 import diode.Action
 import org.scalajs.dom._
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSExport}
+import scala.scalajs.js.annotation.JSExport
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react._
 import diode.react.ModelProxy
 import example.Modal.ModalType
-import org.scalajs.dom.raw._
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import scala.collection.immutable.Queue
@@ -23,20 +22,13 @@ object webApp extends js.JSApp {
 
   case class CachedModel(name: String, model: Tree, selected: Boolean, uUID: UUID)
 
-  case class OpenModals(isModalOpen: Boolean = false, isNewModelModalOpen: Boolean = false, isDollarModalOpen: Boolean = false,
-                        isReleaseModalOpen: Boolean = false, isOrdinalModalOpen: Boolean = false)
+  case class OpenModals(isModalOpen: Boolean = false, isNewModelModalOpen: Boolean = false)
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, modalType: ModalType, treeItem: TreeItem,
+  case class State(modalType: ModalType, treeItem: TreeItem,
                    dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
-                   cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", Tree(Seq()), selected = true, uUID = UUID.random())),
+                   cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", emptyTree, selected = true, uUID = UUID.random())),
                    openModals: OpenModals = OpenModals(), saveModelType : String = "rec",
-                   latestRecTree: Tree = Tree(Seq()), isMethodStarted: Boolean = false,
-                   waitingForModel: Boolean = false, scrollPosition: Double = 0, newModel: Tree = emptyTree) {
-
-    def log(line: String): State = copy(logLines = logLines :+ line)
-
-    def saveTree(tree: Tree): State = copy(latestRecTree = tree)
-
+                   isMethodStarted: Boolean = false, scrollPosition: Double = 0, newModel: Tree = emptyTree, method: Seq[String] = Seq()) {
   }
 
   val emptyTree = Tree(Seq())
@@ -58,14 +50,8 @@ object webApp extends js.JSApp {
 
     def closeModal(e: ReactEvent): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isModalOpen = false)))
 
-    def closeDollarModal(e: ReactEvent): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isDollarModalOpen = false)))
-
-    def closeReleaseModal(e: ReactEvent): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isReleaseModalOpen = false)))
-
-    def closeOrdinalModal(e: ReactEvent): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isOrdinalModalOpen = false)))
-
     def closeNewModelModal(): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isNewModelModalOpen = false)))
-
+    
     def saveScrollPosition(position: Double): Callback = {
       if($.accessDirect.state.scrollPosition != position)
         $.modState(_.copy(scrollPosition = position))
@@ -73,14 +59,9 @@ object webApp extends js.JSApp {
         Callback()
     }
 
+
     def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem]): Callback
     = $.modState(_.copy(modalType = modalType, treeItem = treeItem, openModals = OpenModals(isModalOpen = true), dispatch = newDispatch, path = newPath, elemToModal = newElemToAdd))
-
-    def openDollarModal: Callback = $.modState(_.copy(openModals = OpenModals(isDollarModalOpen = true)))
-
-    def openOrdinalModal: Callback  = $.modState(_.copy(openModals = OpenModals(isOrdinalModalOpen = true)))
-
-    def openReleaseModal: Callback  = $.modState(_.copy(openModals = OpenModals(isReleaseModalOpen = true)))
 
     def openNewModelModal(newSaveModelType: String, newModel: Tree): Callback = $.modState(_.copy(openModals = OpenModals(isNewModelModalOpen = true),
       saveModelType = newSaveModelType, newModel = newModel))
@@ -111,14 +92,15 @@ object webApp extends js.JSApp {
       Callback(temp.scrollTop = scrollPosition)
     }
 
-    def getScroll: Callback = {
-      $.modState(_.copy(scrollPosition = document.getElementById("treeView").scrollTop))
-    }
+    def getScroll: Callback = $.modState(_.copy(scrollPosition = document.getElementById("treeView").scrollTop))
 
 
     def saveModel(name: String, model: Tree, P: Props): Callback =
       $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, model, selected = false, UUID.random())))
 
+    def sendMethod(currentMethod: Seq[String]) = $.modState(_.copy(method = currentMethod, isMethodStarted = true))
+
+    def methodDone = $.modState(_.copy(isMethodStarted = false))
 
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
@@ -136,7 +118,7 @@ object webApp extends js.JSApp {
         ^.paddingLeft := "5px",
         <.div(
           ^.className := "header",
-          Header(P.proxy, openNewModelModal)
+          Header(P.proxy, openNewModelModal, sendMethod, getActiveModelName)
         ),
         <.div(
           ^.className := "col-1",
@@ -145,7 +127,7 @@ object webApp extends js.JSApp {
           ^.height := "100%",
           ^.paddingRight := "9px",
           ElementList(),
-          ReqTLog(P.proxy, stateSaveTree(_), openNewModelModal)
+          ReqTLog(P.proxy, openNewModelModal, () => S.method, S.isMethodStarted, methodDone)
         ),
         <.div(
           ^.className := "col-2",
@@ -157,15 +139,6 @@ object webApp extends js.JSApp {
           sc(proxy => treeView((proxy, openModalWithContent)))
         )
       )
-
-
-    }
-
-
-    def setTemplate(child: Seq[Elem]): Callback = $.modState(_.copy(latestRecTree = Tree(child)))
-
-    def stateSaveTree(tree: Tree): Unit = {
-      $.accessDirect.state.saveTree(tree)
     }
 
     val cachedModels = ReactComponentB[(Props, State)]("cachedModelsComponent")
@@ -251,17 +224,16 @@ object webApp extends js.JSApp {
           ^.paddingTop := "5px",
           Styles.removeButtonSimple,
           ^.outline := "none",
-          ^.onClick ==> removeCachedModel($.props._3, $.props._1)
+          ^.onClick ==> removeCachedModel($.props._1, $.props._2, $.props._3)
         )
       )).build
+
+    def getActiveModelName: Option[CachedModel] = $.accessDirect.state.cachedModels.find(_.selected)
+
 
     def setActiveModel(cachedModel: CachedModel,P: Props, S: State): Callback = {
       updateActiveModel(cachedModel, P,S) >> P.proxy.dispatchCB(SetModel(cachedModel.model.children))
     }
-
-    def activeModel(activeModel: CachedModel, cachedModels: Queue[CachedModel]): Callback = $.modState(_.copy(cachedModels = cachedModels.map(
-      model => if(model.uUID.equals(activeModel.uUID)) model.copy(selected = true) else model.copy(selected = false))))
-
 
     def updateActiveModel(cachedModel: CachedModel, P: Props, S: State): Callback = {
       val newModels: Queue[CachedModel] = S.cachedModels.map(model =>
@@ -273,18 +245,18 @@ object webApp extends js.JSApp {
       $.modState(_.copy(cachedModels = newModels))
     }
 
-
-    def removeCachedModel(state: State, modelToRemove: CachedModel)(e: ReactEventI): Callback = {
+    def removeCachedModel(modelToRemove: CachedModel, P: Props, S: State)(e: ReactEventI): Callback = {
       e.stopPropagation()
-      val index = state.cachedModels.indexWhere(_.equals(modelToRemove))
-      val beginning = state.cachedModels.take(index)
-      val end = state.cachedModels.drop(index+1)
+      val index = S.cachedModels.indexWhere(_.equals(modelToRemove))
+      val beginning = S.cachedModels.take(index)
+      val end = S.cachedModels.drop(index+1)
+
       $.modState(_.copy(cachedModels = beginning ++ end))
     }
 
   }
     val pageContent = ReactComponentB[Props]("Content")
-      .initialState(State(None, Vector.empty, message = "", modalType = Modal.EMPTY_MODAL, treeItem = null))
+      .initialState(State(modalType = Modal.EMPTY_MODAL, treeItem = null))
       .renderBackend[Backend]
         .componentWillReceiveProps( x => x.$.backend.setScroll(x.currentState.scrollPosition))
         .componentDidUpdate(x => {

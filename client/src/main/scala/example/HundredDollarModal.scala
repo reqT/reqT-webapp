@@ -38,9 +38,16 @@ object HundredDollarModal {
     ^.opacity := "0.5"
   )
 
+  val buttonAreaStyle = Seq(
+    ^.width:= "95%",
+    ^.padding := "20px",
+    ^.display.flex,
+    ^.justifyContent.spaceBetween
+  )
+
   case class State(newSHSEntity: Option[Entity], newRSEntity: Option[Entity], newBAttribute: Option[Attribute], newPAttribute: Option[Attribute])
 
-  case class Props(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]])
+  case class Props(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, model: String)
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
@@ -87,12 +94,9 @@ object HundredDollarModal {
 //              <.hr
             ),
             <.div(
-              ^.width:= "95%",
-              ^.padding := "20px",
-              ^.display.flex,
-              ^.justifyContent.spaceBetween,
+              buttonAreaStyle,
               <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
-              <.button("OK", ^.className := "btn btn-success pull-right",  ^.autoFocus := "true", ^.bottom := "0px", ^.onClick ==> send(P,S))
+              <.button("OK", ^.className := "btn btn-success pull-right",  ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> sendMethod(P,S))
             )),
           <.div(
             backdropStyle,
@@ -127,15 +131,7 @@ object HundredDollarModal {
     def setNewBAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newBAttribute = attribute))
     def setNewPAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newPAttribute = attribute))
 
-    def send(P: Props, S: State)(e: ReactEvent): Callback ={
-      P.send(prepHundredDollar(state = S, _)) match {
-      case Some(callback) => callback.foreach(_.runNow())
-        //callbacks.head.runNow()
-//        .foreach(_.runNow()) //>> onClose(P)(e)
-      case None => Callback()
-      }
-      onClose(P)
-    }
+    def sendMethod(P: Props, S: State): Callback = P.sendMethod(prepHundredDollar(S, P.model)) >> onClose(P)
 
     def onClose(P: Props): Callback = P.onClose() >> resetState
 
@@ -156,7 +152,7 @@ object HundredDollarModal {
       .build
 
 
-    def apply(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]])
-    = component.set()(Props(isOpen, onClose, send))
+    def apply(isOpen: Boolean, onClose: () => Callback,  sendMethod: Seq[String] => Callback , model: String)
+    = component.set()(Props(isOpen, onClose, sendMethod, model))
 
 }
