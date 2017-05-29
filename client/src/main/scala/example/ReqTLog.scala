@@ -131,7 +131,7 @@ object ReqTLog {
 
 //      P.stateSaveTree(tree)
       if (S.isMethodStarted || S.waitingForModel){
-        P.openNewModelModal("rec", tree)
+        P.openNewModelModal("rec", tree).runNow()
         $.accessDirect.modState(_.copy(isMethodStarted = false))
       }
     }

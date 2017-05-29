@@ -82,7 +82,6 @@ object webApp extends js.JSApp {
 
     val treeView = ReactComponentB[(ModelProxy[Tree], (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback)]("treeView")
       .render(P => <.pre(
-        //        ^.onScroll --> getScroll,
         Styles.treeView,
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
@@ -279,7 +278,7 @@ object webApp extends js.JSApp {
     val pageContent = ReactComponentB[Props]("Content")
       .initialState(State(None, Vector.empty, message = "", modalType = Modal.EMPTY_MODAL, treeItem = null))
       .renderBackend[Backend]
-      .componentDidUpdate(_ => Callback(println("hej")))
+        .componentWillReceiveProps( x => x.$.backend.getScroll)
       .build
 
     val dc = AppCircuit.connect(_.tree)
