@@ -57,7 +57,7 @@ object OrdinalModal {
 
   case class State(rankings: Seq[Int] = Seq(), pairs: Seq[Seq[Entity]] = Seq(), deviation: Int = 0, typeToRank: String = "", readyForRanking: Boolean = false)
 
-  case class Props(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
+  case class Props(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, currentModel: Tree)
 
 
   def generatePairs($: BackendScope[Props, State], entities: Seq[Entity]): Seq[Seq[Entity]] = {
@@ -246,10 +246,10 @@ object OrdinalModal {
     def send(P: Props, S: State)(e: ReactEvent): Callback ={
       val list = generateRankingList(S.rankings, S.pairs)
 
-      P.send(prepOrdinal(state = S, list, _)) match {
-        case Some(callback) => callback.foreach(_.runNow())
-        case None => Callback()
-      }
+//      P.send(prepOrdinal(state = S, list, _)) match {
+//        case Some(callback) => callback.foreach(_.runNow())
+//        case None => Callback()
+//      }
       onClose(P)
     }
 
@@ -271,7 +271,7 @@ object OrdinalModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
-  = component.set()(Props(isOpen, onClose, send, currentModel))
+  def apply(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, currentModel: Tree)
+  = component.set()(Props(isOpen, onClose, sendMethod, currentModel))
 
 }

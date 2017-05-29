@@ -55,7 +55,7 @@ object ReleaseModal {
 
   case class State(newEntity: String, newAttribute: Option[Attribute], sortBy: Seq[String], releaseType: ReleaseType = MAX)
 
-  case class Props(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
+  case class Props(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, currentModel: Tree)
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
@@ -216,12 +216,12 @@ object ReleaseModal {
 
 
     def send(P: Props, S: State)(e: ReactEvent): Callback ={
-      P.send(prepRelease(state = S, _)) match {
-        case Some(callback) => callback.foreach(_.runNow())
-        //callbacks.head.runNow()
-        //        .foreach(_.runNow()) //>> onClose(P)(e)
-        case None => Callback()
-      }
+//      P.send(prepRelease(state = S, _)) match {
+//        case Some(callback) => callback.foreach(_.runNow())
+//        //callbacks.head.runNow()
+//        //        .foreach(_.runNow()) //>> onClose(P)(e)
+//        case None => Callback()
+//      }
       onClose(P)
     }
 
@@ -243,7 +243,7 @@ object ReleaseModal {
       .build
 
 
-    def apply(isOpen: Boolean, onClose: () => Callback, send: (String => Seq[String]) => Option[Seq[Callback]], currentModel: Tree)
-    = component.set()(Props(isOpen, onClose, send, currentModel))
+    def apply(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback , currentModel: Tree)
+    = component.set()(Props(isOpen, onClose, sendMethod, currentModel))
 
 }

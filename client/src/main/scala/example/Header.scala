@@ -32,7 +32,7 @@ object Header {
   )
 
   case class State(openModals: OpenModals = OpenModals())
-  case class Props(modelProxy: ModelProxy[Tree], openNewModelModal: (String, Tree) => Callback)
+  case class Props(modelProxy: ModelProxy[Tree], openNewModelModal: (String, Tree) => Callback, sendMethod: Seq[String] => Callback)
 
   case class OpenModals(isDollarModalOpen: Boolean = false, isReleaseModalOpen: Boolean = false, isOrdinalModalOpen: Boolean = false, isCopyModalOpen: Boolean = false,
                         isHelpModalOpen: Boolean = false)
@@ -56,16 +56,12 @@ object Header {
 
     def render(P: Props, S: State) = {
       <.div(
-        HundredDollarModal(isOpen = S.openModals.isDollarModalOpen, onClose = closeDollarModal, sendPrepMessage),
-        ReleaseModal(isOpen = S.openModals.isReleaseModalOpen, onClose = closeReleaseModal, sendPrepMessage, P.modelProxy.value),
-        OrdinalModal(isOpen = S.openModals.isOrdinalModalOpen, onClose = closeOrdinalModal, sendPrepMessage, P.modelProxy.value),
+        HundredDollarModal(isOpen = S.openModals.isDollarModalOpen, onClose = closeDollarModal, P.sendMethod, P.modelProxy.value.makeString),
+        ReleaseModal(isOpen = S.openModals.isReleaseModalOpen, onClose = closeReleaseModal, P.sendMethod, P.modelProxy.value),
+        OrdinalModal(isOpen = S.openModals.isOrdinalModalOpen, onClose = closeOrdinalModal, P.sendMethod, P.modelProxy.value),
         CopyModal(isOpen = S.openModals.isCopyModalOpen, onClose = closeCopyModal, P.modelProxy.value.makeString),
         navigationBar((P,S))
       )
-    }
-
-    def sendPrepMessage(prepMessage: String => Seq[String]): Option[Seq[Callback]] = {
-        Some(Seq(Callback(println("SENDMSG"))))
     }
 
     val navigationBar = ReactComponentB[(Props, State)]("navigationBar")
@@ -86,7 +82,7 @@ object Header {
               ^.`type`:="file",
               ^.display.none,
               ^.accept := "text/plain, .txt",
-              ^.onChange ==> importModel($.props._2.modelProxy.dispatchCB)
+              ^.onChange ==> importModel($.props._2)
             )
           )
           case "Export" =>
@@ -137,17 +133,17 @@ object Header {
 
     // Klara inte specialtecken i strängar  ------------------------------------------------------------------!!!!!
 
-    def parseModel(newModel: String, dispatch: Action => Callback): Callback = {
+    def parseModel(newModel: String, P: Props): Callback = {
       Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete{
         case Success(r) => Callback(println(r.responseText))
-//          openNewModelModal("imp", SetModel(read[Model](r.responseText).tree)).runNow
+          P.openNewModelModal("imp",read[Model](r.responseText).tree).runNow()
         case Failure(e) => Callback(println(e.toString))
       }
       Callback()
     }
 
 
-    def importModel(dispatch: Action => Callback)(e: ReactEventI): Callback = {
+    def importModel(P: Props)(e: ReactEventI): Callback = {
       if(e.currentTarget.files.item(0).`type` == "text/plain") {
         var newModel = "newModel empty, shouldn't happen"
         val fileReader = new FileReader
@@ -155,7 +151,7 @@ object Header {
 
         fileReader.onload = (_: UIEvent) => {
           newModel = fileReader.result.asInstanceOf[String]
-          parseModel(newModel.replace("\n", "").trim, dispatch)
+          parseModel(newModel.replace("\n", "").trim, P)
         }
         Callback(e.currentTarget.value = "")
       } else {
@@ -197,7 +193,7 @@ object Header {
     .build
 
 
-  def apply(modelProxy: ModelProxy[Tree], openCachedModelModal: (String, Tree) => Callback)
-  = component.set()(Props(modelProxy, openCachedModelModal))
+  def apply(modelProxy: ModelProxy[Tree], openNewModelModal: (String, Tree) => Callback, sendMethod: Seq[String] => Callback)
+  = component.set()(Props(modelProxy, openNewModelModal, sendMethod))
 
 }

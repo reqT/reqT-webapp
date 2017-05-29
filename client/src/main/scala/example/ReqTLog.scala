@@ -17,35 +17,35 @@ import scala.util.{Failure, Success}
   */
 object ReqTLog {
 
-
-  case class State(websocket: Option[WebSocket] ,logLines: Vector[String], message: String, isMethodStarted: Boolean = false, waitingForModel: Boolean = false){
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, isMethodStarted: Boolean = false, waitingForModel: Boolean = false){
     def log(line: String): State = copy(logLines = logLines :+ line)
   }
 
-  case class Props(proxy: ModelProxy[Tree], stateSaveTree: Tree => Unit, openNewModelModal: (String, Tree) => Callback)
+  case class Props(proxy: ModelProxy[Tree], stateSaveTree: Tree => Unit, openNewModelModal: (String, Tree) => Callback, getMethod: () => Seq[String], runMethod: Boolean)
 
   class Backend($: BackendScope[Props, State]) {
+
 
     def render(P: Props, S: State) = {
 
       def setMethodStarted: Callback = $.modState(_.copy(isMethodStarted = true))
 
-      val sendVerify: Option[Callback] =
+      val sendVerify: Option[Callback] = {
         for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
           yield sendMessage(websocket, P.proxy.value.makeString.replaceAll("\n", ""))
-
-
-      def sendPrepMessage(prepMessage: String => Seq[String]): Option[Seq[Callback]] = {
-        for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
-          yield sendMessages(websocket, prepMessage(v1 = P.proxy.value.makeString.replaceAll("\n", ""))) :+ setMethodStarted
       }
+
+
+      def sendPrepMessage(msgs: Seq[String]): Option[Seq[Callback]] = {
+        for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
+          yield sendMessages(websocket, msgs) :+ setMethodStarted
+      }
+
 
       val send: Option[Callback] ={
         for (websocket <- S.websocket if S.message.nonEmpty)
           yield sendMessage(websocket, S.message)
       }
-
-
 
       def handleKeyDown(event: ReactKeyboardEventI): Option[Callback] = {
         if (event.nativeEvent.keyCode == KeyCode.Enter)
@@ -77,7 +77,7 @@ object ReqTLog {
             ^.onClick -->? sendVerify
           )
         ),
-        log(S.logLines)// Display log
+        log(S.logLines)
       )
     }
 
@@ -94,7 +94,7 @@ object ReqTLog {
           ^.whiteSpace.`pre-line`,
           $.props.map(<.p(_)))
       )
-      //      .componentDidUpdate(_ => updateScroll)
+      .componentDidUpdate(_ => updateScroll)
       .componentDidMount(_ => Callback({
       var reqtLog = document.getElementById("reqTLog").asInstanceOf[dom.html.Pre]
       reqtLog.setAttribute("style", "user-select:text;" + reqtLog.style.cssText)
@@ -114,6 +114,9 @@ object ReqTLog {
       $.modState(_.copy(message = newMessage))
     }
 
+
+
+
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
       def send(msg : String) = Callback(websocket.send(msg))
       def updateState = $.modState(s => s.log(s"Sent: \n$msg").copy(message = ""))
@@ -128,8 +131,7 @@ object ReqTLog {
     def sendMessages(websocket: WebSocket, msg: Seq[String]): Seq[Callback] = msg.map(sendMessage(websocket,_))
 
     def receiveModel(S: State, P: Props, tree: Tree) = {
-
-//      P.stateSaveTree(tree)
+      //      P.stateSaveTree(tree)
       if (S.isMethodStarted || S.waitingForModel){
         P.openNewModelModal("rec", tree)
         $.accessDirect.modState(_.copy(isMethodStarted = false))
@@ -167,9 +169,10 @@ object ReqTLog {
           direct.modState(_.copy(websocket = None).log(s"Closed: ${event.reason}"))
         }
 
-        //Måste ändras till hostname
+
         val url = "ws://127.0.0.1:9000/socket"
-        // Create WebSocket and setup listeners
+
+
         val websocket = new WebSocket(url)
         websocket.onopen = onopen _
         websocket.onclose = onclose _
@@ -201,11 +204,18 @@ object ReqTLog {
     .initialState(State(None, Vector.empty, message = ""))
     .renderBackend[Backend]
     .componentDidMount(x =>  x.backend.start(x.props))
+    .componentWillReceiveProps(
+      x => if (x.nextProps.runMethod){
+        x.$.modState(_.copy(isMethodStarted = true))
+        Callback(x.nextProps.getMethod().map(s => x.$.backend.sendMessage(x.$.state.websocket.get,s).runNow()))
+      }
+      else Callback()
+    )
     .componentWillUnmount(_.backend.end)
     .build
 
 
-  def apply(proxy: ModelProxy[Tree], stateSaveTree: Tree => Unit, openNewModelModal: (String, Tree) => Callback)
-  = component.set()(Props(proxy, stateSaveTree, openNewModelModal))
+  def apply(proxy: ModelProxy[Tree], stateSaveTree: Tree => Unit, openNewModelModal: (String, Tree) => Callback, getMethod: () => Seq[String], runMethod: Boolean)
+  = component.set()(Props(proxy, stateSaveTree, openNewModelModal, getMethod, runMethod))
 
 }
