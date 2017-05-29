@@ -17,28 +17,21 @@ import scala.util.{Failure, Success}
   */
 object ReqTLog {
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, isMethodStarted: Boolean = false, waitingForModel: Boolean = false){
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, waitingForModel: Boolean = false, isMethodRunning: Boolean = false){
     def log(line: String): State = copy(logLines = logLines :+ line)
   }
 
-  case class Props(proxy: ModelProxy[Tree], stateSaveTree: Tree => Unit, openNewModelModal: (String, Tree) => Callback, getMethod: () => Seq[String], runMethod: Boolean)
+  case class Props(proxy: ModelProxy[Tree], openNewModelModal: (String, Tree) => Callback, getMethod: () => Seq[String], runMethod: Boolean, methodDone: Callback)
 
   class Backend($: BackendScope[Props, State]) {
 
 
     def render(P: Props, S: State) = {
 
-      def setMethodStarted: Callback = $.modState(_.copy(isMethodStarted = true))
 
       val sendVerify: Option[Callback] = {
         for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
           yield sendMessage(websocket, P.proxy.value.makeString.replaceAll("\n", ""))
-      }
-
-
-      def sendPrepMessage(msgs: Seq[String]): Option[Seq[Callback]] = {
-        for (websocket <- S.websocket if P.proxy.value.toString.nonEmpty)
-          yield sendMessages(websocket, msgs) :+ setMethodStarted
       }
 
 
@@ -115,8 +108,6 @@ object ReqTLog {
     }
 
 
-
-
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
       def send(msg : String) = Callback(websocket.send(msg))
       def updateState = $.modState(s => s.log(s"Sent: \n$msg").copy(message = ""))
@@ -128,13 +119,16 @@ object ReqTLog {
         send(msg) >> updateState
     }
 
-    def sendMessages(websocket: WebSocket, msg: Seq[String]): Seq[Callback] = msg.map(sendMessage(websocket,_))
 
-    def receiveModel(S: State, P: Props, tree: Tree) = {
-      //      P.stateSaveTree(tree)
-      if (S.isMethodStarted || S.waitingForModel){
+    def sendMessages(websocket: WebSocket, msg: Seq[String]): Unit = {
+      msg.foreach(sendMessage(websocket,_).runNow())
+      $.accessDirect.modState(_.copy(isMethodRunning = true))
+    }
+
+    def receiveModel(S: State, P: Props, tree: Tree): Unit = {
+      if (S.isMethodRunning || S.waitingForModel){
         P.openNewModelModal("rec", tree).runNow()
-        $.accessDirect.modState(_.copy(isMethodStarted = false))
+        $.modState(_.copy(isMethodRunning = false)).runNow()
       }
     }
 
@@ -190,7 +184,6 @@ object ReqTLog {
 
     def end: Callback = {
       def closeWebSocket = $.state.map(_.websocket.foreach(_.close()))
-
       def clearWebSocket = $.modState(_.copy(websocket = None))
 
       closeWebSocket >> clearWebSocket
@@ -206,8 +199,8 @@ object ReqTLog {
     .componentDidMount(x =>  x.backend.start(x.props))
     .componentWillReceiveProps(
       x => if (x.nextProps.runMethod){
-        x.$.modState(_.copy(isMethodStarted = true))
-        Callback(x.nextProps.getMethod().map(s => x.$.backend.sendMessage(x.$.state.websocket.get,s).runNow()))
+        x.$.backend.sendMessages(x.$.state.websocket.get, x.nextProps.getMethod())
+        x.nextProps.methodDone
       }
       else Callback()
     )
@@ -215,7 +208,7 @@ object ReqTLog {
     .build
 
 
-  def apply(proxy: ModelProxy[Tree], stateSaveTree: Tree => Unit, openNewModelModal: (String, Tree) => Callback, getMethod: () => Seq[String], runMethod: Boolean)
-  = component.set()(Props(proxy, stateSaveTree, openNewModelModal, getMethod, runMethod))
+  def apply(proxy: ModelProxy[Tree], openNewModelModal: (String, Tree) => Callback, getMethod: () => Seq[String], runMethod: Boolean, methodDone: Callback)
+  = component.set()(Props(proxy, openNewModelModal, getMethod, runMethod, methodDone))
 
 }
