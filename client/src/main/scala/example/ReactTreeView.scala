@@ -11,6 +11,7 @@ import scalacss.ScalaCssReact._
 import scala.scalajs.js
 import shared._
 import diode.NoAction
+import org.scalajs.dom.document
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def linkToString: String = link match {
@@ -65,13 +66,6 @@ object ReactTreeView {
       ^.key := "toggle",
       ^.className := "container",
       ^.draggable := true
-    )
-
-    def selectedTreeItemContent = Seq(
-      ^.color := "darkblue",
-      ^.border := "5px",
-      ^.borderColor := "darkblue",
-      ^.borderRadius := "5px"
     )
 
     def treeItemBefore = Seq(
@@ -182,7 +176,8 @@ object ReactTreeView {
               style = P.style,
               filterMode = S.filterMode,
               modelProxy = P.modelProxy,
-              setModalContent = P.setModalContent
+              setModalContent = P.setModalContent,
+              saveScrollPosition = P.saveScrollPosition
             )
           )
         )
@@ -204,7 +199,7 @@ object ReactTreeView {
     //def toggleOpen(P: NodeProps): NodeProps = P.copy(open = !P.open)
 
     def onTreeMenuToggle(P: NodeProps)(e: ReactEventH): Callback =
-      childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
+      P.onNodeSelect($.asInstanceOf[NodeC]) >> childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
 
     def onItemSelect(P: NodeProps)(e: ReactEventH): Callback =
       P.onNodeSelect($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
@@ -355,39 +350,38 @@ object ReactTreeView {
       val treeMenuToggle: TagMod =
         if (S.children.nonEmpty)
         <.span(
-            ^.onClick ==> onTreeMenuToggle(P),
-            ^.key := "arrow",
-            P.style.treeItemBefore,
-        "▼"
+          ^.onClick ==> onTreeMenuToggle(P),
+          ^.onDblClick ==> onTreeMenuToggle(P),
+          ^.key := "arrow",
+          P.style.treeItemBefore,
+          "▼"
         )
         else if (P.root.children.nonEmpty && S.children.isEmpty)
         <.span(
-            ^.onClick ==> onTreeMenuToggle(P),
-            ^.key := "arrow",
-            P.style.treeItemBefore,
-        "▶"
+          ^.onClick ==> onTreeMenuToggle(P),
+          ^.onDblClick ==> onTreeMenuToggle(P),
+          ^.key := "arrow",
+          P.style.treeItemBefore,
+          "▶"
         )
         else ""
 
 
       <.li(
         P.style.treeItem,
-        ^.key := {if(depth == 1) P.root.uuid.toString else P.root.item.asInstanceOf[Elem].uuid.toString},
         <.div(
           P.style.treeItemDiv,
           ^.borderBottomRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
           ^.borderTopRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
           ^.backgroundColor := { if (P.root.item.isInstanceOf[Entity]) "#CEDBE7" else "#CFEADD" },
           treeMenuToggle,
-          ^.onClick ==> onItemSelect(P),
           ^.onDrop ==> onDrop(P),
           ^.onDragStart ==> dragStart(P),
           ^.onDragEnd ==> onItemDrop(P),
           ^.onDragOver ==> onItemDragOver(P),
           ^.onDblClick ==> onDoubleClickTreeItem(P,S),
-          S.selected ?= P.style.selectedTreeItemContent,
           S.draggedOver ?= dragOverStyle(P),
-
+          ^.onClick ==> onItemSelect(P),
           <.div(
             ^.className := "row",
             ^.overflow.hidden,
@@ -506,7 +500,8 @@ object ReactTreeView {
                        style: Style,
                        filterMode: Boolean,
                        modelProxy: ModelProxy[Tree],
-                       setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback
+                       setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback,
+                       saveScrollPosition: Double => Callback
                       )
 
 
@@ -519,8 +514,13 @@ object ReactTreeView {
         _$.modState(_.copy(children = if (newProps.open) newProps.root.children else Nil))
           .when(newProps.filterMode)
           .void
+
     }
-    .shouldComponentUpdate(x => if(x.currentState.selected || x.currentState.draggedOver) true else false)
+      .componentWillUpdate(x => {
+        println("TreeNode Will Update")
+        x.$.props.saveScrollPosition(document.getElementById("treeView").scrollTop)
+      })
+    .shouldComponentUpdate(x => if(x.nextState.selected || x.currentState.draggedOver) true else false)
     .build
 
   val component = ReactComponentB[Props]("ReactTreeView")
@@ -534,7 +534,8 @@ object ReactTreeView {
                    showSearchBox: Boolean,
                    style: Style,
                    modelProxy: ModelProxy[Tree],
-                   setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback
+                   setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback,
+                   saveScrollPosition: Double => Callback
                   )
 
   def apply(root: TreeItem,
@@ -545,8 +546,9 @@ object ReactTreeView {
             key: js.UndefOr[js.Any] = js.undefined,
             style: Style = new Style {},
             modelProxy: ModelProxy[Tree],
-            setModalContent: (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback
+            setModalContent: (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback,
+            saveScrollPosition: Double => Callback
            ) =
-    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, setModalContent))
+    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, setModalContent, saveScrollPosition))
 
 }

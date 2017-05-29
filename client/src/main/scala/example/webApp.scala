@@ -51,6 +51,14 @@ object webApp extends js.JSApp {
     def closeModal(e: ReactEvent): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isModalOpen = false)))
 
     def closeNewModelModal(): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isNewModelModalOpen = false)))
+    
+    def saveScrollPosition(position: Double): Callback = {
+      if($.accessDirect.state.scrollPosition != position)
+        $.modState(_.copy(scrollPosition = position))
+      else
+        Callback()
+    }
+
 
     def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem]): Callback
     = $.modState(_.copy(modalType = modalType, treeItem = treeItem, openModals = OpenModals(isModalOpen = true), dispatch = newDispatch, path = newPath, elemToModal = newElemToAdd))
@@ -69,7 +77,8 @@ object webApp extends js.JSApp {
             openByDefault = true,
             modelProxy = P.props._1,
             showSearchBox = true,
-            setModalContent = P.props._2
+            setModalContent = P.props._2,
+            saveScrollPosition = saveScrollPosition(_)
           ),
           <.strong(
             ^.id := "treeviewcontent"
@@ -78,12 +87,13 @@ object webApp extends js.JSApp {
       ))
       .build
 
-    def setScroll(position: Double): Callback = {
+    def setScroll(scrollPosition: Double): Callback = {
       var temp = document.getElementById("treeView").asInstanceOf[dom.html.Pre]
-      Callback(temp.scrollTop = temp.scrollHeight)
+      Callback(temp.scrollTop = scrollPosition)
     }
 
     def getScroll: Callback = $.modState(_.copy(scrollPosition = document.getElementById("treeView").scrollTop))
+
 
     def saveModel(name: String, model: Tree, P: Props): Callback =
       $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, model, selected = false, UUID.random())))
@@ -94,6 +104,7 @@ object webApp extends js.JSApp {
 
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
+
 
       <.div(
         Modal(S.openModals.isModalOpen, closeModal, S.modalType, S.treeItem, S.dispatch, S.path, S.elemToModal),
@@ -247,7 +258,11 @@ object webApp extends js.JSApp {
     val pageContent = ReactComponentB[Props]("Content")
       .initialState(State(modalType = Modal.EMPTY_MODAL, treeItem = null))
       .renderBackend[Backend]
-        .componentWillReceiveProps( x => x.$.backend.getScroll)
+//        .componentWillReceiveProps( x => x.$.backend.setScroll(x.currentState.scrollPosition))
+        .componentDidUpdate(x => {
+        println("PageContent did Update")
+      x.$.backend.setScroll(x.currentState.scrollPosition)
+    })
       .build
 
     val dc = AppCircuit.connect(_.tree)
