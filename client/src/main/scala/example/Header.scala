@@ -164,7 +164,7 @@ object Header {
 
     def downloadModel(P: Props, S: State): Unit = {
       val file = new Blob(js.Array(P.modelProxy.value.makeString), js.Dynamic.literal(`type` = "text/plain").asInstanceOf[BlobPropertyBag])
-      val downloadElement = document.createElement("downloadElement")
+      val downloadElement = document.createElement("a")
       val tempURL = dom.URL.createObjectURL(file)
       downloadElement.setAttribute("href", tempURL)
 
