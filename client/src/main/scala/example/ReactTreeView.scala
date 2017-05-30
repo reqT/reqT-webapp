@@ -68,6 +68,20 @@ object ReactTreeView {
       ^.draggable := true
     )
 
+    def treeItemIdDiv = Seq(
+      ^.className := "row",
+      ^.overflow.hidden,
+      ^.unselectable := "true",
+      ^.position := "absolute",
+      ^.left := "7%",
+      ^.top := "0px",
+      ^.bottom := "0px",
+      ^.width := "440px",
+      ^.paddingLeft := "0px",
+      ^.paddingRight := "0px",
+      ^.fontSize := "medium"
+    )
+
     def treeItemBefore = Seq(
       ^.position := "absolute",
       ^.height := "100.%%",
@@ -383,17 +397,7 @@ object ReactTreeView {
           S.draggedOver ?= dragOverStyle(P),
           ^.onClick ==> onItemSelect(P),
           <.div(
-            ^.className := "row",
-            ^.overflow.hidden,
-            ^.unselectable := "true",
-            ^.position := "absolute",
-            ^.left := "7%",
-            ^.top := "0px",
-            ^.bottom := "0px",
-            ^.width := "440px",
-            ^.paddingLeft := "0px",
-            ^.paddingRight := "0px",
-            ^.fontSize := "medium",
+            P.style.treeItemIdDiv,
             ^.id := P.root.itemToString,
             if (P.root.item.isInstanceOf[Elem]) {
               Seq(

@@ -16,17 +16,15 @@ import shared._
 @JSExport
 object webApp extends js.JSApp {
 
-//  case class modelProps(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem])
+  case class ModelProps(modalType: ModalType = Modal.EMPTY_MODAL, treeItem: TreeItem = null, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToAdd: Option[Elem] = None)
 
   case class Props(proxy: ModelProxy[Tree])
 
   case class CachedModel(name: String, model: Tree, selected: Boolean, uUID: UUID)
 
-  case class OpenModals(isModalOpen: Boolean = false, isNewModelModalOpen: Boolean = false)
+  case class OpenModals(isModalOpen: Boolean = false, isNewModelModalOpen: Boolean = false, isDeleteModalOpen: Boolean = false)
 
-  case class State(modalType: ModalType, treeItem: TreeItem,
-                   dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToModal: Option[Elem] = None,
-                   cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", emptyTree, selected = true, uUID = UUID.random())),
+  case class State(modelProps: ModelProps = ModelProps(), cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", emptyTree, selected = true, uUID = UUID.random())),
                    openModals: OpenModals = OpenModals(), saveModelType : String = "rec",
                    isMethodStarted: Boolean = false, scrollPosition: Double = 0, newModel: Tree = emptyTree, method: Seq[String] = Seq()) {
   }
@@ -49,9 +47,9 @@ object webApp extends js.JSApp {
   class Backend($: BackendScope[Props, State]) {
 
     def closeModal(e: ReactEvent): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isModalOpen = false)))
-
+    def closeDeleteModal: Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isDeleteModalOpen = false)))
     def closeNewModelModal(): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isNewModelModalOpen = false)))
-    
+
     def saveScrollPosition(position: Double): Callback = {
       if($.accessDirect.state.scrollPosition != position)
         $.modState(_.copy(scrollPosition = position))
@@ -61,7 +59,7 @@ object webApp extends js.JSApp {
 
 
     def openModalWithContent(modalType: ModalType, treeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElemToAdd: Option[Elem]): Callback
-    = $.modState(_.copy(modalType = modalType, treeItem = treeItem, openModals = OpenModals(isModalOpen = true), dispatch = newDispatch, path = newPath, elemToModal = newElemToAdd))
+    = $.modState(S => S.copy(openModals = OpenModals(isModalOpen = true), modelProps = ModelProps(modalType, treeItem, newDispatch, newPath, newElemToAdd)))
 
     def openNewModelModal(newSaveModelType: String, newModel: Tree): Callback = $.modState(_.copy(openModals = OpenModals(isNewModelModalOpen = true),
       saveModelType = newSaveModelType, newModel = newModel))
@@ -107,7 +105,8 @@ object webApp extends js.JSApp {
 
 
       <.div(
-        Modal(S.openModals.isModalOpen, closeModal, S.modalType, S.treeItem, S.dispatch, S.path, S.elemToModal),
+        Modal(S.openModals.isModalOpen, closeModal, S.modelProps),
+        DeleteModal(S.openModals.isDeleteModalOpen, closeDeleteModal, S.modelProps.treeItem, S.modelProps.dispatch, S.modelProps.path),
         NewModelModal(isOpen = S.openModals.isNewModelModalOpen, onClose = closeNewModelModal, saveModel = saveModel(_, _, P),
           S.newModel, S.saveModelType),
         ^.className := "container",
@@ -256,7 +255,7 @@ object webApp extends js.JSApp {
 
   }
     val pageContent = ReactComponentB[Props]("Content")
-      .initialState(State(modalType = Modal.EMPTY_MODAL, treeItem = null))
+      .initialState(State())
       .renderBackend[Backend]
 //        .componentWillReceiveProps( x => x.$.backend.setScroll(x.currentState.scrollPosition))
         .componentDidUpdate(x => {
