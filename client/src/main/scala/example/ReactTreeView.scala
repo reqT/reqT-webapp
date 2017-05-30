@@ -119,6 +119,7 @@ object ReactTreeView {
     def saveScrollPosition(position: Double): Callback =  $.modState(s => s.copy(scrollPosition = position))
 
     def onNodeSelect(P: Props)(selected: NodeC): Callback = {
+
       val removeSelection: Callback =
         $.state.flatMap(
           _.selectedNode
@@ -471,7 +472,7 @@ object ReactTreeView {
                 ^.top := "0%",
                 ^.height := "100%",
                 ^.left := "100%",
-                RelationSelect(relation, dispatch, Some(updateRel), isModelValue = true, None)
+                RelationSelect(relation, dispatch, Some(updateRel), isModelValue = true, None, Some(P.saveScrollPosition(_)))
               )
             case None =>
               <.div()

@@ -257,7 +257,7 @@ object webApp extends js.JSApp {
     val pageContent = ReactComponentB[Props]("Content")
       .initialState(State())
       .renderBackend[Backend]
-//        .componentWillReceiveProps( x => x.$.backend.setScroll(x.currentState.scrollPosition))
+        .componentWillReceiveProps( x => x.$.backend.setScroll(x.currentState.scrollPosition))
         .componentDidUpdate(x => {
         println("PageContent did Update")
       x.$.backend.setScroll(x.currentState.scrollPosition)
