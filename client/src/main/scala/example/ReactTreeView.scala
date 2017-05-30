@@ -2,7 +2,6 @@ package example
 
 import diode.Action
 import diode.react.ModelProxy
-import example.Modal.ModalType
 import japgolly.scalajs.react.CompScope._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^.{^, _}
@@ -93,6 +92,58 @@ object ReactTreeView {
       ^.width := "11px"
     )
 
+    def attributeDiv = Seq(
+      ^.className := "col",
+      ^.height := "100%",
+      ^.width := "40%",
+      ^.top := "0px",
+      ^.bottom := "0px",
+      ^.position := "absolute",
+      ^.left := "0%",
+      ^.paddingTop := "3%",
+      ^.paddingLeft := "3%"
+    )
+
+    def elemDiv1 = Seq(
+      ^.fontStyle.oblique,
+      ^.className := "col",
+      ^.height := "100%",
+      ^.width := "30%",
+      ^.top := "0px",
+      ^.bottom := "0px",
+      ^.position := "absolute",
+      ^.left := "0%",
+      ^.paddingTop := "3%",
+      ^.paddingLeft := "3%"
+    )
+
+    def elemDiv2 = Seq(
+      ^.width := "0px",
+      ^.height := "100%",
+      ^.float.left,
+      ^.border := "1px inset",
+      ^.left := "30%",
+      ^.position := "absolute",
+      ^.top := "0px",
+      ^.bottom := "0px",
+      ^.opacity := "0.5"
+    )
+
+    def elemDiv3 = Seq(
+      ^.className := "col",
+      ^.height := "100%",
+      ^.width := "70%",
+      ^.top := "0px",
+      ^.bottom := "0px",
+      ^.paddingLeft := "3%",
+      ^.position := "absolute",
+      ^.left := "30%",
+      ^.overflow.hidden,
+      ^.textAlign.justify,
+      ^.wordWrap.`break-word`,
+      ^.fontSize.small
+    )
+
     def treeItemHasChildrenClosed = Seq(^.contentStyle := "▶")
 
     def treeItemHasChildrenOpened = Seq(^.contentStyle := "▼")
@@ -111,10 +162,42 @@ object ReactTreeView {
                    filterMode: Boolean,
                    selectedNode: js.UndefOr[NodeC],
                    dragOverNode: js.UndefOr[NodeC],
-                   scrollPosition: Double
+                   scrollPosition: Double,
+                   openModals: OpenModals = OpenModals(),
+                   modelProps: ModelProps = ModelProps()
                   )
 
+  case class Props(root: TreeItem,
+                   open: Boolean,
+                   onItemSelect: js.UndefOr[(String, String, Int) => Callback],
+                   showSearchBox: Boolean,
+                   style: Style,
+                   modelProxy: ModelProxy[Tree],
+                   saveScrollPosition: Double => Callback
+                  )
+
+  case class ModelProps(treeItem: TreeItem = null, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToAdd: Option[Elem] = None)
+
+  case class OpenModals(isAddElemModalOpen: Boolean = false, isEditModalOpen: Boolean = false, isDeleteModalOpen: Boolean = false)
+
+
   class Backend($: BackendScope[Props, State]) {
+
+    def closeDeleteModal: Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isDeleteModalOpen = false)))
+    def closeEditModal: Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isEditModalOpen = false)))
+    def closeAddElemModal: Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isAddElemModalOpen = false)))
+
+    def openDeleteModal(newTreeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String]) = $.modState(S =>
+      S.copy(openModals = S.openModals.copy(isDeleteModalOpen = true),
+        modelProps = ModelProps(newTreeItem, newDispatch, newPath, None)))
+
+    def openEditModal(newTreeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String]) = $.modState(S =>
+      S.copy(openModals = S.openModals.copy(isEditModalOpen = true),
+        modelProps = ModelProps(newTreeItem, newDispatch, newPath, None)))
+
+    def openAddElemModal(newTreeItem: TreeItem, newDispatch: (Action => Callback), newPath: Seq[String], newElem: Option[Elem]) = $.modState(S =>
+      S.copy(openModals = S.openModals.copy(isAddElemModalOpen = true),
+        modelProps = ModelProps(newTreeItem, newDispatch, newPath, newElem)))
 
     def saveScrollPosition(position: Double): Callback =  $.modState(s => s.copy(scrollPosition = position))
 
@@ -178,6 +261,9 @@ object ReactTreeView {
 
     def render(P: Props, S: State) =
       <.div(
+        DeleteModal(S.openModals.isDeleteModalOpen, closeDeleteModal, S.modelProps.treeItem, S.modelProps.dispatch, S.modelProps.path),
+        EditModal(S.openModals.isEditModalOpen, closeEditModal, S.modelProps.treeItem, S.modelProps.dispatch, S.modelProps.path),
+        AddElemModal(S.openModals.isAddElemModalOpen, closeAddElemModal, S.modelProps.treeItem, S.modelProps.dispatch, S.modelProps.path, S.modelProps.elemToAdd),
         P.style.reactTreeView)(
           P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
           TreeNode.withKey("root")(
@@ -191,7 +277,9 @@ object ReactTreeView {
               style = P.style,
               filterMode = S.filterMode,
               modelProxy = P.modelProxy,
-              setModalContent = P.setModalContent,
+              openDeleteModal = openDeleteModal,
+              openEditModal = openEditModal,
+              openAddElemModal = openAddElemModal,
               saveScrollPosition = P.saveScrollPosition
             )
           )
@@ -286,9 +374,9 @@ object ReactTreeView {
         dispatch(NoAction)
       } else if (notExistingElem) {
         getElem(event) match {
-          case entity: Entity => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(entity))
-          case intAttr: IntAttribute => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(intAttr))
-          case stringAttr: StringAttribute => P.setModalContent(Modal.ADD_ELEM_MODAL, P.root, dispatch, pathTo, Some(stringAttr))
+          case entity: Entity => P.openAddElemModal(P.root, dispatch, pathTo, Some(entity))
+          case intAttr: IntAttribute => P.openAddElemModal(P.root, dispatch, pathTo, Some(intAttr))
+          case stringAttr: StringAttribute => P.openAddElemModal(P.root, dispatch, pathTo, Some(stringAttr))
           case _ => Callback()
         }
       } else {
@@ -304,8 +392,8 @@ object ReactTreeView {
       val path = (if (P.parent.isEmpty) P.root.uuid.toString else P.parent + "/" + P.root.uuid).split("/")
 
       P.root.item match {
-        case _ : Elem => P.setModalContent(Modal.EDIT_MODAL, P.root, dispatch, path, None)
-        case _ => dispatch(NoAction)
+        case _ : Elem => P.openEditModal(P.root, dispatch, path)
+        case _ => Callback()
       }
     }
 
@@ -318,7 +406,7 @@ object ReactTreeView {
       val path = if (P.parent.isEmpty) P.root.uuid.toString else P.parent + "/" + P.root.uuid
       val dispatch: Action => Callback = P.modelProxy.dispatchCB
 
-      P.setModalContent(Modal.DELETE_MODAL, P.root, dispatch, path.split("/"), None)
+      P.openDeleteModal(P.root, dispatch, path.split("/"))
     }
 
     def dragOverStyle(P: NodeProps): Seq[TagMod] = {
@@ -403,58 +491,21 @@ object ReactTreeView {
             if (P.root.item.isInstanceOf[Elem]) {
               Seq(
                 <.div(
-                  ^.fontStyle.oblique,
-                  ^.className := "col",
-                  ^.height := "100%",
-                  ^.width := "30%",
-                  ^.top := "0px",
-                  ^.bottom := "0px",
-                  ^.position := "absolute",
-                  ^.left := "0%",
-                  ^.paddingTop := "3%",
-                  ^.paddingLeft := "3%",
+                  P.style.elemDiv1,
                   ^.fontSize := { if(P.root.entityToString.length > 12) "small" else "medium" },
                   P.root.entityToString
                 ),
                 <.div(
-                  ^.width := "0px",
-                  ^.height := "100%",
-                  ^.float.left,
-                  ^.border := "1px inset",
-                  ^.left := "30%",
-                  ^.position := "absolute",
-                  ^.top := "0px",
-                  ^.bottom := "0px",
-                  ^.opacity := "0.5"
+                  P.style.elemDiv2
                 ),
                 <.div(
-                  ^.className := "col",
-                  ^.height := "100%",
-                  ^.width := "70%",
-                  ^.top := "0px",
-                  ^.bottom := "0px",
-                  ^.paddingLeft := "3%",
-                  ^.position := "absolute",
-                  ^.left := "30%",
-                  ^.overflow.hidden,
-                  ^.textAlign.justify,
-                  ^.wordWrap.`break-word`,
-                  ^.fontSize.small,
-                  ^.paddingTop := { if(P.root.contentToString.length >= 38 || P.root.contentToString.contains("\n")) "1.8%" else "3%" },
+                  P.style.elemDiv3,
                   setContentDivSize(P.root.contentToString)
                 )
               )
             } else{
               <.div(
-                ^.className := "col",
-                ^.height := "100%",
-                ^.width := "40%",
-                ^.top := "0px",
-                ^.bottom := "0px",
-                ^.position := "absolute",
-                ^.left := "0%",
-                ^.paddingTop := "3%",
-                ^.paddingLeft := "3%",
+                P.style.attributeDiv,
                 <.span(
                   P.root.entityToString
                 )
@@ -505,7 +556,9 @@ object ReactTreeView {
                        style: Style,
                        filterMode: Boolean,
                        modelProxy: ModelProxy[Tree],
-                       setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback,
+                       openDeleteModal: (TreeItem, (Action => Callback),  Seq[String]) => Callback,
+                       openEditModal: (TreeItem, (Action => Callback),  Seq[String]) => Callback,
+                       openAddElemModal: (TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback,
                        saveScrollPosition: Double => Callback
                       )
 
@@ -533,15 +586,6 @@ object ReactTreeView {
     .renderBackend[Backend]
     .build
 
-  case class Props(root: TreeItem,
-                   open: Boolean,
-                   onItemSelect: js.UndefOr[(String, String, Int) => Callback],
-                   showSearchBox: Boolean,
-                   style: Style,
-                   modelProxy: ModelProxy[Tree],
-                   setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback,
-                   saveScrollPosition: Double => Callback
-                  )
 
   def apply(root: TreeItem,
             openByDefault: Boolean = true,
@@ -551,9 +595,8 @@ object ReactTreeView {
             key: js.UndefOr[js.Any] = js.undefined,
             style: Style = new Style {},
             modelProxy: ModelProxy[Tree],
-            setModalContent: (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback,
             saveScrollPosition: Double => Callback
            ) =
-    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, setModalContent, saveScrollPosition))
+    component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, saveScrollPosition))
 
 }

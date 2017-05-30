@@ -12,7 +12,7 @@ import shared._
 object DeleteModal {
 
   def modalStyle = Seq(
-    ^.width:= "400px",
+    ^.width := "400px",
     ^.padding := "5px",
     ^.position := "absolute",
     ^.border := "1px solid #CCC",
@@ -21,9 +21,9 @@ object DeleteModal {
     ^.left := "50%",
     ^.transform := "translate(-50%,-50%)",
     ^.zIndex := "9999",
-    ^.background := "#FFF" ,
+    ^.background := "#FFF",
     ^.paddingBottom := "15px",
-    ^.paddingRight := "15px" ,
+    ^.paddingRight := "15px",
     ^.paddingTop := "15px",
     ^.paddingLeft := "15px",
     ^.boxShadow := "rgba(0, 0, 0, 0.2) 5px 6px 12px 0px"
@@ -80,14 +80,15 @@ object DeleteModal {
 
     def deleteElemModalStyle(P : Props, S: State) =
 
-      P.treeItem.item match{
+      P.treeItem.item match {
 
         case "Model" => Seq(
-          <.h4(
+          <.h5(
             "Do you want to delete the entire model?",
+            ^.fontSize := "16px",
             ^.textAlign.center
           ),
-          <.br,
+//          <.br,
           <.div(
             buttonAreaStyle,
             <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick --> P.onClose),
@@ -96,8 +97,9 @@ object DeleteModal {
         )
 
         case item => Seq(
-          <.h4(
+          <.h5(
             "Do you want to delete the following?",
+            ^.fontSize := "16px",
             ^.textAlign.center
           ),
           <.dl(
@@ -119,7 +121,7 @@ object DeleteModal {
               P.treeItem.linkToString
             ),
             <.dl(
-
+              ^.className := "dl-horizontal"
             ),
             P.treeItem.children.nonEmpty ?= <.br,<.hr,
             P.treeItem.children.map(child => {
@@ -146,72 +148,6 @@ object DeleteModal {
         )
       }
 
-//
-//      if(P.treeItem.item != "Model") {
-//        Seq(
-//          <.h4(
-//            "Do you want to delete the following?",
-//            ^.textAlign.center
-//          ),
-//          <.dl(
-//            <.br,
-//            ^.className := "dl-horizontal",
-//            <.dt(
-//              ^.textAlign := "center",
-//              ^.color := {
-//                if (P.treeItem.item.isInstanceOf[IntAttribute] || P.treeItem.item.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA"
-//              },
-//              P.treeItem.entityToString),
-//            <.dd(
-//              P.treeItem.contentToString
-//            ),
-//            P.treeItem.children.nonEmpty ?= <.hr,
-//            <.dt(
-//              ^.textAlign := "center",
-//              ^.color := "#FF3636",
-//              P.treeItem.linkToString
-//            ),
-//            <.dl(
-//
-//            ),
-//            P.treeItem.children.nonEmpty ?= <.br,
-//            P.treeItem.children.nonEmpty ?= <.hr,
-//            P.treeItem.children.map(child => {
-//              Seq(
-//                <.dt(
-//                  child.entityToString.replaceAll("TreeItem", ""),
-//                  ^.textAlign := "center",
-//                  ^.color := {
-//                    if (child.item.isInstanceOf[IntAttribute] || child.item.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA"
-//                  }
-//                ),
-//                <.dd(
-//                  child.contentToString
-//                )
-//              )
-//            }),
-//            P.treeItem.children.nonEmpty ?= <.br
-//          ),
-//          <.div(
-//            buttonAreaStyle,
-//            <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick --> P.onClose),
-//            <.button("Delete", ^.className := "btn btn-danger", ^.bottom := "0px", ^.onClick --> onDelete(P))
-//          )
-//        )
-//      } else {
-//        Seq(
-//          <.h4(
-//            "Do you want to delete the entire model?",
-//            ^.textAlign.center
-//          ),
-//          <.br,
-//          <.div(
-//            buttonAreaStyle,
-//            <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick --> P.onClose),
-//            <.button("Delete", ^.className := "btn btn-danger",   ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> onDelete(P))
-//          )
-//        )
-//      }
 
     def onDelete(P: Props): Callback = {
       P.treeItem.item match {

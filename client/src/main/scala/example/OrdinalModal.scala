@@ -55,6 +55,15 @@ object OrdinalModal {
     ^.justifyContent.spaceBetween
   )
 
+  def nbrInputStyle = Seq(
+    ^.`type` := "number",
+    ^.min := 0,
+    ^.max := 99999999,
+    ^.className := "form-control",
+    ^.width := "60%",
+    ^.borderRadius := "5px"
+  )
+
   case class State(rankings: Seq[Int] = Seq(), pairs: Seq[Seq[Entity]] = Seq(), deviation: Int = 0, typeToRank: String = "", readyForRanking: Boolean = false)
 
   case class Props(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, currentModel: Tree)
@@ -76,11 +85,11 @@ object OrdinalModal {
     if (elems.isEmpty)
       Seq()
     else{
-      val entities = elems.filter(_.isEntity).asInstanceOf[Seq[Entity]]
-      val relations = elems.filter(_.isRelation).map(_.asInstanceOf[Relation].entity)
+      val relations = elems.filter(_.isRelation)
+      val entities = elems.filter(_.isEntity).asInstanceOf[Seq[Entity]] ++ relations.map(_.asInstanceOf[shared.Relation].entity)
       val children = relations.flatMap(_.asInstanceOf[Relation].submodel.children)
 
-      entities ++ relations ++ getAllEntities(children)
+      entities ++ getAllEntities(children)
     }
   }
 
@@ -102,12 +111,7 @@ object OrdinalModal {
               <.div(
                 "Deviation:",
                 <.input(
-                  ^.`type` := "number",
-                  ^.min := 0,
-                  ^.max := 99999999,
-                  ^.className := "form-control",
-                  ^.width := "60%",
-                  ^.borderRadius := "5px",
+                  nbrInputStyle,
                   ^.onChange ==> changeDeviation
                 )
               ),

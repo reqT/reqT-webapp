@@ -5,7 +5,6 @@ import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, ReactKeyboardEventI}
 import org.scalajs.dom.ext.KeyCode
 import japgolly.scalajs.react._
-import shared.{Attribute, Entity}
 
 /**
   * Created by johan on 5/17/17.
@@ -59,7 +58,7 @@ object NewModelModal {
     ^.readOnly := "true"
   )
 
-  case class Props(isOpen: Boolean, onClose: () => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, modalType: String)
+  case class Props(isOpen: Boolean, onClose: Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, modalType: String)
 
   case class State(newModelName: String)
 
@@ -143,7 +142,7 @@ object NewModelModal {
 
     def resetState: Callback = $.setState(State(""))
 
-    def onClose(P: Props): Callback = P.onClose() >> resetState
+    def onClose(P: Props): Callback = P.onClose >> resetState
 
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
       if (e.nativeEvent.keyCode == KeyCode.Escape) {
@@ -160,6 +159,6 @@ object NewModelModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: () => Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, modalType: String)
+  def apply(isOpen: Boolean, onClose: Callback, saveModel: (String, shared.Tree) => Callback, tree: shared.Tree, modalType: String)
   = component.set()(Props(isOpen, onClose, saveModel, tree, modalType))
 }
