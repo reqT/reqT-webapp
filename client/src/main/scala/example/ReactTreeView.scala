@@ -42,6 +42,11 @@ case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], 
 }
 
 object ReactTreeView {
+  case class Tuple(var uuid: UUID, collapsed: Boolean)
+  case class AddTuple(tuple: Tuple) extends Action
+  case class RemoveTuple(tuple: Tuple) extends Action
+  case class ToggleCollapsed(uuid: UUID) extends Action
+
   trait Style {
     def reactTreeView = Seq[TagMod]()
 
@@ -97,10 +102,41 @@ object ReactTreeView {
                    filterMode: Boolean,
                    selectedNode: js.UndefOr[NodeC],
                    dragOverNode: js.UndefOr[NodeC],
-                   scrollPosition: Double
+                   scrollPosition: Double,
+                   collapseList: Seq[Tuple] = Seq[Tuple]()
                   )
 
   class Backend($: BackendScope[Props, State]) {
+
+    def getCollapseStatus(S: State, uuid: UUID): Boolean = {
+      println(S.collapseList)
+      S.collapseList.find(_.uuid == uuid) match {
+        case Some(tuple) =>
+          tuple.collapsed
+        case None =>
+
+          $.modState(_.copy(collapseList = S.collapseList :+ new Tuple(uuid, collapsed = false))).runNow()
+          $.forceUpdate
+          false
+      }
+    }
+
+    def toggleCollapseStatus(S: State, uuid: UUID): Unit = {
+      S.collapseList.find(_.uuid == uuid) match {
+        case Some(tuple) =>
+          $.modState(_.copy(collapseList = S.collapseList.map(x => if(x.uuid == uuid){
+            x.copy(collapsed = !x.collapsed)
+            x
+          }  else x
+          ))).runNow()
+
+        case None =>
+//          $.modState(S => S.copy(collapseList = S.collapseList :+ Tuple(uuid, false))).runNow()
+          $.accessDirect.setState(State(filterText = S.filterText, filterMode = S.filterMode, selectedNode = S.selectedNode, dragOverNode = S.dragOverNode, scrollPosition = S.scrollPosition, collapseList = S.collapseList :+ Tuple(uuid, false)))
+      }
+      $.forceUpdate
+      println(S.collapseList)
+    }
 
     def saveScrollPosition(position: Double): Callback =  $.modState(s => s.copy(scrollPosition = position))
 
@@ -178,7 +214,9 @@ object ReactTreeView {
               filterMode = S.filterMode,
               modelProxy = P.modelProxy,
               setModalContent = P.setModalContent,
-              saveScrollPosition = P.saveScrollPosition
+              saveScrollPosition = P.saveScrollPosition,
+              getCollapseStatus = getCollapseStatus(S, _),
+              toggleCollapseStatus = toggleCollapseStatus(S, _)
             )
           )
         )
@@ -211,9 +249,14 @@ object ReactTreeView {
     def onItemDrop(P: NodeProps)(e: ReactDragEvent): Callback =
       P.onNodeDrop($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
 
-    def childrenFromProps(P: NodeProps): CallbackTo[Option[Unit]] =
-      $.modState(S => S.copy(children = if (S.children.isEmpty) P.root.children else Nil))
+    def childrenFromProps(P: NodeProps): CallbackTo[Option[Unit]] ={
+      P.toggleCollapseStatus(P.root.uuid)
+      $.modState(S => S.copy(children = if (S.children.isEmpty && !P.getCollapseStatus(P.root.uuid)){
+        P.root.children
+      }
+      else Nil))
         .when(P.root.children.nonEmpty)
+    }
 
 
     def matchesFilterText(filterText: String, data: TreeItem): Boolean = {
@@ -479,7 +522,7 @@ object ReactTreeView {
             (matchesFilterText(P.filterText, child) || matchesFilterText(P.filterText, P.root)) ?=
               TreeNode.withKey(s"$parent/${child.uuid}")(P.copy(
                 root = child,
-                open = P.open, //!P.filterText.trim.isEmpty,
+                open = P.open,
                 depth = depth,
                 parent = parent,
                 filterText = P.filterText
@@ -502,14 +545,19 @@ object ReactTreeView {
                        filterMode: Boolean,
                        modelProxy: ModelProxy[Tree],
                        setModalContent: (ModalType, TreeItem, (Action => Callback),  Seq[String], Option[Elem]) => Callback,
-                       saveScrollPosition: Double => Callback
+                       saveScrollPosition: Double => Callback,
+                       getCollapseStatus: UUID => Boolean,
+                       toggleCollapseStatus: UUID => Unit
                       )
 
 
 
   lazy val TreeNode = ReactComponentB[NodeProps]("ReactTreeNode")
-    .initialState_P(P => if (P.open) NodeState(P.root.children) else NodeState(Nil))
+    .initialState_P(P => NodeState(P.root.children))
     .renderBackend[NodeBackend]
+      .componentWillMount(x => x.modState(_.copy(children = if(!x.props.getCollapseStatus(x.props.root.uuid)){
+        x.props.root.children
+      } else Nil)))
     .componentWillReceiveProps {
       case ComponentWillReceiveProps(_$, newProps) =>
         _$.modState(_.copy(children = if (newProps.open) newProps.root.children else Nil))
@@ -518,7 +566,6 @@ object ReactTreeView {
 
     }
       .componentWillUpdate(x => {
-        println("TreeNode Will Update")
         x.$.props.saveScrollPosition(document.getElementById("treeView").scrollTop)
       })
     .shouldComponentUpdate(x => if(x.nextState.selected || x.currentState.draggedOver) true else false)
@@ -527,6 +574,10 @@ object ReactTreeView {
   val component = ReactComponentB[Props]("ReactTreeView")
     .initialState(State("", filterMode = false, js.undefined, js.undefined, scrollPosition = 0))
     .renderBackend[Backend]
+      .componentWillUpdate($ => {
+        println($.nextState.collapseList)
+        Callback($.nextState.copy(collapseList =  $.nextState.collapseList ++ $.currentState.collapseList))
+      })
     .build
 
   case class Props(root: TreeItem,
@@ -549,6 +600,7 @@ object ReactTreeView {
             modelProxy: ModelProxy[Tree],
             setModalContent: (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback,
             saveScrollPosition: Double => Callback
+
            ) =
     component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, setModalContent, saveScrollPosition))
 

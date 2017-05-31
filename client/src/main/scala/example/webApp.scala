@@ -68,6 +68,7 @@ object webApp extends js.JSApp {
 
     val treeView = ReactComponentB[(ModelProxy[Tree], (ModalType, TreeItem, (Action => Callback), Seq[String], Option[Elem]) => Callback)]("treeView")
       .render(P => <.pre(
+        ^.className := "zoomViewport",
         Styles.treeView,
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
