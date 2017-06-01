@@ -1,11 +1,10 @@
-package example
-
+package modals
 
 import diode.Action
+import example.TreeItem
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import org.scalajs.dom.ext.KeyCode
-import japgolly.scalajs.react._
 import shared._
 
 

@@ -4,10 +4,13 @@ import diode.react.ModelProxy
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, ReactEventI}
 import shared._
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
+import modals._
 import org.scalajs.dom.ext.Ajax
 import org.scalajs.dom.raw.{Blob, BlobPropertyBag, FileReader, UIEvent}
 import org.scalajs.dom.{document, window}
+import selects.TemplateSelect
 import upickle.default.read
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
 import scala.scalajs.js.URIUtils.encodeURI

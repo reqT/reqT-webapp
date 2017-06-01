@@ -1,10 +1,10 @@
-package example
+package selects
 
-import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, _}
 import diode.Action
-import shared._
+import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import org.scalajs.dom.document
+import shared._
 
 /**
   * Created by johan on 4/4/17.

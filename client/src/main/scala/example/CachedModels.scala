@@ -5,6 +5,7 @@ import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 import shared.{SetModel, Tree, UUID}
 import japgolly.scalajs.react._
+import modals.NewModelModal
 
 import scala.collection.immutable.Queue
 

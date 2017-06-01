@@ -1,11 +1,9 @@
-package example
+package selects
 
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
-import diode.Action
 import org.scalajs.dom.ext.KeyCode
 import shared._
-import diode.NoAction
 
 
 object TemplateSelect {

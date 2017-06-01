@@ -1,5 +1,7 @@
 package example
 
+import java.util.concurrent.TimeUnit
+
 import diode.react.ModelProxy
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react._
@@ -10,6 +12,7 @@ import org.scalajs.dom.raw._
 import shared.{Model, Tree}
 import upickle.default.read
 
+import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
 /**
@@ -68,6 +71,11 @@ object ReqTLog {
             ^.className := "btn btn-default",
             "Verify Model",
             ^.onClick -->? sendVerify
+          ),
+          <.button(
+            ^.className := "btn btn-default pull-right",
+            ^.onClick --> restartReqT(P),
+            "Restart reqT"
           )
         ),
         log(S.logLines)
@@ -93,6 +101,11 @@ object ReqTLog {
       reqtLog.setAttribute("style", "user-select:text;" + reqtLog.style.cssText)
     }))
       .build
+
+    def restartReqT(P: Props): Callback = {
+      start(P).delay(FiniteDuration(1, TimeUnit.SECONDS)).runNow()
+      end
+    }
 
     def updateScroll: Callback = {
       Callback({

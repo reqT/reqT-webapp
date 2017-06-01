@@ -1,8 +1,9 @@
-package example
+package modals
 
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI, ReactEvent, ReactKeyboardEventI, _}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI, ReactKeyboardEventI, _}
 import org.scalajs.dom.ext.KeyCode
+import selects.AttributeSelect
 import shared._
 
 

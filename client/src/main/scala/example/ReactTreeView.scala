@@ -10,7 +10,9 @@ import scalacss.ScalaCssReact._
 import scala.scalajs.js
 import shared._
 import diode.NoAction
+import modals.{AddElemModal, DeleteModal, EditModal}
 import org.scalajs.dom.document
+import selects.RelationSelect
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
   def linkToString: String = link match {
