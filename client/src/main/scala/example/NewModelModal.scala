@@ -92,7 +92,7 @@ object NewModelModal {
                   buttonStyle,
                   <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
                   <.button("Add empty model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, shared.Tree(Seq()),P)),
-                  <.button("Add current model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, P.tree, P))
+                  <.button("Add current model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, AppCircuit.copyTree(P.tree), P))
                 )
               )
             } else {
