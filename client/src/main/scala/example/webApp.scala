@@ -1,14 +1,13 @@
 package example
 
 import org.scalajs.dom._
-
+import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react._
 import diode.react.ModelProxy
 import modals.NewModelModal
-
 import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import scala.collection.immutable.Queue
@@ -135,7 +134,7 @@ object webApp extends js.JSApp {
   }
 
 
-  import org.scalajs.dom
+
 
 
   class Backend($: BackendScope[Props, State]) {

@@ -11,7 +11,8 @@ import scala.scalajs.js
 import shared._
 import diode.NoAction
 import modals.{AddElemModal, DeleteModal, EditModal}
-import org.scalajs.dom.document
+import org.scalajs.dom
+import org.scalajs.dom._
 import selects.RelationSelect
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
@@ -47,6 +48,8 @@ object ReactTreeView {
   case class AddTuple(tuple: Tuple) extends Action
   case class RemoveTuple(tuple: Tuple) extends Action
   case class ToggleCollapsed(uuid: UUID) extends Action
+  case class ZoomIn() extends Action
+  case class ZoomOut() extends Action
 
   trait Style {
     def reactTreeView = Seq[TagMod]()
@@ -274,7 +277,21 @@ object ReactTreeView {
         EditModal(S.openModals.isEditModalOpen, closeEditModal, S.modelProps.treeItem, S.modelProps.dispatch, S.modelProps.path),
         AddElemModal(S.openModals.isAddElemModalOpen, closeAddElemModal, S.modelProps.treeItem, S.modelProps.dispatch, S.modelProps.path, S.modelProps.elemToAdd),
         P.style.reactTreeView)(
-          P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
+          <.div(
+            P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
+            <.button(
+              ^.className := "btn btn-default pull-right",
+              ^.marginTop := "-33px",
+              ^.onClick   --> zoomOut,
+              "-"
+            ),
+            <.button(
+              ^.className := "btn btn-default pull-right",
+              ^.marginTop := "-33px",
+              ^.onClick   --> zoomIn,
+              "+"
+            )
+          ),
           cc(proxy => TreeNode.withKey("root")(
             NodeProps(
               root = P.root,
@@ -295,6 +312,34 @@ object ReactTreeView {
           )
           )
       )
+  }
+  var zoomFactor: Double = 1
+  def zoomIn: Callback = {
+    if(zoomFactor < 1)
+      Callback({
+        zoomFactor = zoomFactor + 0.05
+        val tree = document.getElementById("ReactTreeView").asInstanceOf[dom.html.LI]
+        var styleList = tree.getAttribute("style").split(";")
+        styleList = styleList.filter(p => !p.contains("transform"))
+        tree.setAttribute("style", (s"transform: scale($zoomFactor)" +: styleList).mkString(";"))
+        }
+      )
+    else
+      Callback()
+  }
+
+  def zoomOut: Callback = {
+    if(zoomFactor > 0)
+      Callback({
+        zoomFactor = zoomFactor - 0.05
+        val tree = document.getElementById("ReactTreeView").asInstanceOf[dom.html.LI]
+        var styleList = tree.getAttribute("style").split(";")
+        styleList = styleList.filter(p => !p.contains("transform"))
+        tree.setAttribute("style", (s"transform: scale($zoomFactor)" +: styleList).mkString(";"))
+      }
+      )
+    else
+      Callback()
   }
 
   case class NodeBackend($: BackendScope[NodeProps, NodeState]) {
@@ -506,6 +551,8 @@ object ReactTreeView {
 
       <.li(
         P.style.treeItem,
+        ^.id := "ReactTreeView",
+
         <.div(
           P.style.treeItemDiv,
           ^.borderBottomRightRadius := { if(P.root.children.isEmpty) "5px" else "0px" },
