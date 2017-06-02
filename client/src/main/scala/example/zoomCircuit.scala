@@ -9,9 +9,9 @@ case class Zoom(factor: Double)
 object ZoomCircuit extends Circuit[Zoom] with ReactConnector[Zoom] {
 
 
-  def initialModel: Double = 1
+  def initialModel: Zoom = Zoom(1)
 
-  class CollapseListHandler[M](modelRW: ModelRW[M, Double]) extends ActionHandler(modelRW) {
+  class ZoomHandler[M](modelRW: ModelRW[M, Double]) extends ActionHandler(modelRW) {
     override def handle = {
       case ZoomIn() =>
         if(modelRW.value < 1)
@@ -26,5 +26,5 @@ object ZoomCircuit extends Circuit[Zoom] with ReactConnector[Zoom] {
     }
   }
 
-  override protected def actionHandler = new CollapseListHandler(zoomTo(_.factor))
+  override protected def actionHandler = new ZoomHandler(zoomTo(_.factor))
 }
