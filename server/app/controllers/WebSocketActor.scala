@@ -15,7 +15,6 @@ object WebSocketActor {
 
 class WebSocketActor(out: ActorRef) extends Actor {
   val templateHandler = new TemplateHandler
-
   val parser = new ExprParser
 
 
@@ -70,9 +69,11 @@ class WebSocketActor(out: ActorRef) extends Actor {
     }
   }
 
+  @volatile var stopReadThread = false
+
   val readThread = new Thread(new Runnable {
     override def run() = {
-      while(reqTprocess.isAlive) {
+      while(reqTprocess.isAlive && !stopReadThread) {
 
         if(reqTis.available() > 0){
           val nbrOfReadBytes = reqTis.read(buf, 0, 10000)
@@ -85,9 +86,12 @@ class WebSocketActor(out: ActorRef) extends Actor {
         }
       }
     }
-  }).start()
+  })
+  readThread.start()
 
-
+  override def postStop() = {
+    stopReadThread = true
+  }
 
 //  testUpickle
 //  def testUpickle = {

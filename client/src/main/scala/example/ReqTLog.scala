@@ -172,17 +172,16 @@ object ReqTLog {
           direct.modState(_.log(s"Error: ${event.message}"))
         }
 
-        def onclose(event: CloseEvent): Unit = {
+        def onclose(webSocket: WebSocket)(event: CloseEvent): Unit = {
+          webSocket.close()
           direct.modState(_.copy(websocket = None).log(s"Closed: ${event.reason}"))
         }
 
-
         val url = "ws://127.0.0.1:9000/socket"
-
 
         val websocket = new WebSocket(url)
         websocket.onopen = onopen _
-        websocket.onclose = onclose _
+        websocket.onclose = onclose(websocket: WebSocket) _
         websocket.onmessage = onmessage _
         websocket.onerror = onerror _
         websocket
