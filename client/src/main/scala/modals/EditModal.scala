@@ -43,6 +43,7 @@ object EditModal {
   def intInputStyle = Seq(
     ^.className := "form-control",
     ^.width := "60%",
+    ^.whiteSpace := "pre-line",
     ^.borderRadius := "5px",
     ^.autoFocus := "true",
     ^.maxLength := "9",
@@ -53,6 +54,7 @@ object EditModal {
     ^.className := "form-control",
     ^.width := "95%",
     ^.maxWidth := "95%",
+    ^.marginTop := "-18px",
     ^.maxHeight := "200px",
     ^.border := "1px solid #CCC",
     ^.borderRadius := "5px",
@@ -187,22 +189,28 @@ object EditModal {
         <.dd(
         ),
         P.treeItem.children.nonEmpty ?= <.hr,
-        P.treeItem.children.map(x => {
-          Seq(
-            <.dt(
-              x.entityToString.replaceAll("TreeItem", ""),
-              ^.textAlign := "center",
-              ^.paddingRight := "3.5%",
-              ^.color := {
-                if (x.item.isInstanceOf[StringAttribute] || x.item.isInstanceOf[IntAttribute]) "#03EE7D" else "#047BEA"
-              }
-            ),
-            <.dd(
-              x.contentToString
+        <.div(
+          ^.maxHeight := "300px",
+          ^.overflowY := "auto",
+          P.treeItem.children.map(x => {
+            Seq(
+              <.dt(
+                x.entityToString.replaceAll("TreeItem", ""),
+                ^.textAlign := "center",
+                ^.paddingRight := "3.5%",
+                ^.color := {
+                  if (x.item.isInstanceOf[StringAttribute] || x.item.isInstanceOf[IntAttribute]) "#03EE7D" else "#047BEA"
+                }
+              ),
+              <.dd(
+                ^.whiteSpace := "pre-line",
+                ^.wordBreak := "break-word",
+                x.contentToString
+              ),
+              <.br
             )
-          )
-        }),
-        <.br
+          })
+        )
       ),
       <.div(
         buttonAreaStyle,

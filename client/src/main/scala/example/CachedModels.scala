@@ -166,7 +166,9 @@ object CachedModels {
           <.div(
             tabDivStyle,
             <.ul(
+              ^.borderBottom := "0px",
               listStyle,
+              ^.borderBottom := "0px",
               $.props._2.cachedModels.reverse.map(model => listModels((model, $.props._1, $.props._2)))
             )
           )

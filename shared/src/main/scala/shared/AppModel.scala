@@ -74,7 +74,7 @@ case class Relation(var entity: Entity, var link: RelationType, submodel:Tree) e
 
 
   def modelString = "Relation("+entity.modelString+","+link.modelString+","+submodel.toString+")"
-  override def toString: String = entity.toString + " " + link.toString + " " + submodel.toString
+  override def toString: String = entity.toString + " " + link.toString + {if(submodel.children.length > 1) "\n" + submodel.toString else " " + submodel.toString}
 
   def setLink(newLink: RelationType): Relation = {
     link = newLink

@@ -2,6 +2,8 @@ package modals
 
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactKeyboardEventI, _}
+import org.scalajs.dom
+import org.scalajs.dom.document
 import org.scalajs.dom.ext.KeyCode
 
 
@@ -98,6 +100,7 @@ object CopyModal {
           ),
           <.dd(
             <.textarea(
+              ^.id := "copyModelText",
               textAreaStyle,
               ^.value := $.props.currentModel
             )
