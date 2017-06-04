@@ -49,6 +49,7 @@ object AddElemModal {
   def intInputStyle = Seq(
     ^.className := "form-control",
     ^.width := "60%",
+    ^.marginTop := "-18px",
     ^.borderRadius := "5px",
     ^.autoFocus := "true",
     ^.maxLength := "9",
@@ -60,6 +61,7 @@ object AddElemModal {
     ^.width := "95%",
     ^.maxWidth := "95%",
     ^.maxHeight := "200px",
+    ^.marginTop := "-18px",
     ^.border := "1px solid #CCC",
     ^.borderRadius := "5px",
     ^.autoFocus := "true"
@@ -135,9 +137,11 @@ object AddElemModal {
           }
         ),
         <.dd(
+          ^.marginTop := "-18px",
           {
             if (P.treeItem.entityToString != "Model") P.treeItem.contentToString else ""
           }
+
         ),
         <.hr,
         <.dt(
