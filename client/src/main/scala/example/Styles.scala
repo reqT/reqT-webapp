@@ -26,7 +26,7 @@ object Styles extends StyleSheet.Inline {
   val treeView = style(
     overflow.auto,
     width(100.%%),
-    height(87.%%),
+    height(86.%%),
     float.left
   )
 

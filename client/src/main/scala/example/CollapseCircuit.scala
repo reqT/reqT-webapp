@@ -1,10 +1,10 @@
-
 package example
 
 import diode._
 import diode.react.ReactConnector
 import example.ReactTreeView.{AddTuple, RemoveTuple, ToggleCollapsed, Tuple}
 import shared._
+
 case class ColModel(list: Seq[Tuple])
 
 object CollapseCircuit extends Circuit[ColModel] with ReactConnector[ColModel] {

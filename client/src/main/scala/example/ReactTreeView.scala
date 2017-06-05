@@ -278,19 +278,19 @@ object ReactTreeView {
         AddElemModal(S.openModals.isAddElemModalOpen, closeAddElemModal, S.modelProps.treeItem, S.modelProps.dispatch, S.modelProps.path, S.modelProps.elemToAdd),
         P.style.reactTreeView)(
           <.div(
-            P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
-            <.button(
-              ^.className := "btn btn-default pull-right",
-              ^.marginTop := "-33px",
-              ^.onClick   --> zoomOut,
-              "-"
-            ),
-            <.button(
-              ^.className := "btn btn-default pull-right",
-              ^.marginTop := "-33px",
-              ^.onClick   --> zoomIn,
-              "+"
-            )
+            P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange)
+//            <.button(
+//              ^.className := "btn btn-default pull-right",
+//              ^.marginTop := "-33px",
+//              ^.onClick   --> zoomOut,
+//              "-"
+//            ),
+//            <.button(
+//              ^.className := "btn btn-default pull-right",
+//              ^.marginTop := "-33px",
+//              ^.onClick   --> zoomIn,
+//              "+"
+//            )
           ),
           cc(proxy => TreeNode.withKey("root")(
             NodeProps(

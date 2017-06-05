@@ -1,7 +1,7 @@
 package modals
 
 import diode.Action
-import example.TreeItem
+import example.{TreeItem}
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import org.scalajs.dom.ext.KeyCode
@@ -66,7 +66,6 @@ object AddElemModal {
     ^.borderRadius := "5px",
     ^.autoFocus := "true"
   )
-
 
 
   case class State(input: String)
@@ -158,6 +157,7 @@ object AddElemModal {
             case Some(e: Entity) => e.getType
             case Some(e: IntAttribute) => e.getType
             case Some(e: StringAttribute) => e.getType
+            case Some(e: Relation) => "Error"
             case None => "Error"
           },
           ^.textAlign := "center",

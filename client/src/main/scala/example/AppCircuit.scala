@@ -188,6 +188,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
               newEntity
             }
               else elem)).tree)
+          case None => noChange
         }
 
 
