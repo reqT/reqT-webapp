@@ -67,10 +67,9 @@ object AddElemModal {
   )
 
 
-
   case class State(input: String)
 
-  case class Props(isOpen: Boolean, onClose: Callback, treeItem: TreeItem = null, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(), elemToAdd: Option[Elem])
+  case class Props(isOpen: Boolean, onClose: Callback, treeItem: TreeItem = null, prepDispatch: (Seq[String], Elem) => Callback = null, path: Seq[String] = Seq(), elemToAdd: Option[Elem])
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S:State) =
@@ -99,7 +98,12 @@ object AddElemModal {
       $.modState(_.copy(input = newInput.replaceAll("[^\\d]", "")))
     }
 
-    def addElem(P: Props, S: State): Callback = P.dispatch(AddElem(P.path, prepareElem(S.input, P.elemToAdd), RelationType("has"))) >> P.onClose
+    def addElem(P: Props, S: State): Callback = {
+
+        P.prepDispatch(P.path, prepareElem(S.input, P.elemToAdd)) >> P.onClose
+
+//        P.dispatch(AddElem(P.path, prepareElem(S.input, P.elemToAdd), RelationType("has"))) >> P.onClose
+    }
 
     def prepareElem(newValue: String, elem: Option[Elem]): Elem = {
       elem.get match {
@@ -195,9 +199,8 @@ object AddElemModal {
   val component = ReactComponentB[Props]("Modal")
     .initialState(State(""))
     .renderBackend[Backend]
-//    .componentWillReceiveProps(i => i.$.backend.initStates(i.nextProps))
     .build
 
-  def apply(isOpen: Boolean, onClose: Callback, treeItem: TreeItem, dispatch: (Action => Callback), path: Seq[String], elemToAdd: Option[Elem])
-  = component.set()(Props(isOpen, onClose, treeItem, dispatch, path, elemToAdd))
+  def apply(isOpen: Boolean, onClose: Callback, treeItem: TreeItem, prepDispatch: (Seq[String], Elem) => Callback, path: Seq[String], elemToAdd: Option[Elem])
+  = component.set()(Props(isOpen, onClose, treeItem, prepDispatch, path, elemToAdd))
 }

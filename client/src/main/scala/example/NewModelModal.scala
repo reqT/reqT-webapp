@@ -85,14 +85,14 @@ object NewModelModal {
                   <.button("Save Result", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, P.tree, P))
                 )
               )
-            } else if(P.modalType == "save") {
+            } else if (P.modalType == "save") {
               <.div(
                 InputComponent(S),
                 <.div(
                   buttonStyle,
                   <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
-                  <.button("Add empty model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, shared.Tree(Seq()),P)),
-                  <.button("Add current model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, P.tree, P))
+                  <.button("Add empty model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, shared.Tree(Seq()), P)),
+                  <.button("Add current model", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> addModel(S.newModelName, AppCircuit.copyTree(P.tree), P))
                 )
               )
             } else {
@@ -138,16 +138,17 @@ object NewModelModal {
       $.setState(s = S.copy(newModelName = newName))
     }
 
-    def addModel(newName: String, tree: shared.Tree, P: Props): Callback = P.saveModel(newName,tree) >> onClose(P)
+    def addModel(newName: String, tree: shared.Tree, P: Props): Callback = P.saveModel(newName, tree) >> onClose(P)
 
     def resetState: Callback = $.setState(State(""))
 
     def onClose(P: Props): Callback = P.onClose >> resetState
 
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
-      if (e.nativeEvent.keyCode == KeyCode.Escape) {
+      if (e.nativeEvent.keyCode == KeyCode.Escape)
         onClose(P)
-      }
+      else if (e.nativeEvent.keyCode == KeyCode.Enter)
+        addModel(S.newModelName, P.tree, P)
       else
         Callback()
     }

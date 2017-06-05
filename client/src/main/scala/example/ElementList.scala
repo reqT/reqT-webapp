@@ -26,6 +26,14 @@ object ElementList {
     ^.width := "100%"
   )
 
+  val entityListStyle = Seq(
+    ^.className := "form-control",
+    ^.id := "dragList",
+    ^.height := "86%",
+    ^.marginTop := "5px",
+    ^.overflow := "auto"
+  )
+
   val entities = List("Ent", "Meta", "Item", "Label", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release", "Resource", "Risk", "Service",
     "Stakeholder", "System", "User", "Class", "Data", "Input", "Member", "Output", "Relationship", "Design", "Screen", "MockUp", "Function", "Interface", "State", "Event",
     "Epic", "Feature", "Goal", "Idea", "Issue", "Req", "Ticket", "WorkPackage", "Breakpoint", "Barrier", "Quality", "Target", "Scenario", "Task", "Test", "Story", "UseCase",
@@ -81,11 +89,7 @@ object ElementList {
 
   val entityListView = ReactComponentB[Seq[String]]("entityList")
     .render(elems => <.pre(
-      ^.className := "form-control",
-      ^.id := "dragList",
-      ^.height := "86%",
-      ^.marginTop := "5px",
-      ^.overflow := "auto",
+      entityListStyle,
       elems.props.sorted.map(listElem(_))
     ))
     .build

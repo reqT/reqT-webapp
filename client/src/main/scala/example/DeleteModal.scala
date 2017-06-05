@@ -71,7 +71,7 @@ object DeleteModal {
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
       if (e.nativeEvent.keyCode == KeyCode.Escape){
         P.onClose
-      } else if(e.nativeEvent.keyCode == KeyCode.Enter &&  !e.shiftKey){
+      } else if(e.nativeEvent.keyCode == KeyCode.Enter){
         onDelete(P)
       }else{
         Callback()

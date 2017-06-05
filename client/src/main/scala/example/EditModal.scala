@@ -60,7 +60,7 @@ object EditModal {
   )
 
   def buttonAreaStyle = Seq(
-    ^.width:= "95%",
+    ^.width := "95%",
     ^.padding := "20px",
     ^.display.flex,
     ^.justifyContent.spaceBetween
@@ -71,20 +71,20 @@ object EditModal {
   case class Props(isOpen: Boolean, onClose: Callback, treeItem: TreeItem = null, dispatch: (Action => Callback) = null, path: Seq[String] = Seq())
 
   class Backend($: BackendScope[Props, State]) {
-    def render(P: Props, S:State) =
+    def render(P: Props, S: State) =
       if (P.isOpen) {
         <.div(
-          ^.onKeyDown ==> handleKeyDown(P,S),
+          ^.onKeyDown ==> handleKeyDown(P, S),
           <.div(
             modalStyle,
-            editModalStyle(P,S)
+            editModalStyle(P, S)
           ),
           <.div(
             backdropStyle,
             ^.onClick --> P.onClose
           )
         )
-      }else
+      } else
         <.div()
 
 
@@ -124,11 +124,11 @@ object EditModal {
     }
 
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
-      if (e.nativeEvent.keyCode == KeyCode.Escape){
+      if (e.nativeEvent.keyCode == KeyCode.Escape) {
         P.onClose
-      } else if(e.nativeEvent.keyCode == KeyCode.Enter &&  !e.shiftKey){
-        onSave(P,S)
-      }else{
+      } else if (e.nativeEvent.keyCode == KeyCode.Enter && !e.shiftKey) {
+        onSave(P, S)
+      } else {
         Callback()
       }
     }
@@ -232,7 +232,6 @@ object EditModal {
         Callback()
       }
     }
-
 
 
   }

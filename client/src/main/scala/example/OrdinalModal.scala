@@ -73,11 +73,12 @@ object OrdinalModal {
       entities.combinations(2).toList
   }
 
-  def getReq(elems: Seq[Elem], typeToRank: String): Seq[Entity] ={
-    if (typeToRank=="")
-      getAllEntities(elems).filter(_.entityType.equals("Req"))
-    else
-      getAllEntities(elems).filter(_.entityType.equals(typeToRank))
+  def getEntities(elems: Seq[Elem], typeToRank: String): Seq[Entity] ={
+    if (typeToRank==""){
+      val all = getAllEntities(elems)
+      all.filter(_.entityType == all.head.entityType)
+    } else
+      getAllEntities(elems).filter(_.entityType == typeToRank)
   }
 
 
@@ -153,7 +154,9 @@ object OrdinalModal {
         <.div()
 
     def setState(P: Props, S:State):  Callback ={
-      val newPairs = generatePairs($, getReq(P.currentModel.children, S.typeToRank))
+
+      val newPairs = generatePairs($, getEntities(P.currentModel.children, S.typeToRank))
+      println(newPairs)
 
       $.modState(_.copy(rankings = List.fill(newPairs.size)(1), pairs = newPairs, readyForRanking = true))
     }
@@ -212,6 +215,8 @@ object OrdinalModal {
     def findTypesInModel(elems: Seq[Elem]): Seq[String] = getAllEntities(elems).map(e => e.entityType).distinct
 
 
+
+
     def tell(S: State): Callback = Callback(println(S.rankings.size))
 
     def setTypeToRank(event: ReactEventI): Callback ={
@@ -262,7 +267,7 @@ object OrdinalModal {
 
 
   val component = ReactComponentB[Props]("Modal")
-    .initialState(State(  ))
+    .initialState(State())
     .renderBackend[Backend]
     .build
 

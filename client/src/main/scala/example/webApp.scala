@@ -15,13 +15,13 @@ import shared._
 object webApp extends js.JSApp {
 
   val contentDivStyle = Seq(
-      ^.className := "container",
-      ^.width := "100%",
-      ^.height := "100%",
-      ^.overflow := "hidden",
-      ^.paddingRight := "5px",
-      ^.paddingLeft := "5px"
-    )
+    ^.className := "container",
+    ^.width := "100%",
+    ^.height := "100%",
+    ^.overflow := "hidden",
+    ^.paddingRight := "5px",
+    ^.paddingLeft := "5px"
+  )
 
   val ListTerminalDivStyle = Seq(
     ^.className := "col-1",
@@ -78,7 +78,6 @@ object webApp extends js.JSApp {
     ^.padding := "5px",
     ^.float.left,
     ^.overflow := "hidden",
-    ^.border:= "1px",
     ^.borderRadius := "5px",
     ^.height := "30px",
     ^.top := "0px",
@@ -115,10 +114,9 @@ object webApp extends js.JSApp {
 
   case class CachedModel(name: String, model: Tree, selected: Boolean, uUID: UUID)
 
-  case class State( cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", emptyTree, selected = true, uUID = UUID.random())),
-                    isNewModelModalOpen: Boolean = false, saveModelType : String = "rec",
-                   isMethodStarted: Boolean = false, scrollPosition: Double = 0, newModel: Tree = emptyTree, method: Seq[String] = Seq()) {
-  }
+  case class State(cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", emptyTree, selected = true, uUID = UUID.random())),
+                   isNewModelModalOpen: Boolean = false, saveModelType: String = "rec",
+                   isMethodStarted: Boolean = false, scrollPosition: Double = 0, newModel: Tree = emptyTree, method: Seq[String] = Seq())
 
   val emptyTree = Tree(Seq())
 
@@ -138,7 +136,7 @@ object webApp extends js.JSApp {
   class Backend($: BackendScope[Props, State]) {
 
     def saveScrollPosition(position: Double): Callback = {
-      if($.accessDirect.state.scrollPosition != position)
+      if ($.accessDirect.state.scrollPosition != position)
         $.modState(_.copy(scrollPosition = position))
       else
         Callback()
@@ -152,6 +150,7 @@ object webApp extends js.JSApp {
     val treeView = ReactComponentB[ModelProxy[Tree]]("treeView")
       .render(P => <.pre(
         Styles.treeView,
+        ^.overflowX := "hidden",
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
         <.div(
@@ -185,8 +184,6 @@ object webApp extends js.JSApp {
 
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
-
-
       <.div(
         NewModelModal(isOpen = S.isNewModelModalOpen, onClose = closeNewModelModal, saveModel = saveModel(_, _, P), S.newModel, S.saveModelType),
         contentDivStyle,
@@ -201,7 +198,7 @@ object webApp extends js.JSApp {
         ),
         <.div(
           cachedModelsDivStyle,
-          cachedModels((P,S)),
+          cachedModels((P, S)),
           sc(proxy => treeView(proxy))
         )
       )
@@ -216,15 +213,15 @@ object webApp extends js.JSApp {
         ),
         <.div(
           cachedModelsDiv1Style,
-          <.div(  
+          <.div(
             cachedModelsRowStyle,
-              <.ul(
-                ^.display.flex,
-                ^.height := "0px",
-                ^.className := "nav nav-tabs",
-                ^.listStyleType.none,
-                $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1, $.props._2)))
-              )
+            <.ul(
+              ^.display.flex,
+              ^.height := "0px",
+              ^.className := "nav nav-pills",
+              ^.listStyleType.none,
+              $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1, $.props._2)))
+            )
           )
         )
       )
@@ -233,8 +230,9 @@ object webApp extends js.JSApp {
     val listModels = ReactComponentB[(CachedModel, Props, State)]("listElem")
       .render($ => <.li(
         modelTabsStyle,
-        ^.opacity := {if($.props._1.selected) "1" else "0.7"},
-        ^.borderStyle := {if($.props._1.selected) "solid" else "none"},
+        ^.opacity := {
+          if ($.props._1.selected) "1" else "0.7"
+        },
         <.span(
           modelTabsSpanStyle,
           $.props._1.name
@@ -242,7 +240,7 @@ object webApp extends js.JSApp {
         ^.onClick --> setActiveModel($.props._1, $.props._2, $.props._3),
 
         <.button(
-         modelTabsButtonStyle,
+          modelTabsButtonStyle,
           Styles.removeButtonSimple,
           ^.outline := "none",
           ^.onClick ==> removeCachedModel($.props._1, $.props._2, $.props._3)
@@ -252,8 +250,8 @@ object webApp extends js.JSApp {
     def getActiveModelName: Option[CachedModel] = $.accessDirect.state.cachedModels.find(_.selected)
 
 
-    def setActiveModel(cachedModel: CachedModel,P: Props, S: State): Callback = {
-      updateActiveModel(cachedModel, P,S) >> P.proxy.dispatchCB(SetModel(cachedModel.model.children))
+    def setActiveModel(cachedModel: CachedModel, P: Props, S: State): Callback = {
+      updateActiveModel(cachedModel, P, S) >> P.proxy.dispatchCB(SetModel(cachedModel.model.children))
     }
 
     def updateActiveModel(cachedModel: CachedModel, P: Props, S: State): Callback = {
@@ -270,23 +268,23 @@ object webApp extends js.JSApp {
       e.stopPropagation()
       val index = S.cachedModels.indexWhere(_.equals(modelToRemove))
       val beginning = S.cachedModels.take(index)
-      val end = S.cachedModels.drop(index+1)
+      val end = S.cachedModels.drop(index + 1)
 
       $.modState(_.copy(cachedModels = beginning ++ end))
     }
 
   }
-    val pageContent = ReactComponentB[Props]("Content")
-      .initialState(State())
-      .renderBackend[Backend]
-        .componentWillReceiveProps( x => x.$.backend.setScroll(x.currentState.scrollPosition))
-        .componentDidUpdate(x => {
-        println("PageContent did Update")
+
+  val pageContent = ReactComponentB[Props]("Content")
+    .initialState(State())
+    .renderBackend[Backend]
+    .componentWillReceiveProps(x => x.$.backend.setScroll(x.currentState.scrollPosition))
+    .componentDidUpdate(x => {
       x.$.backend.setScroll(x.currentState.scrollPosition)
     })
-      .build
+    .build
 
-    val dc = AppCircuit.connect(_.tree)
+  val dc = AppCircuit.connect(_.tree)
 
   def main(): Unit = {
     Styles.addToDocument()

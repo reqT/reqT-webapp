@@ -156,6 +156,13 @@ case class IntAttribute(var attrType: String, var value: Int = 0) extends Attrib
   override def toString(): String = s"$attrType($value)"
 }
 
+//case class StatusValueAttribute(var attrType: String, var value: Int = 1) extends Attribute{
+//  isAttribute = true
+//  isIntAttribute = true
+//
+//
+//}
+
 
 
 case class RelationType(relationType: String) {
@@ -171,11 +178,17 @@ case class RelationType(relationType: String) {
 
 case class AddElem(path: Seq[String], elem: Elem, relationType: RelationType) extends Action
 
+case class AddElemToPlaceholder(path: Seq[String], elem: Elem, afterChildren: Boolean) extends Action
+
 case class RemoveElem(path: Seq[String]) extends Action
 
 case class RemoveEmptyRelation(path: Seq[String]) extends Action
 
+case class MoveElemToPlaceholder(oldPath: Seq[String], newPath: Seq[String], afterChildren: Boolean) extends Action
+
 case class MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) extends Action
+
+case class CopyElemToPlaceholder(oldPath: Seq[String], newPath: Seq[String], afterChildren: Boolean) extends Action
 
 case class CopyElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) extends Action
 
