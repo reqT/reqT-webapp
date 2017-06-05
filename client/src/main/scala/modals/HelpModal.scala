@@ -1,12 +1,11 @@
-package example
+package modals
 
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactKeyboardEventI}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactKeyboardEventI, _}
 import org.scalajs.dom.ext.KeyCode
-import japgolly.scalajs.react._
 
 
-object CopyModal {
+object HelpModal {
 
   val textAreaStyle = Seq(
     ^.className := "form-control",
@@ -59,7 +58,7 @@ object CopyModal {
 
   case class State()
 
-  case class Props(isOpen: Boolean, onClose: () => Callback, currentModel: String)
+  case class Props(isOpen: Boolean, onClose: () => Callback)
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -80,10 +79,10 @@ object CopyModal {
           ^.onKeyDown ==> handleKeyDown(P),
           copyModal(P),
           <.div(
-          backdropStyle,
-          ^.onClick --> onClose(P)
+            backdropStyle,
+            ^.onClick --> onClose(P)
+          )
         )
-      )
       else
         <.div()
     }
@@ -94,14 +93,10 @@ object CopyModal {
         <.div(
           modalStyle,
           <.h4(
-            "Copy",
+            "Help",
             ^.textAlign.center
           ),
           <.dd(
-            <.textarea(
-              textAreaStyle,
-              ^.value := $.props.currentModel
-            )
           ),
           <.div(
             buttonAreaStyle,
@@ -119,6 +114,6 @@ object CopyModal {
     .build
 
 
-  def apply(isOpen: Boolean, onClose: () => Callback, currentModel: String) = component.set()(Props(isOpen, onClose, currentModel))
+  def apply(isOpen: Boolean, onClose: () => Callback) = component.set()(Props(isOpen, onClose))
 
 }

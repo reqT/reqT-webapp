@@ -171,7 +171,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
           }
         }
 
-
       case MoveElem(oldPath: Seq[String], newPath: Seq[String], relationType: RelationType) =>
         val elemUUID = oldPath.last
         val elemToMove: Elem = findElem(modelRW, oldPath.init.tail, elemUUID)
@@ -217,8 +216,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
           }
         }
 
-
-
       case CopyElemToPlaceholder(oldPath: Seq[String], newPath: Seq[String], afterChildren: Boolean) =>
         val elemUUID = oldPath.last
         val elemToCopy: Elem = findElem(modelRW, oldPath.init.tail, elemUUID)
@@ -245,10 +242,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
           }
         }
 
-
-
-
-
       case SetModel(treeItem: Seq[Elem]) =>
         val model = Tree(treeItem)
         updated(model)
@@ -273,11 +266,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
           case None => noChange
         }
 
-      case SetModel(treeItem: Seq[Elem]) =>
-        val model = Tree(treeItem)
-        updated(model)
-
-
       case UpdateEntity(path:Seq[String], newEntity: Entity) =>
         val elemID = path.last
 
@@ -288,6 +276,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
               newEntity
             }
               else elem)).tree)
+          case None => noChange
         }
 
 

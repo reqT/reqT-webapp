@@ -1,11 +1,10 @@
-package example
-
+package modals
 
 import diode.Action
+import example.TreeItem
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import org.scalajs.dom.ext.KeyCode
-import japgolly.scalajs.react._
 import shared._
 
 
@@ -112,6 +111,7 @@ object DeleteModal {
               },
               P.treeItem.entityToString),
             <.dd(
+              ^.whiteSpace := "pre-line",
               P.treeItem.contentToString
             ),
             P.treeItem.children.nonEmpty ?= <.hr,
@@ -124,20 +124,27 @@ object DeleteModal {
               ^.className := "dl-horizontal"
             ),
             P.treeItem.children.nonEmpty ?= <.br,<.hr,
-            P.treeItem.children.map(child => {
-              Seq(
-                <.dt(
-                  child.entityToString.replaceAll("TreeItem", ""),
-                  ^.textAlign := "center",
-                  ^.color := {
-                    if (child.item.isInstanceOf[IntAttribute] || child.item.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA"
-                  }
-                ),
-                <.dd(
-                  child.contentToString
+            <.div(
+              ^.maxHeight := "300px",
+              ^.overflowY := "auto",
+              P.treeItem.children.map(child => {
+                Seq(
+                  <.dt(
+                    child.entityToString.replaceAll("TreeItem", ""),
+                    ^.textAlign := "center",
+                    ^.color := {
+                      if (child.item.isInstanceOf[IntAttribute] || child.item.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA"
+                    }
+                  ),
+                  <.dd(
+                    ^.whiteSpace := "pre-line",
+                    ^.wordBreak := "break-word",
+                    child.contentToString
+                  ),
+                  <.br
                 )
-              )
-            }),
+              })
+            ),
             P.treeItem.children.nonEmpty ?= <.br
           ),
           <.div(

@@ -10,7 +10,10 @@ import scalacss.ScalaCssReact._
 import scala.scalajs.js
 import shared._
 import diode.NoAction
-import org.scalajs.dom.document
+import modals.{AddElemModal, DeleteModal, EditModal}
+import org.scalajs.dom
+import org.scalajs.dom._
+import selects.RelationSelect
 
 case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], var link: Option[RelationType]) {
 
@@ -42,6 +45,11 @@ case class TreeItem(var item: Any, var uuid: UUID, var children: Seq[TreeItem], 
 }
 
 object ReactTreeView {
+
+  case class Tuple(var uuid: UUID, collapsed: Boolean)
+  case class AddTuple(tuple: Tuple) extends Action
+  case class RemoveTuple(tuple: Tuple) extends Action
+  case class ToggleCollapsed(uuid: UUID) extends Action
 
   trait Style {
     def reactTreeView = Seq[TagMod]()
@@ -164,6 +172,7 @@ object ReactTreeView {
                    selectedNode: js.UndefOr[NodeC],
                    dragOverNode: js.UndefOr[NodeC],
                    scrollPosition: Double,
+                   collapseList: Seq[Tuple] = Seq[Tuple](),
                    openModals: OpenModals = OpenModals(),
                    modelProps: ModelProps = ModelProps()
                   )
@@ -175,6 +184,7 @@ object ReactTreeView {
                    style: Style,
                    modelProxy: ModelProxy[Tree],
                    saveScrollPosition: Double => Callback
+
                   )
 
   case class ModelProps(treeItem: TreeItem = null, dispatch: (Action => Callback) = null, path: Seq[String] = Seq(),
@@ -275,25 +285,57 @@ object ReactTreeView {
         EditModal(S.openModals.isEditModalOpen, closeEditModal, S.modelProps.treeItem, S.modelProps.dispatch, S.modelProps.path),
         AddElemModal(S.openModals.isAddElemModalOpen, closeAddElemModal, S.modelProps.treeItem, S.modelProps.prepDispatch, S.modelProps.path, S.modelProps.elemToAdd),
         P.style.reactTreeView)(
-        P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange),
-        TreeNode.withKey("root")(
-          NodeProps(
-            root = P.root,
-            open = P.open,
-            onNodeSelect = onNodeSelect(P),
-            onNodeEnter = onNodeEnter(P),
-            onNodeLeave = onNodeLeave(P),
-            filterText = S.filterText,
-            style = P.style,
-            filterMode = S.filterMode,
-            modelProxy = P.modelProxy,
-            openDeleteModal = openDeleteModal,
-            openEditModal = openEditModal,
-            openAddElemModal = openAddElemModal,
-            saveScrollPosition = P.saveScrollPosition
+          <.div(
+            P.showSearchBox ?= ReactSearchBox(onTextChange = onTextChange)
+          ),
+          cc(proxy => TreeNode.withKey("root")(
+            NodeProps(
+              root = P.root,
+              open = P.open,
+              onNodeSelect = onNodeSelect(P),
+              onNodeEnter = onNodeEnter(P),
+              onNodeLeave = onNodeLeave(P),
+              filterText = S.filterText,
+              style = P.style,
+              filterMode = S.filterMode,
+              modelProxy = P.modelProxy,
+              openDeleteModal = openDeleteModal,
+              openEditModal = openEditModal,
+              openAddElemModal = openAddElemModal,
+              saveScrollPosition = P.saveScrollPosition,
+              collapseProxy = proxy
+            )
           )
-        )
+          )
       )
+  }
+  var zoomFactor: Double = 1
+  def zoomIn: Callback = {
+    if(zoomFactor < 1)
+      Callback({
+        zoomFactor = zoomFactor + 0.05
+        val tree = document.getElementById("ReactTreeView").asInstanceOf[dom.html.LI]
+        var styleList = tree.getAttribute("style").split(";")
+        styleList = styleList.filter(p => !p.contains("transform"))
+        tree.setAttribute("style", (s"transform: scale($zoomFactor)" +: styleList).mkString(";"))
+        }
+      )
+    else
+      Callback()
+  }
+
+  def zoomOut: Callback = {
+    if(zoomFactor > 0)
+      Callback({
+        zoomFactor = zoomFactor - 0.05
+        val tree = document.getElementById("ReactTreeView").asInstanceOf[dom.html.LI]
+        var styleList = tree.getAttribute("style").split(";")
+        styleList = styleList.filter(p => !p.contains("transform"))
+        tree.setAttribute("style", (s"transform: scale($zoomFactor)" +: styleList).mkString(";"))
+      }
+      )
+    else
+      Callback()
   }
 
   case class NodeBackend($: BackendScope[NodeProps, NodeState]) {
@@ -314,7 +356,7 @@ object ReactTreeView {
     }
 
     def onTreeMenuToggle(P: NodeProps)(e: ReactEventH): Callback =
-      P.onNodeSelect($.asInstanceOf[NodeC]) >> childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
+      P.collapseProxy.dispatchCB(ToggleCollapsed(P.root.uuid)) >> P.onNodeSelect($.asInstanceOf[NodeC]) >> childrenFromProps(P) >> e.preventDefaultCB >> e.stopPropagationCB
 
     def onItemSelect(P: NodeProps)(e: ReactEventH): Callback =
       P.onNodeSelect($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
@@ -331,9 +373,13 @@ object ReactTreeView {
     def onDragLeave(P: NodeProps)(e: ReactDragEvent): Callback =
       P.onNodeLeave($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB >> $.modState(_.copy(shouldUpdate = false))
 
-    def childrenFromProps(P: NodeProps): CallbackTo[Option[Unit]] =
-      $.modState(S => S.copy(children = if (S.children.isEmpty) P.root.children else Nil))
+    def childrenFromProps(P: NodeProps): CallbackTo[Option[Unit]] ={
+      $.modState(S => S.copy(children = if (S.children.isEmpty){
+        P.root.children
+      }
+      else Nil))
         .when(P.root.children.nonEmpty)
+    }
 
 
     def matchesFilterText(filterText: String, data: TreeItem): Boolean = {
@@ -374,6 +420,17 @@ object ReactTreeView {
       //      val droppingAttribute = event.dataTransfer.getData("type") == "stringAttr" || event.dataTransfer.getData("type") == "intAttr"
       var isAttribute = false
 
+      val collapsed = P.collapseProxy.value.find(_.uuid == P.root.uuid) match {
+        case Some(tuple) =>
+          tuple.collapsed
+        case None =>
+          AddTuple(Tuple(P.root.uuid, collapsed = false))
+          false
+      }
+
+      if(collapsed) {
+        P.collapseProxy.dispatchCB(ToggleCollapsed(P.root.uuid)).runNow()
+      }
 
       if (P.root.item.toString != "Model")
         isAttribute = P.root.item.asInstanceOf[Elem].isAttribute
@@ -568,15 +625,24 @@ object ReactTreeView {
 
       val updateRel = UpdateRelation(path, P.root.item.asInstanceOf[Entity].id, _: Option[RelationType])
 
+      val collapsed = P.collapseProxy.value.find(_.uuid == P.root.uuid) match {
+        case Some(tuple) =>
+          tuple.collapsed
+        case None =>
+          P.collapseProxy.dispatchCB(AddTuple(Tuple(P.root.uuid, collapsed = false)))
+          false
+      }
+
       val treeMenuToggle: TagMod =
-        if (S.children.nonEmpty)
-          <.span(
-            ^.onClick ==> onTreeMenuToggle(P),
-            ^.onDblClick ==> onTreeMenuToggle(P),
-            ^.key := "arrow",
-            P.style.treeItemBefore,
-            "▼"
-          )
+
+        if (S.children.nonEmpty && !collapsed)
+        <.span(
+          ^.onClick ==> onTreeMenuToggle(P),
+          ^.onDblClick ==> onTreeMenuToggle(P),
+          ^.key := "arrow",
+          P.style.treeItemBefore,
+          "▼"
+        )
         else if (P.root.children.nonEmpty && S.children.isEmpty)
           <.span(
             ^.onClick ==> onTreeMenuToggle(P),
@@ -615,7 +681,6 @@ object ReactTreeView {
             ^.onDragEnter ==> onDragEnter(P),
             ^.onDblClick ==> onDoubleClickTreeItem(P, S),
             S.draggedOver ?= dragOverStyle(P),
-            //            ^.onClick ==> onItemSelect(P),
             <.div(
               P.style.treeItemIdDiv,
               ^.id := P.root.itemToString,
@@ -677,15 +742,16 @@ object ReactTreeView {
           <.ul(P.style.treeGroup)(
             S.children.map(child =>
               (matchesFilterText(P.filterText, child) || matchesFilterText(P.filterText, P.root)) ?=
-                TreeNode.withKey(s"$parent/${child.uuid}")(P.copy(
+                cc(proxy => TreeNode.withKey(s"$parent/${child.uuid}")(P.copy(
                   root = child,
                   open = P.open,
                   depth = depth,
                   parent = parent,
-                  filterText = P.filterText
+                  filterText = P.filterText,
+                  collapseProxy = proxy
                 ))
-            )
-          )
+                )
+            ))
         )
 //        if (P.root.children.nonEmpty) {
 //          <.div(
@@ -703,13 +769,16 @@ object ReactTreeView {
 //          <.div()
 //        }
       )
-
     }
   }
+
 
   case class NodeState(children: Seq[TreeItem], selected: Boolean = false, draggedOver: Boolean = false, scrollPosition: Double = 0,
                        showTemp: Boolean = false, shouldUpdate: Boolean = false, dragEnter: Int = 0, overPlaceholder: Boolean = false,
                        showTemp2: Boolean = false, willUpdate: Boolean = false)
+
+  val cc = CollapseCircuit.connect(_.list)
+
 
   case class NodeProps(root: TreeItem,
                        open: Boolean,
@@ -722,32 +791,50 @@ object ReactTreeView {
                        style: Style,
                        filterMode: Boolean,
                        modelProxy: ModelProxy[Tree],
-                       openDeleteModal: (TreeItem, (Action => Callback), Seq[String]) => Callback,
-                       openEditModal: (TreeItem, (Action => Callback), Seq[String]) => Callback,
-                       openAddElemModal: (TreeItem, (Seq[String], Elem) => Callback, Seq[String], Option[Elem]) => Callback,
-                       saveScrollPosition: Double => Callback
+                       openDeleteModal: (TreeItem, (Action => Callback),  Seq[String]) => Callback,
+                       openEditModal: (TreeItem, (Action => Callback),  Seq[String]) => Callback,
+                       openAddElemModal: (TreeItem, (Seq[String], Elem) => Callback ,  Seq[String], Option[Elem]) => Callback,
+                       saveScrollPosition: Double => Callback,
+                       collapseProxy: ModelProxy[Seq[Tuple]]
                       )
 
 
   lazy val TreeNode = ReactComponentB[NodeProps]("ReactTreeNode")
-    .initialState_P(P => if (P.open) NodeState(P.root.children) else NodeState(Nil))
+    .initialState_P(P => NodeState(P.root.children))
     .renderBackend[NodeBackend]
+      .componentWillMount(x =>
+        x.props.collapseProxy.dispatchCB(AddTuple(Tuple(x.props.root.uuid, collapsed = false))) >>
+        {
+          x.props.collapseProxy.value.find(_.uuid == x.props.root.uuid) match {
+            case Some(tuple) =>
+              if(!tuple.collapsed)
+                x.modState(_.copy(children = x.props.root.children))
+              else
+                x.modState(_.copy(children = Nil))
+            case None =>
+              x.modState(_.copy(children = x.props.root.children))
+          }
+        }
+      )
     .componentWillReceiveProps {
       case ComponentWillReceiveProps(_$, newProps) =>
         _$.modState(_.copy(children = if (newProps.open) newProps.root.children else Nil))
           .when(newProps.filterMode)
           .void
     }
-
     .shouldComponentUpdate(x => if (x.nextState.selected || x.nextState.shouldUpdate || x.currentState.draggedOver) true else false)
+//      .componentWillUpdate(x => {
+//        x.$.props.saveScrollPosition(document.getElementById("treeView").scrollTop)
+//      })
     .build
 
   val component = ReactComponentB[Props]("ReactTreeView")
     .initialState(State("", filterMode = false, js.undefined, js.undefined, scrollPosition = 0))
     .renderBackend[Backend]
     .componentWillUpdate(x => {
-      x.$.props.saveScrollPosition(document.getElementById("treeView").scrollTop)
-    })
+        x.$.props.saveScrollPosition(document.getElementById("treeView").scrollTop) >>
+        Callback(x.nextState.copy(collapseList =  x.nextState.collapseList ++ x.currentState.collapseList))
+      })
     .build
 
 
@@ -760,6 +847,7 @@ object ReactTreeView {
             style: Style = new Style {},
             modelProxy: ModelProxy[Tree],
             saveScrollPosition: Double => Callback
+
            ) =
     component.set(key, ref)(Props(root, openByDefault, onItemSelect, showSearchBox, style, modelProxy, saveScrollPosition))
 

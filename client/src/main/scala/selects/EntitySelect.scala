@@ -1,8 +1,7 @@
-package example
+package selects
 
 import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, _}
-import diode.Action
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import shared._
 
 
