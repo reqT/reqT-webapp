@@ -163,7 +163,7 @@ object webApp extends js.JSApp {
           ReactTreeView(
             root = elemToTreeItem(P.props.value.children),
             modelProxy = P.props,
-            showSearchBox = true,
+            showSearchBox = false,
             saveScrollPosition = saveScrollPosition
           ),
           <.strong(

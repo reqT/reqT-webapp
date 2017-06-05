@@ -57,9 +57,9 @@ object ReactTreeView {
     def treeGroup = Seq(^.margin := "5px", ^.padding := "0 0 0 40px")
 
     def treeItem = Seq(
-      ^.listStyleType := "none",
+      ^.listStyleType := "none"
       //      ^.marginTop := "1px",
-      ^.paddingLeft := "20px"
+//      ^.paddingLeft := "20px"
     )
 
     def treeItemDiv = Seq(
@@ -417,7 +417,6 @@ object ReactTreeView {
       val notExistingElem = event.dataTransfer.getData("existing") == "false"
       val dropOnSelf = pathFrom.diff(pathTo).isEmpty
       val dropOnItsChildren = pathFrom.init.corresponds(pathTo)(_ == _)
-      //      val droppingAttribute = event.dataTransfer.getData("type") == "stringAttr" || event.dataTransfer.getData("type") == "intAttr"
       var isAttribute = false
 
       val collapsed = P.collapseProxy.value.find(_.uuid == P.root.uuid) match {
@@ -442,22 +441,24 @@ object ReactTreeView {
       }
 
 
-      if (ctrlHeld)
-        dispatch(CopyElem(pathFrom, pathTo, RelationType("has")))
-      else if (isAttribute || dropOnSelf || dropOnItsChildren) {
-        dispatch(NoAction)
-      } else if (notExistingElem) {
-        getElem(event) match {
-          case entity: Entity => P.openAddElemModal(P.root, (S, E) => dispatch(AddElem(S, E, RelationType("has"))), pathTo, Some(entity))
-          case intAttr: IntAttribute => P.openAddElemModal(P.root, (S, E) => dispatch(AddElem(S, E, RelationType("has"))), pathTo, Some(intAttr))
-          case stringAttr: StringAttribute => P.openAddElemModal(P.root, (S, E) => dispatch(AddElem(S, E, RelationType("has"))), pathTo, Some(stringAttr))
-          case _ => Callback()
+      def action = {
+        if (ctrlHeld)
+          dispatch(CopyElem(pathFrom, pathTo, RelationType("has")))
+        else if (isAttribute || dropOnSelf || dropOnItsChildren) {
+          dispatch(NoAction)
+        } else if (notExistingElem) {
+          getElem(event) match {
+            case entity: Entity => P.openAddElemModal(P.root, (S, E) => dispatch(AddElem(S, E, RelationType("has"))), pathTo, Some(entity))
+            case intAttr: IntAttribute => P.openAddElemModal(P.root, (S, E) => dispatch(AddElem(S, E, RelationType("has"))), pathTo, Some(intAttr))
+            case stringAttr: StringAttribute => P.openAddElemModal(P.root, (S, E) => dispatch(AddElem(S, E, RelationType("has"))), pathTo, Some(stringAttr))
+            case _ => Callback()
+          }
+        } else {
+          dispatch(MoveElem(pathFrom, pathTo, RelationType("has"))) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))
         }
-      } else {
-        dispatch(MoveElem(pathFrom, pathTo, RelationType("has"))) >> dispatch(RemoveElem(pathFrom)) >> dispatch(RemoveEmptyRelation(pathFrom.init))
       }
-
-
+      $.modState(_.copy(shouldUpdate = true)).runNow()
+      action >> $.modState(_.copy(draggedOver = false))
     }
 
     def onDoubleClickTreeItem(P: NodeProps, S: NodeState)(e: ReactEvent): Callback = {
@@ -559,10 +560,6 @@ object ReactTreeView {
 
     def expand: Callback = $.modState(S => S.copy(showTemp = true, dragEnter = S.dragEnter + 1))
 
-    def expand2: Callback = $.modState(S => S.copy(showTemp2 = true))
-
-    def contract2: Callback = $.modState(S => S.copy(showTemp2 = false))
-
     def contract: Callback = {
       $.modState(S => {
         if (S.dragEnter <= 1)
@@ -584,21 +581,6 @@ object ReactTreeView {
       $.modState(_.copy(overPlaceholder = false)).runNow()
       contract >> e.preventDefaultCB >> e.stopPropagationCB
     }
-
-    def onDragOverTemp2(P: NodeProps)(e: ReactDragEvent): Callback = {
-      enter >> expand2 >> e.preventDefaultCB >> e.stopPropagationCB
-    }
-
-    def onDragLeaveTemp2(P: NodeProps)(e: ReactDragEvent): Callback = {
-      $.modState(_.copy(overPlaceholder = false)).runNow()
-      contract2 >> e.preventDefaultCB >> e.stopPropagationCB
-    }
-
-    def onDragEndTemp2(P: NodeProps)(e: ReactDragEvent): Callback = {
-      $.modState(_.copy(overPlaceholder = false)).runNow()
-      $.modState(_.copy(showTemp2 = false)) >> e.preventDefaultCB >> e.stopPropagationCB
-    }
-
 
     def onDragEndTemp(P: NodeProps)(e: ReactDragEvent): Callback = {
       $.modState(_.copy(overPlaceholder = false)).runNow()
@@ -656,9 +638,11 @@ object ReactTreeView {
       <.div(
         <.li(
           ^.zIndex := "-1",
+          ^.paddingTop := "5px",
           ^.onDragEnter ==> onDragOverLi(P),
           ^.onDragLeave ==> onDragLeaveLi(P),
           ^.transform := "translateX(6.5px)",
+//          ^.border := "1px solid black",
           P.style.treeItem,
           <.div(
             P.style.treeItemDiv,
@@ -774,8 +758,7 @@ object ReactTreeView {
 
 
   case class NodeState(children: Seq[TreeItem], selected: Boolean = false, draggedOver: Boolean = false, scrollPosition: Double = 0,
-                       showTemp: Boolean = false, shouldUpdate: Boolean = false, dragEnter: Int = 0, overPlaceholder: Boolean = false,
-                       showTemp2: Boolean = false, willUpdate: Boolean = false)
+                       showTemp: Boolean = false, shouldUpdate: Boolean = false, dragEnter: Int = 0, overPlaceholder: Boolean = false)
 
   val cc = CollapseCircuit.connect(_.list)
 
