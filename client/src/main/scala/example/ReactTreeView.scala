@@ -758,6 +758,7 @@ object ReactTreeView {
         ),
         if (P.root.children.nonEmpty) {
           <.div(
+            ^.backgroundColor := "green",
             ^.pointerEvents := "none",
             S.showTemp2 ?= placeholderStyle(P),
             ^.transform := "translateX(6px)"
