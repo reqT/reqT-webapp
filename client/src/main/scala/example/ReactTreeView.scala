@@ -682,6 +682,7 @@ object ReactTreeView {
                   ),
                   <.div(
                     P.style.elemDiv3,
+                    ^.paddingTop := { if(P.root.contentToString.length >= 38 || P.root.contentToString.contains("\n")) "1.8%" else "3%" },
                     setContentDivSize(P.root.contentToString)
                   )
                 )
