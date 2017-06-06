@@ -734,6 +734,7 @@ object ReactTreeView {
             }
           ),
           <.div(
+            ^.backgroundColor := "lightgrey",
             ^.pointerEvents := "none",
             ^.zIndex := "-5",
             ^.backgroundColor := "lightgrey",
