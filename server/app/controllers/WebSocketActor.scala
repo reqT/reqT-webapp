@@ -90,6 +90,7 @@ class WebSocketActor(out: ActorRef) extends Actor {
   readThread.start()
 
   override def postStop() = {
+    reqTprocess.destroy()
     stopReadThread = true
   }
 
