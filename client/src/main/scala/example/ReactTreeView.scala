@@ -175,6 +175,7 @@ object ReactTreeView {
                    collapseList: Seq[Tuple] = Seq[Tuple](),
                    openModals: OpenModals = OpenModals(),
                    modelProps: ModelProps = ModelProps()
+
                   )
 
   case class Props(root: TreeItem,
@@ -350,6 +351,7 @@ object ReactTreeView {
       event.dataTransfer.setData("existing", "true")
       event.dataTransfer.setData("path", path)
 
+
       $.modState(_.copy(dragEnter = 0))
     }
 
@@ -358,6 +360,7 @@ object ReactTreeView {
 
 //    def onItemSelect(P: NodeProps)(e: ReactEventH): Callback =
 //      P.onNodeSelect($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
+
 
     def onDragOver(P: NodeProps)(e: ReactEventH): Callback =
       e.preventDefaultCB >> e.stopPropagationCB
@@ -412,6 +415,7 @@ object ReactTreeView {
       else Nil))
         .when(P.root.children.nonEmpty)
     }
+
 
 
     def matchesFilterText(filterText: String, data: TreeItem): Boolean = {
@@ -766,6 +770,7 @@ object ReactTreeView {
   }
 
 
+
   case class NodeState(children: Seq[TreeItem], selected: Boolean = false, draggedOver: Boolean = false, scrollPosition: Double = 0,
                        showTemp1: Boolean = false, showTemp2: Boolean = false, shouldUpdate: Boolean = false, dragEnter: Int = 0)
 
@@ -827,6 +832,7 @@ object ReactTreeView {
         x.$.props.saveScrollPosition(document.getElementById("treeView").scrollTop) >>
         Callback(x.nextState.copy(collapseList =  x.nextState.collapseList ++ x.currentState.collapseList))
       })
+
     .build
 
 

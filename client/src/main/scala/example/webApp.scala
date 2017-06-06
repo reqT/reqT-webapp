@@ -14,6 +14,7 @@ import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import scala.collection.immutable.Queue
 import shared._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @JSExport
 object webApp extends js.JSApp {
@@ -172,6 +173,7 @@ object webApp extends js.JSApp {
       ))
       .build
 
+
     def setScroll(scrollPosition: Double): Callback = {
       val pre = document.getElementById("treeView").asInstanceOf[dom.html.Pre]
       Callback(pre.scrollTop = scrollPosition)
@@ -259,6 +261,7 @@ object webApp extends js.JSApp {
       updateActiveModel(cachedModel, P, S) >> P.proxy.dispatchCB(SetModel(cachedModel.model.children))
     }
 
+
     def updateActiveModel(cachedModel: CachedModel, P: Props, S: State): Callback = {
       val newModels: Queue[CachedModel] = S.cachedModels.map(model =>
         if (model.selected)
@@ -288,6 +291,7 @@ object webApp extends js.JSApp {
       x.$.backend.setScroll(x.currentState.scrollPosition)
     })
     .build
+
 
   val dc = AppCircuit.connect(_.tree)
 
