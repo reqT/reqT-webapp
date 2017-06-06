@@ -14,7 +14,6 @@ import scalacss.ScalaCssReact._
 import scalacss.Defaults._
 import scala.collection.immutable.Queue
 import shared._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 @JSExport
 object webApp extends js.JSApp {

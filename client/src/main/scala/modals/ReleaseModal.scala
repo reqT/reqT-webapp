@@ -97,19 +97,6 @@ object ReleaseModal {
               ),
               <.dd(
                 entitySelect(P)
-              ),
-              <.br,
-              <.hr,
-              <.br,
-              <.dt(
-                ^.textAlign.center,
-                "sorted in order:"
-              ),
-              <.dd(
-                orderSelect(0),
-                orderSelect(1),
-                orderSelect(2),
-                orderSelect(3)
               )
             ),
             <.div(
@@ -129,20 +116,20 @@ object ReleaseModal {
         <.div()
 
 
-    val orderSelect = ReactComponentB[Int]("orderSelect")
-      .render($ =>
-        <.select(
-          selectStyle(),
-          ^.defaultValue := standardList($.props),
-          ^.onChange ==> changeOrder($.props)
-        )(
-          <.option("Release"),
-          <.option("Feature"),
-          <.option("Stakeholder"),
-          <.option("Resource")
-        )
-      )
-      .build
+//    val orderSelect = ReactComponentB[Int]("orderSelect")
+//      .render($ =>
+//        <.select(
+//          selectStyle(),
+//          ^.defaultValue := standardList($.props),
+//          ^.onChange ==> changeOrder($.props)
+//        )(
+//          <.option("Release"),
+//          <.option("Feature"),
+//          <.option("Stakeholder"),
+//          <.option("Resource")
+//        )
+//      )
+//      .build
 
 
     val entitySelect = ReactComponentB[Props]("entitySelect")
@@ -204,10 +191,8 @@ object ReleaseModal {
 
       Seq(
         s"val releaseMethod=$model\n",
-        "val CSPproblem = csp.releasePlan(releaseMethod)\n",
-        s"val solution = CSPproblem.$problemType($entity/$attribute)\n",
-        s"val sortedSolution = solution.sortByTypes(${state.sortBy(0)}, ${state.sortBy(1)}, ${state.sortBy(2)}, ${state.sortBy(3)})\n",
-        "sortedSolution\n"
+        s"val solution = csp.releasePlan(releaseMethod).$problemType($entity/$attribute)\n"
+//        s"val solution = CSPproblem.$problemType($entity/$attribute)\n"
       )
     }
 
