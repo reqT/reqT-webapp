@@ -93,6 +93,7 @@ object ReqTLog {
           ^.overflowY.auto,
           ^.overflowX.hidden,
           ^.whiteSpace.`pre-line`,
+          ^.wordBreak := "break-word",
           $.props.map(<.p(_)))
       )
       .componentDidUpdate(_ => updateScroll)
