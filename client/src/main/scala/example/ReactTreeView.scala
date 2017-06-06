@@ -736,6 +736,7 @@ object ReactTreeView {
           <.div(
             ^.pointerEvents := "none",
             ^.zIndex := "-5",
+            ^.backgroundColor := "lightgrey",
             ^.transform := {
               if (P.root.children.nonEmpty) "translate(40px,0px)" else "none"
             },
@@ -764,7 +765,7 @@ object ReactTreeView {
         ),
         if (P.root.children.nonEmpty) {
           <.div(
-            ^.backgroundColor := "green",
+            ^.backgroundColor := "lightgrey",
             ^.pointerEvents := "none",
             ^.transform := {
               if (P.root.item == "Model") "translate(40px,0px)" else "none"
