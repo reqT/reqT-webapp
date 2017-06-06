@@ -45,6 +45,7 @@ object EditModal {
     ^.width := "60%",
     ^.whiteSpace := "pre-line",
     ^.borderRadius := "5px",
+    ^.marginTop := "-18px",
     ^.autoFocus := "true",
     ^.maxLength := "9",
     ^.placeholder := "Number"

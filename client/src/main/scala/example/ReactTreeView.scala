@@ -537,10 +537,7 @@ object ReactTreeView {
         ^.borderRadius := "5px",
         ^.height := "50px",
         ^.border := "2px dashed",
-        ^.borderColor := "black",
-        ^.transform := {
-          if (P.root.children.nonEmpty) "translate(47px,0px)" else "none"
-        }
+        ^.borderColor := "black"
       )
     }
 
@@ -646,14 +643,20 @@ object ReactTreeView {
         ^.onDragOver ==> onDragOver(P),
         ^.onDrop ==> onDrop(P),
         <.li(
+//          if(P.root.item == "Model") {
+//            ^.height := "100%"
+//          } else {
+//            EmptyTag
+//          },
           ^.zIndex := "-1",
           ^.onDragEnter ==> onDragEnterLI(P),
           ^.onDragLeave ==> onDragLeaveLI(P),
           ^.onDragOver ==> onDragOver(P),
           ^.onDrop ==> dropOnPlaceholder(P, dropAfterChildren = false),
-//          ^.transform := "translateX(6.5px)",
           ^.border := "1px solid rgba(211,211,211,0.5)",
-          ^.borderTop := "1px solid rgba(211,211,211,0.5)",
+          ^.borderTopLeftRadius := "5px",
+          ^.marginBottom := "-1px",
+          ^.marginRight := "-1px",
           P.style.treeItem,
           <.div(
             P.style.treeItemDiv,
@@ -734,6 +737,10 @@ object ReactTreeView {
             ^.backgroundColor := "lightgrey",
             ^.pointerEvents := "none",
             ^.zIndex := "-5",
+            ^.backgroundColor := "lightgrey",
+            ^.transform := {
+              if (P.root.children.nonEmpty) "translate(40px,0px)" else "none"
+            },
             S.showTemp1 ?= placeholderStyle(P)
           ),
           if (S.children.nonEmpty){
@@ -761,8 +768,10 @@ object ReactTreeView {
           <.div(
             ^.backgroundColor := "lightgrey",
             ^.pointerEvents := "none",
-            S.showTemp2 ?= placeholderStyle(P),
-            ^.transform := "translateX(6px)"
+            ^.transform := {
+              if (P.root.item == "Model") "translate(40px,0px)" else "none"
+            },
+            S.showTemp2 ?= placeholderStyle(P)
           )
         } else {
           <.div(^.pointerEvents := "none")
