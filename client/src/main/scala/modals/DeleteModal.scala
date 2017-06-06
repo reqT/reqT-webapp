@@ -54,6 +54,7 @@ object DeleteModal {
     def render(P: Props, S:State) =
       if (P.isOpen) {
         <.div(
+          ^.autoFocus := "true",
           ^.onKeyDown ==> handleKeyDown(P,S),
           <.div(
             modalStyle,
@@ -91,7 +92,7 @@ object DeleteModal {
           <.div(
             buttonAreaStyle,
             <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick --> P.onClose),
-            <.button("Delete", ^.className := "btn btn-danger",   ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> onDelete(P))
+            <.button("Delete", ^.className := "btn btn-danger", ^.bottom := "0px", ^.onClick --> onDelete(P))
           )
         )
 

@@ -1,10 +1,11 @@
 package modals
 
 import diode.Action
-import example.{TreeItem}
+import example.TreeItem
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import org.scalajs.dom.ext.KeyCode
+import selects.RelationSelect
 import shared._
 
 
@@ -40,7 +41,7 @@ object AddElemModal {
   )
 
   def buttonAreaStyle = Seq(
-    ^.width:= "95%",
+    ^.width := "95%",
     ^.padding := "20px",
     ^.display.flex,
     ^.justifyContent.spaceBetween
@@ -68,26 +69,29 @@ object AddElemModal {
   )
 
 
-  case class State(input: String)
+  case class State(input: String, newRelation: Option[RelationType] = None)
 
-  case class Props(isOpen: Boolean, onClose: Callback, treeItem: TreeItem = null, prepDispatch: (Seq[String], Elem) => Callback = null, path: Seq[String] = Seq(), elemToAdd: Option[Elem])
+  case class Props(isOpen: Boolean, onClose: Callback, treeItem: TreeItem, dispatch: (Action => Callback), path: Seq[String] = Seq(), elemToAdd: Option[Elem],
+                   addToPlaceholder: Boolean = false)
 
   class Backend($: BackendScope[Props, State]) {
-    def render(P: Props, S:State) =
+    def render(P: Props, S: State) =
       if (P.isOpen) {
         <.div(
-          ^.onKeyDown ==> handleKeyDown(P,S),
+          ^.onKeyDown ==> handleKeyDown(P, S),
           <.div(
             modalStyle,
-            addElemModalStyle(P,S)
+            addElemModalStyle(P, S)
           ),
           <.div(
             backdropStyle,
             ^.onClick --> P.onClose
           )
         )
-      }else
+      } else
         <.div()
+
+    def setNewRelation(relationType: Option[RelationType]): Callback = $.modState(_.copy(newRelation = relationType))
 
     def inputChanged(e: ReactEventI): Callback = {
       val newInput = e.target.value
@@ -100,11 +104,12 @@ object AddElemModal {
     }
 
     def addElem(P: Props, S: State): Callback = {
-
-        P.prepDispatch(P.path, prepareElem(S.input, P.elemToAdd)) >> P.onClose
-
-//        P.dispatch(AddElem(P.path, prepareElem(S.input, P.elemToAdd), RelationType("has"))) >> P.onClose
+      if (P.addToPlaceholder)
+        P.dispatch(AddElemToPlaceholder(P.path, prepareElem(S.input, P.elemToAdd))) >> P.onClose
+      else
+        P.dispatch(AddElem(P.path, prepareElem(S.input, P.elemToAdd), S.newRelation.getOrElse(RelationType("has")))) >> P.onClose
     }
+
 
     def prepareElem(newValue: String, elem: Option[Elem]): Elem = {
       elem.get match {
@@ -116,47 +121,62 @@ object AddElemModal {
     }
 
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
-      if (e.nativeEvent.keyCode == KeyCode.Escape){
+      if (e.nativeEvent.keyCode == KeyCode.Escape) {
         P.onClose
-      } else if(e.nativeEvent.keyCode == KeyCode.Enter &&  !e.shiftKey){
-        addElem(P,S)
-      }else{
+      } else if (e.nativeEvent.keyCode == KeyCode.Enter && !e.shiftKey) {
+        addElem(P, S)
+      } else {
         Callback()
       }
     }
 
     def addElemModalStyle(P: Props, S: State) = Seq(
       <.h4(
-        "Do you want to add the following?",
+        "Add the following",
         ^.textAlign.center
       ),
       <.dl(
         ^.className := "dl-horizontal",
         <.br,
-        <.dt(
-          P.treeItem.entityToString,
-          ^.textAlign := "center",
-          ^.color := {
-            if (P.treeItem.isInstanceOf[Attribute]) "#03EE7D" else "#047BEA"
-          }
-        ),
-        <.dd(
-          ^.marginTop := "-18px",
-          {
-            if (P.treeItem.entityToString != "Model") P.treeItem.contentToString else ""
-          }
+        if (!P.addToPlaceholder) {
+          Seq(
+            <.dt(
+              ^.textAlign := "center",
+              ^.color := {
+                if (P.treeItem.item.isInstanceOf[Attribute]) "#03EE7D" else "#047BEA"
+              },
+              if (P.addToPlaceholder) {
+                P.treeItem.entityToString
+              } else {
+                P.treeItem.entityToString
+              }
+            ),
+            <.dd(
+              ^.marginTop := "-18px",
+              ^.whiteSpace := "pre-line",
+              ^.wordBreak := "break-word", {
+                if (P.treeItem.entityToString != "Model") P.treeItem.contentToString else ""
+              }
 
-        ),
-        <.hr,
-        <.dt(
-          ^.textAlign := "center",
-          ^.color := "#FF3636",
-          "has"
-        ),
-        <.dd(
+            ),
+            <.hr,
+            <.dt(
+              P.treeItem.link match {
+                case Some(tpe) => tpe.getType
+                case None => RelationSelect("has", None, None, isModelValue = false, Some(setNewRelation), None)
+              },
+              ^.textAlign := "center",
+              ^.color := "#FF3636"
+            ),
+            <.dd(
 
-        ),
-        <.hr,
+            ),
+            <.hr
+          )
+
+        } else {
+          ""
+        },
         <.dt(
           P.elemToAdd match {
             case Some(e: Entity) => e.getType
@@ -205,6 +225,6 @@ object AddElemModal {
     .renderBackend[Backend]
     .build
 
-  def apply(isOpen: Boolean, onClose: Callback, treeItem: TreeItem, prepDispatch: (Seq[String], Elem) => Callback, path: Seq[String], elemToAdd: Option[Elem])
-  = component.set()(Props(isOpen, onClose, treeItem, prepDispatch, path, elemToAdd))
+  def apply(isOpen: Boolean, onClose: Callback, treeItem: TreeItem, dispatch: (Action => Callback), path: Seq[String], elemToAdd: Option[Elem], addToPlaceholder: Boolean)
+  = component.set()(Props(isOpen, onClose, treeItem, dispatch, path, elemToAdd, addToPlaceholder))
 }
