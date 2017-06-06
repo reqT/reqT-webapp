@@ -178,7 +178,7 @@ case class RelationType(relationType: String) {
 
 case class AddElem(path: Seq[String], elem: Elem, relationType: RelationType) extends Action
 
-case class AddElemToPlaceholder(path: Seq[String], elem: Elem, afterChildren: Boolean) extends Action
+case class AddElemToPlaceholder(path: Seq[String], elem: Elem) extends Action
 
 case class RemoveElem(path: Seq[String]) extends Action
 

@@ -26,7 +26,7 @@ object RelationSelect {
     ^.textAlignLast.center
   )
 
-  case class Props(value: String, dispatch: Action => Callback, updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback], saveScrollPosition: Option[Double => Callback])
+  case class Props(value: String, dispatch: Option[Action => Callback], updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback], saveScrollPosition: Option[Double => Callback])
 
   case class State(value: String)
 
@@ -37,7 +37,7 @@ object RelationSelect {
     def render(P: Props, S: State) =
       <.select(
         selectStyle(P),
-        ^.value := { if(S.value.isEmpty) P.value else S.value },
+        ^.value := { if(S.value.isEmpty) P.value else S.value},
         ^.onChange ==> onChange(P, S)
       )(
         relationList.map(x => <.option(x))
@@ -58,11 +58,14 @@ object RelationSelect {
       val newRel = e.target.value
 
       if(P.isModelValue)
-        P.dispatch(P.updateRel.get(Some(RelationType(newRel)))) >> saveScrollPos(P)
+        P.dispatch match {
+          case Some(dispatch) =>  dispatch(P.updateRel.get(Some(RelationType(newRel)))) >> saveScrollPos(P)
+          case None => Callback(println("Error: Missing dispatch"))
+        }
       else
         P.setNewRelation match {
           case Some(setRelation) => setRelation(Some(RelationType(newRel))) >> $.setState(s = S.copy(value = e.target.value)) >> saveScrollPos(P)
-          case None => Callback(println("missing setNewRelation method")) >> saveScrollPos(P)
+          case None => Callback(println("Error: Missing setNewRelation method")) >> saveScrollPos(P)
         }
     }
 
@@ -77,7 +80,7 @@ object RelationSelect {
 
 
 
-  def apply(value: String, dispatch: Action => Callback, updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback], saveScrollPosition: Option[Double => Callback])
+  def apply(value: String, dispatch: Option[Action => Callback], updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback], saveScrollPosition: Option[Double => Callback])
   = component.set()(Props(value, dispatch, updateRel, isModelValue, setNewRelation, saveScrollPosition))
 
 }

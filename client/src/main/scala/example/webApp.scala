@@ -134,9 +134,6 @@ object webApp extends js.JSApp {
   }
 
 
-
-
-
   class Backend($: BackendScope[Props, State]) {
 
     def saveScrollPosition(position: Double): Callback = {
@@ -160,6 +157,8 @@ object webApp extends js.JSApp {
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
         <.div(
+          ^.width := "100%",
+          ^.height := "100%",
           ReactTreeView(
             root = elemToTreeItem(P.props.value.children),
             modelProxy = P.props,
@@ -232,6 +231,7 @@ object webApp extends js.JSApp {
         )
       )
       ).build
+
     val listModels = ReactComponentB[(CachedModel, Props, State)]("listElem")
       .render($ => <.li(
         modelTabsStyle,
