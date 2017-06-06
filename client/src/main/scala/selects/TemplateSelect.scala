@@ -38,6 +38,7 @@ object TemplateSelect {
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
       <.button(
+        ^.onKeyDown ==> handleKeyDown,
         ^.className := "btn btn-default navbar-btn",
         ^.margin := "5px",
         ^.padding := "10px",
@@ -47,8 +48,7 @@ object TemplateSelect {
         S.isOpen ?= dropdownList(P),
         S.isOpen ?= <.div(
           backdropStyle,
-          // ^.onClick --> closeDropdown,
-          ^.onKeyDown ==> handleKeyDown
+          ^.onClick --> closeDropdown
         )
       )
 

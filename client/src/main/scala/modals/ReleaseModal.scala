@@ -118,7 +118,7 @@ object ReleaseModal {
               ^.display.flex,
               ^.justifyContent.spaceBetween,
               <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
-              <.button("OK", ^.className := "btn btn-success pull-right", ^.bottom := "0px", ^.onClick --> sendMethod(P,S))
+              <.button("OK", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> sendMethod(P,S))
             )),
           <.div(
             backdropStyle,

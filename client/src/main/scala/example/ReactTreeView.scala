@@ -764,6 +764,7 @@ object ReactTreeView {
         ),
         if (P.root.children.nonEmpty) {
           <.div(
+            ^.backgroundColor := "green",
             ^.pointerEvents := "none",
             ^.transform := {
               if (P.root.item == "Model") "translate(40px,0px)" else "none"

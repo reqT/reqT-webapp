@@ -23,14 +23,14 @@ object webApp extends js.JSApp {
     ^.className := "container",
     ^.width := "100%",
     ^.height := "100%",
-    ^.overflow := "hidden",
+    ^.overflow.hidden,
     ^.paddingRight := "5px",
     ^.paddingLeft := "5px"
   )
 
   val ListTerminalDivStyle = Seq(
     ^.className := "col-1",
-    ^.float := "left",
+    ^.float.left,
     ^.width := "29%",
     ^.height := "100%",
     ^.paddingRight := "9px"
@@ -47,7 +47,7 @@ object webApp extends js.JSApp {
     ^.padding := "5px",
     ^.paddingRight := "5px",
     ^.height := "5%",
-    ^.overflow := "hidden",
+    ^.overflow.hidden,
     ^.position.relative
   )
 
@@ -75,14 +75,14 @@ object webApp extends js.JSApp {
 
   val modelTabsStyle = Seq(
     ^.className := "navpill",
-    ^.display := "inline",
-    ^.whiteSpace := "nowrap",
+    ^.display.inline,
+    ^.whiteSpace.nowrap,
     ^.position.relative,
     ^.marginLeft := "5px",
     ^.marginRight := "5px",
     ^.padding := "5px",
     ^.float.left,
-    ^.overflow := "hidden",
+    ^.overflow.hidden,
     ^.borderRadius := "5px",
     ^.height := "30px",
     ^.top := "0px",
@@ -110,7 +110,7 @@ object webApp extends js.JSApp {
   )
 
   val cachedModelsRowStyle = Seq(
-    ^.whiteSpace := "nowrap",
+    ^.whiteSpace.nowrap,
     ^.position.absolute,
     ^.className := "clickable-row"
   )
@@ -154,7 +154,6 @@ object webApp extends js.JSApp {
       .render(P => <.pre(
         ^.className := "zoomViewport",
         Styles.treeView,
-        ^.overflowX := "hidden",
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
         <.div(
