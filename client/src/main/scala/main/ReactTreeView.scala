@@ -335,31 +335,31 @@ object ReactTreeView {
     def onDragOver(P: NodeProps)(e: ReactEventH): Callback = e.preventDefaultCB >> e.stopPropagationCB
 
     def onDragEnter(P: NodeProps)(e: ReactDragEvent): Callback =
-      contract >> P.onNodeEnter($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB >> Callback(println("EnterNode"))
+      contract >> P.onNodeEnter($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB
 
     def onDragEnd(P: NodeProps)(e: ReactDragEvent): Callback =
       P.onNodeLeave($.asInstanceOf[NodeC]) >> $.modState(_.copy(shouldUpdate = false, showTemp1 = false, showTemp2 = false)) >> e.preventDefaultCB >> e.stopPropagationCB
 
     def onDragLeave(P: NodeProps)(e: ReactDragEvent): Callback =
-      P.onNodeLeave($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB >> $.modState(_.copy(shouldUpdate = false)) >> Callback(println("LeaveNode"))
+      P.onNodeLeave($.asInstanceOf[NodeC]) >> e.preventDefaultCB >> e.stopPropagationCB >> $.modState(_.copy(shouldUpdate = false))
 
     def onDragEnterLI(P: NodeProps)(e: ReactDragEvent): Callback = {
       $.modState(_.copy(shouldUpdate = true)).runNow()
-      expand >> e.preventDefaultCB >> e.stopPropagationCB >> Callback(println("EnterLI"))
+      expand >> e.preventDefaultCB >> e.stopPropagationCB
     }
 
     def onDragLeaveLI(P: NodeProps)(e: ReactDragEvent): Callback = {
       $.modState(_.copy(shouldUpdate = true)).runNow()
-      contract >> e.preventDefaultCB >> e.stopPropagationCB >> Callback(println("LeaveLI"))
+      contract >> e.preventDefaultCB >> e.stopPropagationCB
     }
 
     def onDragEnterUL(P: NodeProps)(e: ReactDragEvent): Callback = {
       $.modState(_.copy(shouldUpdate = true)).runNow()
-      expand2 >> e.preventDefaultCB >> e.stopPropagationCB >> Callback(println("EnterUL"))
+      expand2 >> e.preventDefaultCB >> e.stopPropagationCB
     }
 
     def onDragLeaveUL(P: NodeProps)(e: ReactDragEvent): Callback =
-      contract2 >> e.preventDefaultCB >> e.stopPropagationCB >> Callback(println("LeaveUL"))
+      contract2 >> e.preventDefaultCB >> e.stopPropagationCB
 
     def expand2: Callback = $.modState(_.copy(showTemp2 = true))
 
