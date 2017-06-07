@@ -14,7 +14,7 @@ object AttributeSelect {
   def selectStyle() = Seq(
     ^.className := "form-control pull-right",
     ^.width := "155px",
-    ^.height :=  "100%",
+    ^.height := "100%",
     ^.color := "#03EE7D",
     ^.background := "white",
     ^.textAlign.center,
@@ -34,7 +34,9 @@ object AttributeSelect {
     def render(P: Props, S: State) =
       <.select(
         selectStyle(),
-        ^.value := { if(S.value.isEmpty) P.value else S.value },
+        ^.value := {
+          if (S.value.isEmpty) P.value else S.value
+        },
         ^.onChange ==> onChange(P, S)
       )(
         P.isIntAttr ?= intAttributeList.map(x => <.option(x)),
@@ -60,7 +62,6 @@ object AttributeSelect {
     .initialState(State(value = ""))
     .renderBackend[Backend]
     .build
-
 
 
   def apply(value: String, isIntAttr: Boolean, setNewAttribute: Option[Attribute] => Callback)

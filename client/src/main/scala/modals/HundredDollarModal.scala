@@ -10,7 +10,7 @@ import shared._
 object HundredDollarModal {
 
   def modalStyle = Seq(
-    ^.width:= "400px",
+    ^.width := "400px",
     ^.padding := "5px",
     ^.position := "absolute",
     ^.border := "1px solid #CCC",
@@ -19,9 +19,9 @@ object HundredDollarModal {
     ^.left := "50%",
     ^.transform := "translate(-50%,-50%)",
     ^.zIndex := "9999",
-    ^.background := "#FFF" ,
+    ^.background := "#FFF",
     ^.paddingBottom := "15px",
-    ^.paddingRight := "15px" ,
+    ^.paddingRight := "15px",
     ^.paddingTop := "15px",
     ^.paddingLeft := "15px",
     ^.boxShadow := "rgba(0, 0, 0, 0.2) 5px 6px 12px 0px"
@@ -39,7 +39,7 @@ object HundredDollarModal {
   )
 
   val buttonAreaStyle = Seq(
-    ^.width:= "95%",
+    ^.width := "95%",
     ^.padding := "20px",
     ^.display.flex,
     ^.justifyContent.spaceBetween
@@ -91,12 +91,12 @@ object HundredDollarModal {
               <.dd(
                 EntitySelect("Stakeholder", setNewSHSEntity, isModelValue = false)
               )
-//              <.hr
+              //              <.hr
             ),
             <.div(
               buttonAreaStyle,
               <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
-              <.button("OK", ^.className := "btn btn-success pull-right",  ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> sendMethod(P,S))
+              <.button("OK", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> sendMethod(P, S))
             )),
           <.div(
             backdropStyle,
@@ -114,7 +114,7 @@ object HundredDollarModal {
       val p = state.newPAttribute.getOrElse("Prio").toString.split('(').head
 
       Seq(
-        s"val dollarMethod = ${model.replaceAll("\n","")} \n",
+        s"val dollarMethod = ${model.replaceAll("\n", "")} \n",
         s"val shs = dollarMethod . entitiesOfType ( $shs ) \n",
         s"val rs = dollarMethod . entitiesOfType ( $rs ) \n",
         s"val prioSum = shs . map ( s => dollarMethod / s / $p ) . sum \n",
@@ -123,12 +123,14 @@ object HundredDollarModal {
         s"val sum = resultDollar . collect { case $b  ( b ) => b }. sum \n")
     }
 
-    def resetState: Callback = $.setState(State(None,None,None,None))
+    def resetState: Callback = $.setState(State(None, None, None, None))
 
     def setNewSHSEntity(entity: Option[Entity]): Callback = $.modState(_.copy(newSHSEntity = entity))
+
     def setNewRSEntity(entity: Option[Entity]): Callback = $.modState(_.copy(newRSEntity = entity))
 
     def setNewBAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newBAttribute = attribute))
+
     def setNewPAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newPAttribute = attribute))
 
     def sendMethod(P: Props, S: State): Callback = P.sendMethod(prepHundredDollar(S, P.model)) >> onClose(P)
@@ -145,14 +147,13 @@ object HundredDollarModal {
   }
 
 
+  val component = ReactComponentB[Props]("Modal")
+    .initialState(State(None, None, None, None))
+    .renderBackend[Backend]
+    .build
 
-    val component = ReactComponentB[Props]("Modal")
-      .initialState(State(None,None,None,None))
-      .renderBackend[Backend]
-      .build
 
-
-    def apply(isOpen: Boolean, onClose: () => Callback,  sendMethod: Seq[String] => Callback , model: String)
-    = component.set()(Props(isOpen, onClose, sendMethod, model))
+  def apply(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, model: String)
+  = component.set()(Props(isOpen, onClose, sendMethod, model))
 
 }

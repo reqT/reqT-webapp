@@ -23,16 +23,16 @@ class TemplateHandler {
       wanted
     }
 
-//    if(templateNbr > getAmountOfTemplates)
-//      None
-//    else
-      Some(contentIterator.filter(take).mkString("\n"))
+    //    if(templateNbr > getAmountOfTemplates)
+    //      None
+    //    else
+    Some(contentIterator.filter(take).mkString("\n"))
   }
 
 
   def getAmountOfTemplates: Int = {
     var amount = 0
-    Source.fromFile(filePathTemplates).getLines.foreach(line => if(line.replace(" ", "").startsWith("Template=")) amount+=1)
+    Source.fromFile(filePathTemplates).getLines.foreach(line => if (line.replace(" ", "").startsWith("Template=")) amount += 1)
     amount
   }
 

@@ -31,22 +31,22 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
   }
 
   def zoomToRelation(modelRW: ModelRW[Model, Tree], path: Seq[String]): Option[ModelRW[Model, Elem]] = {
-      val index = modelRW.value.children.indexWhere(retrieveEntity(_).uuid.toString == path.head)
-      val elemFound = retrieveEntity(modelRW.value.children(index))
+    val index = modelRW.value.children.indexWhere(retrieveEntity(_).uuid.toString == path.head)
+    val elemFound = retrieveEntity(modelRW.value.children(index))
 
-      if (elemFound.hasRelation) {
-        val elemRW = modelRW.zoomRW(_.children.apply(index))((tree, newElem)
-        => tree.copy(children = (tree.children.take(index) :+ newElem) ++ tree.children.drop(index + 1)))
+    if (elemFound.hasRelation) {
+      val elemRW = modelRW.zoomRW(_.children.apply(index))((tree, newElem)
+      => tree.copy(children = (tree.children.take(index) :+ newElem) ++ tree.children.drop(index + 1)))
 
-        if(!elemRW.value.isRelation || path.size == 1){
-          Some(elemRW)
-        } else {
-          zoomToRelation(elemRW.zoomRW(_.asInstanceOf[Relation].submodel)((relation, newSubmodel)
-          => relation.asInstanceOf[Relation].copy(submodel = newSubmodel)), path.tail)
-        }
+      if (!elemRW.value.isRelation || path.size == 1) {
+        Some(elemRW)
       } else {
-        None
+        zoomToRelation(elemRW.zoomRW(_.asInstanceOf[Relation].submodel)((relation, newSubmodel)
+        => relation.asInstanceOf[Relation].copy(submodel = newSubmodel)), path.tail)
       }
+    } else {
+      None
+    }
   }
 
   def copyElem(elem: Elem): Elem = elem match {
@@ -63,7 +63,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
     case node: Node => node
   }
 
-  def findElem(modelRW: ModelRW[Model,Tree], path: Seq[String], elemUUID: String): Elem = {
+  def findElem(modelRW: ModelRW[Model, Tree], path: Seq[String], elemUUID: String): Elem = {
     zoomToChildren(modelRW, path) match {
       case Some(modelRW) => modelRW.value.find(retrieveEntity(_).uuid.toString == elemUUID).get
       case None => Entity("Error", "404")
@@ -92,29 +92,29 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
       case AddElem(path: Seq[String], newElem: Elem, relationType: RelationType) =>
         val elemUUID = path.last
 
-            zoomToChildren(modelRW, path.tail) match {
-              case Some(modelRW) =>
-                modelRW.value.find(_.uuid.toString == path.last) match {
-                  case Some(foundElem) => updated(modelRW.updated(modelRW.value.map(
-                    elem => if (elem.uuid.toString == foundElem.uuid.toString && !elem.isAttribute) Relation(elem.asInstanceOf[Entity], relationType, Tree(Seq(newElem))) else elem
-                  )).tree)
+        zoomToChildren(modelRW, path.tail) match {
+          case Some(modelRW) =>
+            modelRW.value.find(_.uuid.toString == path.last) match {
+              case Some(foundElem) => updated(modelRW.updated(modelRW.value.map(
+                elem => if (elem.uuid.toString == foundElem.uuid.toString && !elem.isAttribute) Relation(elem.asInstanceOf[Entity], relationType, Tree(Seq(newElem))) else elem
+              )).tree)
 
-                  case None => updated(modelRW.updated(modelRW.value :+ newElem).tree)
-                }
-              case None =>
-                noChange
+              case None => updated(modelRW.updated(modelRW.value :+ newElem).tree)
             }
+          case None =>
+            noChange
+        }
 
 
       case AddElemToPlaceholder(path: Seq[String], newElem: Elem) =>
-          zoomToChildren(modelRW, path.tail) match {
-            case Some(rw) =>
-              rw.value.find(_.uuid.toString == path.last) match {
-                case Some(_) => updated(rw.updated(addElem(newElem, rw.value, path.last)).tree)
-                case None => updated(rw.updated(newElem +: rw.value).tree)
-              }
-            case None => noChange
-          }
+        zoomToChildren(modelRW, path.tail) match {
+          case Some(rw) =>
+            rw.value.find(_.uuid.toString == path.last) match {
+              case Some(_) => updated(rw.updated(addElem(newElem, rw.value, path.last)).tree)
+              case None => updated(rw.updated(newElem +: rw.value).tree)
+            }
+          case None => noChange
+        }
 
 
       case RemoveEmptyRelation(path: Seq[String]) => {
@@ -184,11 +184,11 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         val elemUUID = oldPath.last
         val elemToMove: Elem = copyElem(findElem(modelRW, oldPath.init.tail, elemUUID))
         println("asdf")
-        if(afterChildren){
-          if (newPath.size == 1){
+        if (afterChildren) {
+          if (newPath.size == 1) {
             updated(Tree(modelRW.value.children :+ elemToMove))
           }
-          else{
+          else {
             zoomToChildren(modelRW, newPath.tail.init) match {
               case Some(rw) => updated(rw.updated(addElem(elemToMove, rw.value, newPath.last)).tree)
               case None => noChange
@@ -210,11 +210,11 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         val elemToCopy: Elem = findElem(modelRW, oldPath.init.tail, elemUUID)
         val copiedElem = copyElem(elemToCopy)
 
-        if(afterChildren){
-          if (newPath.size == 1){
+        if (afterChildren) {
+          if (newPath.size == 1) {
             updated(Tree(modelRW.value.children :+ copiedElem))
           }
-          else{
+          else {
             zoomToChildren(modelRW, newPath.tail.init) match {
               case Some(rw) => updated(rw.updated(addElem(copiedElem, rw.value, newPath.last)).tree)
               case None => noChange
@@ -255,16 +255,16 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
           case None => noChange
         }
 
-      case UpdateEntity(path:Seq[String], newEntity: Entity) =>
+      case UpdateEntity(path: Seq[String], newEntity: Entity) =>
         val elemID = path.last
 
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) =>
-            updated(modelRW.updated(modelRW.value.map(elem => if(retrieveEntity(elem).uuid.toString == elemID){
+            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).uuid.toString == elemID) {
               newEntity.setUUID(retrieveEntity(elem).uuid)
               newEntity
             }
-              else elem)).tree)
+            else elem)).tree)
           case None => noChange
         }
 
@@ -274,11 +274,11 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) =>
-            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).uuid.toString == elemID){
+            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).uuid.toString == elemID) {
               newIntAttribute.setUUID(retrieveEntity(elem).uuid)
               newIntAttribute
             }
-              else elem)).tree)
+            else elem)).tree)
 
           case None => noChange
         }
@@ -289,7 +289,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
 
         zoomToChildren(modelRW, path.tail) match {
           case Some(modelRW) =>
-            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).uuid.toString == elemID){
+            updated(modelRW.updated(modelRW.value.map(elem => if (retrieveEntity(elem).uuid.toString == elemID) {
               newStringAttribute.setUUID(retrieveEntity(elem).uuid)
               newStringAttribute
             }

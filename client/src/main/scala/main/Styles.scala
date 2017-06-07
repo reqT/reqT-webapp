@@ -10,6 +10,7 @@ import shared._
   */
 
 object Styles extends StyleSheet.Inline {
+
   import dsl._
 
   val searchView = style(
@@ -54,8 +55,8 @@ object Styles extends StyleSheet.Inline {
 
   val bootStrapRemoveButton = style(
     addClassName("btn glyphicon glyphicon-remove pull-right"),
-//    borderBottomRightRadius(0.px),
-//    borderTopRightRadius(0.px),
+    //    borderBottomRightRadius(0.px),
+    //    borderTopRightRadius(0.px),
     position.absolute,
     width(40.px),
     height(100.%%),

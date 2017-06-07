@@ -40,7 +40,7 @@ object DeleteModal {
   )
 
   def buttonAreaStyle = Seq(
-    ^.width:= "95%",
+    ^.width := "95%",
     ^.padding := "20px",
     ^.display.flex,
     ^.justifyContent.spaceBetween
@@ -51,34 +51,34 @@ object DeleteModal {
   case class Props(isOpen: Boolean, onClose: Callback, treeItem: TreeItem = null, dispatch: (Action => Callback) = null, path: Seq[String] = Seq())
 
   class Backend($: BackendScope[Props, State]) {
-    def render(P: Props, S:State) =
+    def render(P: Props, S: State) =
       if (P.isOpen) {
         <.div(
           ^.autoFocus := "true",
-          ^.onKeyDown ==> handleKeyDown(P,S),
+          ^.onKeyDown ==> handleKeyDown(P, S),
           <.div(
             modalStyle,
-            deleteElemModalStyle(P,S)
+            deleteElemModalStyle(P, S)
           ),
           <.div(
             backdropStyle,
             ^.onClick --> P.onClose
           )
         )
-      }else
+      } else
         <.div()
 
     def handleKeyDown(P: Props, S: State)(e: ReactKeyboardEventI): Callback = {
-      if (e.nativeEvent.keyCode == KeyCode.Escape){
+      if (e.nativeEvent.keyCode == KeyCode.Escape) {
         P.onClose
-      } else if(e.nativeEvent.keyCode == KeyCode.Enter){
+      } else if (e.nativeEvent.keyCode == KeyCode.Enter) {
         onDelete(P)
-      }else{
+      } else {
         Callback()
       }
     }
 
-    def deleteElemModalStyle(P : Props, S: State) =
+    def deleteElemModalStyle(P: Props, S: State) =
 
       P.treeItem.item match {
 
@@ -123,7 +123,7 @@ object DeleteModal {
             <.dl(
               ^.className := "dl-horizontal"
             ),
-            P.treeItem.children.nonEmpty ?= <.br,<.hr,
+            P.treeItem.children.nonEmpty ?= <.br, <.hr,
             <.div(
               ^.maxHeight := "300px",
               ^.overflowY := "auto",

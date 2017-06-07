@@ -27,11 +27,11 @@ object CollapseCircuit extends Circuit[ColModel] with ReactConnector[ColModel] {
 
       case ToggleCollapsed(uuid: UUID) =>
 
-        updated(modelRW.value.map(elem => if(elem.uuid == uuid) {
+        updated(modelRW.value.map(elem => if (elem.uuid == uuid) {
           Tuple(elem.uuid, !elem.collapsed)
         } else elem))
     }
-    }
+  }
 
   override protected def actionHandler = new CollapseListHandler(zoomTo(_.list))
 }

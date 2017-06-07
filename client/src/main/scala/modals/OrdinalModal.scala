@@ -18,9 +18,9 @@ object OrdinalModal {
     ^.left := "50%",
     ^.transform := "translate(-50%,-50%)",
     ^.zIndex := "9999",
-    ^.background := "#FFF" ,
+    ^.background := "#FFF",
     ^.paddingBottom := "15px",
-    ^.paddingRight := "15px" ,
+    ^.paddingRight := "15px",
     ^.paddingTop := "15px",
     ^.paddingLeft := "15px",
     ^.boxShadow := "rgba(0, 0, 0, 0.2) 5px 6px 12px 0px"
@@ -40,7 +40,7 @@ object OrdinalModal {
   def selectStyle = Seq(
     ^.className := "form-control pull-right",
     ^.width := "155px",
-    ^.height :=  "100%",
+    ^.height := "100%",
     ^.color := "BLACK",
     ^.background := "white",
     ^.textAlign.center,
@@ -69,11 +69,11 @@ object OrdinalModal {
 
 
   def generatePairs($: BackendScope[Props, State], entities: Seq[Entity]): Seq[Seq[Entity]] = {
-      entities.combinations(2).toList
+    entities.combinations(2).toList
   }
 
-  def getEntities(elems: Seq[Elem], typeToRank: String): Seq[Entity] ={
-    if (typeToRank==""){
+  def getEntities(elems: Seq[Elem], typeToRank: String): Seq[Entity] = {
+    if (typeToRank == "") {
       val all = getAllEntities(elems)
       all.filter(_.entityType == all.head.entityType)
     } else
@@ -84,7 +84,7 @@ object OrdinalModal {
   def getAllEntities(elems: Seq[Elem]): Seq[Entity] = {
     if (elems.isEmpty)
       Seq()
-    else{
+    else {
       val relations = elems.filter(_.isRelation)
       val entities = elems.filter(_.isEntity).asInstanceOf[Seq[Entity]] ++ relations.map(_.asInstanceOf[shared.Relation].entity)
       val children = relations.flatMap(_.asInstanceOf[Relation].submodel.children)
@@ -96,7 +96,7 @@ object OrdinalModal {
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
       if (P.isOpen) {
-        if (S.readyForRanking){
+        if (S.readyForRanking) {
           <.div(
             ^.onKeyDown ==> handleKeyDown(P, S),
             <.div(
@@ -125,7 +125,7 @@ object OrdinalModal {
               ^.onClick --> onClose(P)
             )
           )
-        }else{
+        } else {
           <.div(
             ^.onKeyDown ==> handleKeyDown(P, S),
             <.div(
@@ -141,7 +141,7 @@ object OrdinalModal {
               <.div(
                 buttonDivStyle,
                 <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
-                <.button("Rank", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> setState(P,S))
+                <.button("Rank", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> setState(P, S))
               )),
             <.div(
               backdropStyle,
@@ -152,7 +152,7 @@ object OrdinalModal {
       } else
         <.div()
 
-    def setState(P: Props, S:State):  Callback ={
+    def setState(P: Props, S: State): Callback = {
 
       val newPairs = generatePairs($, getEntities(P.currentModel.children, S.typeToRank))
       println(newPairs)
@@ -177,17 +177,18 @@ object OrdinalModal {
     def entityButton = ReactComponentB[pairProps]("entityButton")
       .render($ =>
         <.div(
-          ^.className :="btn-group",
+          ^.className := "btn-group",
           <.button(
-            ^.backgroundColor := {if ($.props.state.rankings($.props.index) == $.props.nbr) "green" else "white" },
-            ^.`type`:="button",
-            ^.className:="btn btn-default",
-            ^.onClick --> setRanking($.props.nbr, $.props.index),
-            {
-              $.props.nbr match{
-              case 0 => $.props.pair.head.toString()
-              case 1 => "Equal"
-              case 2 => $.props.pair.last.toString()
+            ^.backgroundColor := {
+              if ($.props.state.rankings($.props.index) == $.props.nbr) "green" else "white"
+            },
+            ^.`type` := "button",
+            ^.className := "btn btn-default",
+            ^.onClick --> setRanking($.props.nbr, $.props.index), {
+              $.props.nbr match {
+                case 0 => $.props.pair.head.toString()
+                case 1 => "Equal"
+                case 2 => $.props.pair.last.toString()
               }
             }
           )
@@ -214,39 +215,37 @@ object OrdinalModal {
     def findTypesInModel(elems: Seq[Elem]): Seq[String] = getAllEntities(elems).map(e => e.entityType).distinct
 
 
-
-
     def tell(S: State): Callback = Callback(println(S.rankings.size))
 
-    def setTypeToRank(event: ReactEventI): Callback ={
+    def setTypeToRank(event: ReactEventI): Callback = {
       val input = event.target.value
       $.modState(_.copy(typeToRank = input))
     }
 
-    def changeDeviation(event: ReactEventI): Callback ={
+    def changeDeviation(event: ReactEventI): Callback = {
       val input = event.target.value
       $.modState(_.copy(deviation = input.toInt))
     }
 
 
-    def setRanking(newRank: Int, index: Int): Callback = $.modState(S => S.copy(rankings = S.rankings.updated(index,newRank)))
+    def setRanking(newRank: Int, index: Int): Callback = $.modState(S => S.copy(rankings = S.rankings.updated(index, newRank)))
 
 
     def generateRankingList(ranks: Seq[Int], pairs: Seq[Seq[Entity]]): String = {
       val pairsWithRank = pairs.zip(ranks)
 
-      val rank = pairsWithRank.map(p => p._2 match{
-        case 0 =>  p._1.head.id + " < " + p._1.last.id
-        case 1 =>  ""
-        case 2 =>  p._1.head.id +  " > "  + p._1.last.id
-      } )
+      val rank = pairsWithRank.map(p => p._2 match {
+        case 0 => p._1.head.id + " < " + p._1.last.id
+        case 1 => ""
+        case 2 => p._1.head.id + " > " + p._1.last.id
+      })
 
-      "\""+rank.filterNot(_ == "").mkString(";")+ "\""
+      "\"" + rank.filterNot(_ == "").mkString(";") + "\""
     }
 
     def prepOrdinal(state: State, model: String): Seq[String] = {
       Seq(s"val ordinalMethod =$model",
-      s"val ranked = reqT.parse.comparisonParser.parseAndSolve(ordinalMethod,allowedDeviation=${state.deviation})")
+        s"val ranked = reqT.parse.comparisonParser.parseAndSolve(ordinalMethod,allowedDeviation=${state.deviation})")
     }
 
     def resetState: Callback = $.setState(State())

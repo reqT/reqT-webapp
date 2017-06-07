@@ -34,6 +34,7 @@ object Header {
   )
 
   case class State(openModals: OpenModals = OpenModals())
+
   case class Props(modelProxy: ModelProxy[Tree], openNewModelModal: (String, Tree) => Callback, sendMethod: Seq[String] => Callback, getCurrentModelName: Option[webApp.CachedModel])
 
   case class OpenModals(isDollarModalOpen: Boolean = false, isReleaseModalOpen: Boolean = false, isOrdinalModalOpen: Boolean = false, isCopyModalOpen: Boolean = false,
@@ -43,16 +44,24 @@ object Header {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def closeDollarModal(): Callback =  $.modState(S => S.copy(openModals = S.openModals.copy(isDollarModalOpen = false)))
+    def closeDollarModal(): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isDollarModalOpen = false)))
+
     def closeReleaseModal(): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isReleaseModalOpen = false)))
+
     def closeOrdinalModal(): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isOrdinalModalOpen = false)))
+
     def closeCopyModal(): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isCopyModalOpen = false)))
+
     def closeHelpModal(): Callback = $.modState(S => S.copy(openModals = S.openModals.copy(isHelpModalOpen = false)))
 
     def openDollarModal: Callback = $.modState(_.copy(openModals = OpenModals(isDollarModalOpen = true)))
+
     def openOrdinalModal: Callback = $.modState(_.copy(openModals = OpenModals(isOrdinalModalOpen = true)))
+
     def openReleaseModal: Callback = $.modState(_.copy(openModals = OpenModals(isReleaseModalOpen = true)))
+
     def openCopyModal: Callback = $.modState(_.copy(openModals = OpenModals(isCopyModalOpen = true)))
+
     def openHelpModal: Callback = $.modState(_.copy(openModals = OpenModals(isHelpModalOpen = true)))
 
 
@@ -63,7 +72,7 @@ object Header {
         OrdinalModal(isOpen = S.openModals.isOrdinalModalOpen, onClose = closeOrdinalModal, P.sendMethod, P.modelProxy.value),
         CopyModal(isOpen = S.openModals.isCopyModalOpen, onClose = closeCopyModal, P.modelProxy.value.makeString),
         HelpModal(isOpen = S.openModals.isHelpModalOpen, onClose = closeHelpModal),
-        navigationBar((P,S))
+        navigationBar((P, S))
       )
     }
 
@@ -82,7 +91,7 @@ object Header {
             headerButtonStyle,
             "Import",
             <.input(
-              ^.`type`:="file",
+              ^.`type` := "file",
               ^.display.none,
               ^.accept := "text/plain, .txt",
               ^.onChange ==> importModel($.props._2)
@@ -135,9 +144,9 @@ object Header {
     // Klara inte specialtecken i strängar  ------------------------------------------------------------------!!!!!
 
     def parseModel(newModel: String, P: Props): Callback = {
-      Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete{
+      Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete {
         case Success(r) => Callback(println(r.responseText))
-          P.openNewModelModal("imp",read[Model](r.responseText).tree).runNow()
+          P.openNewModelModal("imp", read[Model](r.responseText).tree).runNow()
         case Failure(e) => Callback(println(e.toString))
       }
       Callback()
@@ -145,7 +154,7 @@ object Header {
 
 
     def importModel(P: Props)(e: ReactEventI): Callback = {
-      if(e.currentTarget.files.item(0).`type` == "text/plain") {
+      if (e.currentTarget.files.item(0).`type` == "text/plain") {
         var newModel = "newModel empty, shouldn't happen"
         val fileReader = new FileReader
         fileReader.readAsText(e.currentTarget.files.item(0), "UTF-8")
@@ -169,8 +178,8 @@ object Header {
       val tempURL = dom.URL.createObjectURL(file)
       downloadElement.setAttribute("href", tempURL)
 
-      P.getCurrentModelName match{
-        case Some(cachedModel) =>  downloadElement.setAttribute("download", s"${cachedModel.name}.txt")
+      P.getCurrentModelName match {
+        case Some(cachedModel) => downloadElement.setAttribute("download", s"${cachedModel.name}.txt")
         case None => downloadElement.setAttribute("download", "reqTModel.txt")
       }
 

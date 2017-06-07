@@ -17,12 +17,12 @@ object ReactSearchBox {
     val searchBox = style(marginBottom(10 px))
 
     val input = style(
-    addClassName("form-control"),
-    fontSize(13 px),
-    fontWeight._300,
-    padding(3 px),
-    backgroundColor.transparent,
-    borderBottom :=! "1px solid #B2ADAD"
+      addClassName("form-control"),
+      fontSize(13 px),
+      fontWeight._300,
+      padding(3 px),
+      backgroundColor.transparent,
+      borderBottom :=! "1px solid #B2ADAD"
     )
   }
 
@@ -30,26 +30,26 @@ object ReactSearchBox {
 
   class Backend(t: BackendScope[Props, _]) {
     def onTextChange(P: Props)(e: ReactEventI) =
-    e.preventDefaultCB >> P.onTextChange(e.target.value)
+      e.preventDefaultCB >> P.onTextChange(e.target.value)
 
     def render(P: Props) =
-    <.div(P.style.searchBox)(
-    <.input(
-    P.style.input,
-    ^.width := "20%",
-    ^.maxWidth := "200px",
-    ^.placeholder :=  "Search",
-    ^.onKeyUp ==> onTextChange(P)
-    )
-    )
+      <.div(P.style.searchBox)(
+        <.input(
+          P.style.input,
+          ^.width := "20%",
+          ^.maxWidth := "200px",
+          ^.placeholder := "Search",
+          ^.onKeyUp ==> onTextChange(P)
+        )
+      )
   }
 
   object DefaultStyle extends Style
 
   val component = ReactComponentB[Props]("ReactSearchBox")
-  .stateless
-  .renderBackend[Backend]
-  .build
+    .stateless
+    .renderBackend[Backend]
+    .build
 
 
   def apply(onTextChange: String => Callback, style: Style = DefaultStyle, ref: js.UndefOr[String] = "", key: js.Any = {}) = component.set(key, ref)(Props(onTextChange, style))

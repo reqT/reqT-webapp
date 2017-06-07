@@ -239,7 +239,7 @@ object webApp extends js.JSApp {
           if ($.props._1.selected) "1" else "0.7"
         },
         ^.backgroundColor := {
-          if($.props._1.selected) "#90C4AB" else "#CFEADD"
+          if ($.props._1.selected) "#90C4AB" else "#CFEADD"
         },
         <.span(
           modelTabsSpanStyle,

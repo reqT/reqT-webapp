@@ -10,7 +10,7 @@ import shared._
 object ReleaseModal {
 
   def modalStyle = Seq(
-    ^.width:= "400px",
+    ^.width := "400px",
     ^.padding := "5px",
     ^.position := "absolute",
     ^.border := "1px solid #CCC",
@@ -19,9 +19,9 @@ object ReleaseModal {
     ^.left := "50%",
     ^.transform := "translate(-50%,-50%)",
     ^.zIndex := "9999",
-    ^.background := "#FFF" ,
+    ^.background := "#FFF",
     ^.paddingBottom := "15px",
-    ^.paddingRight := "15px" ,
+    ^.paddingRight := "15px",
     ^.paddingTop := "15px",
     ^.paddingLeft := "15px",
     ^.boxShadow := "rgba(0, 0, 0, 0.2) 5px 6px 12px 0px"
@@ -41,7 +41,7 @@ object ReleaseModal {
   def selectStyle() = Seq(
     ^.className := "form-control pull-right",
     ^.width := "155px",
-    ^.height :=  "100%",
+    ^.height := "100%",
     ^.color := "BLACK",
     ^.background := "white",
     ^.textAlign.center,
@@ -51,7 +51,9 @@ object ReleaseModal {
   val standardList = Seq("Release", "Feature", "Stakeholder", "Resource")
 
   sealed trait ReleaseType
+
   case object MAX extends ReleaseType
+
   case object MIN extends ReleaseType
 
   case class State(newEntity: String, newAttribute: Option[Attribute], sortBy: Seq[String], releaseType: ReleaseType = MAX)
@@ -100,12 +102,12 @@ object ReleaseModal {
               )
             ),
             <.div(
-              ^.width:= "95%",
+              ^.width := "95%",
               ^.padding := "20px",
               ^.display.flex,
               ^.justifyContent.spaceBetween,
               <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
-              <.button("OK", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> sendMethod(P,S))
+              <.button("OK", ^.className := "btn btn-success pull-right", ^.autoFocus := "true", ^.bottom := "0px", ^.onClick --> sendMethod(P, S))
             )),
           <.div(
             backdropStyle,
@@ -129,14 +131,14 @@ object ReleaseModal {
 
     def createOptions(P: Props): Seq[TagMod] = {
       val entities = getAllEntities(P.currentModel.children)
-      entities.map(e => <.option(e.toString.replaceAll("\"","")))
+      entities.map(e => <.option(e.toString.replaceAll("\"", "")))
     }
 
 
     def getAllEntities(elems: Seq[Elem]): Seq[Entity] = {
-      if (elems.isEmpty){
+      if (elems.isEmpty) {
         Seq()
-      }else{
+      } else {
         val noAttr = elems.filter(_.isEntity).asInstanceOf[Seq[Entity]]
         val relations = elems.filter(_.isRelation)
         val children = relations.flatMap(_.asInstanceOf[Relation].submodel.children)
@@ -160,9 +162,8 @@ object ReleaseModal {
 
     def changeOrder(index: Int)(e: ReactEventI): Callback = {
       val newAttr = e.target.value
-      $.modState(S => S.copy(sortBy = S.sortBy.updated(index,newAttr)))
+      $.modState(S => S.copy(sortBy = S.sortBy.updated(index, newAttr)))
     }
-
 
 
     def prepRelease(state: State, model: String): Seq[String] = {
@@ -179,7 +180,7 @@ object ReleaseModal {
       )
     }
 
-    def resetState: Callback = $.setState(State("",None, standardList))
+    def resetState: Callback = $.setState(State("", None, standardList))
 
     def setNewAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newAttribute = attribute))
 
@@ -196,13 +197,13 @@ object ReleaseModal {
   }
 
 
-    val component = ReactComponentB[Props]("Modal")
-      .initialState(State("", None, standardList))
-      .renderBackend[Backend]
-      .build
+  val component = ReactComponentB[Props]("Modal")
+    .initialState(State("", None, standardList))
+    .renderBackend[Backend]
+    .build
 
 
-    def apply(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback , currentModel: Tree)
-    = component.set()(Props(isOpen, onClose, sendMethod, currentModel))
+  def apply(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, currentModel: Tree)
+  = component.set()(Props(isOpen, onClose, sendMethod, currentModel))
 
 }

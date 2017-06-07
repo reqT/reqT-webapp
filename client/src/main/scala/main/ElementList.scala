@@ -44,7 +44,7 @@ object ElementList {
   val attributes: List[String] = intAttribute ++ stringAttribute
   val elems: List[String] = entities ++ attributes
 
-  case class State(elems: Seq[String], showEntity : Boolean = false, showAttribute: Boolean = false)
+  case class State(elems: Seq[String], showEntity: Boolean = false, showAttribute: Boolean = false)
 
   case class Props()
 
@@ -75,11 +75,11 @@ object ElementList {
       listElemStyle,
       ^.id := $.props.toString,
       ^.classID := $.props.toString,
-      $.props.toString.takeWhile(_!='('),
+      $.props.toString.takeWhile(_ != '('),
       ^.background := (if (entities.contains($.props)) "#CEDBE7" else "#CFEADD"),
-      ^.onDragStart ==>  (
+      ^.onDragStart ==> (
         if (entities.contains($.props)) dragStart(Entity($.props))
-        else if(intAttribute.contains($.props)) dragStart(IntAttribute($.props))
+        else if (intAttribute.contains($.props)) dragStart(IntAttribute($.props))
         else dragStart(StringAttribute($.props))
         )
     )
@@ -94,7 +94,6 @@ object ElementList {
     .build
 
 
-
   class Backend($: BackendScope[Unit, State]) {
     def render(S: State) = {
       <.pre(
@@ -106,7 +105,7 @@ object ElementList {
     }
 
     val searchBox = ReactComponentB[Unit]("searchBox")
-      .render( _ => <.form(
+      .render(_ => <.form(
         <.input.text(
           ^.className := "form-control",
           ^.placeholder := "Search",
@@ -116,7 +115,7 @@ object ElementList {
       ).build
 
     val checkBoxes = ReactComponentB[State]("checkBoxes")
-      .render( $ =>
+      .render($ =>
         <.div(
           <.input.checkbox(
             ^.onChange ==> toggleEntity($.props)
@@ -130,19 +129,19 @@ object ElementList {
       .build
 
     def toggleEntity(S: State)(event: ReactEventI): Callback = {
-      if(S.showEntity && S.showAttribute)
+      if (S.showEntity && S.showAttribute)
         $.modState(_.copy(elems = attributes, showEntity = !S.showEntity))
-      else if(S.showAttribute || S.showEntity)
+      else if (S.showAttribute || S.showEntity)
         $.modState(_.copy(elems = elems, showEntity = !S.showEntity))
       else
         $.modState(_.copy(elems = entities, showEntity = !S.showEntity))
     }
 
     def toggleAttribute(S: State)(event: ReactEventI): Callback = {
-      if(S.showAttribute && S.showEntity)
-        $.modState(_.copy(elems= entities, showAttribute = !S.showAttribute))
-      else if(S.showAttribute || S.showEntity)
-        $.modState(_.copy(elems= elems, showAttribute = !S.showAttribute))
+      if (S.showAttribute && S.showEntity)
+        $.modState(_.copy(elems = entities, showAttribute = !S.showAttribute))
+      else if (S.showAttribute || S.showEntity)
+        $.modState(_.copy(elems = elems, showAttribute = !S.showAttribute))
       else
         $.modState(_.copy(elems = attributes, showAttribute = !S.showAttribute))
     }

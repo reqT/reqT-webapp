@@ -20,7 +20,7 @@ import scala.util.{Failure, Success}
   */
 object ReqTLog {
 
-  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, waitingForModel: Boolean = false, isMethodRunning: Boolean = false){
+  case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, waitingForModel: Boolean = false, isMethodRunning: Boolean = false) {
     def log(line: String): State = copy(logLines = logLines :+ line)
   }
 
@@ -38,7 +38,7 @@ object ReqTLog {
       }
 
 
-      val send: Option[Callback] ={
+      val send: Option[Callback] = {
         for (websocket <- S.websocket if S.message.nonEmpty)
           yield sendMessage(websocket, S.message)
       }
@@ -98,9 +98,9 @@ object ReqTLog {
       )
       .componentDidUpdate(_ => updateScroll)
       .componentDidMount(_ => Callback({
-      var reqtLog = document.getElementById("reqTLog").asInstanceOf[dom.html.Pre]
-      reqtLog.setAttribute("style", "user-select:text;" + reqtLog.style.cssText)
-    }))
+        var reqtLog = document.getElementById("reqTLog").asInstanceOf[dom.html.Pre]
+        reqtLog.setAttribute("style", "user-select:text;" + reqtLog.style.cssText)
+      }))
       .build
 
     def restartReqT(P: Props): Callback = {
@@ -123,11 +123,13 @@ object ReqTLog {
 
 
     def sendMessage(websocket: WebSocket, msg: String): Callback = {
-      def send(msg : String) = Callback(websocket.send(msg))
+      def send(msg: String) = Callback(websocket.send(msg))
+
       def updateState = $.modState(s => s.log(s"Sent: \n$msg").copy(message = ""))
+
       def setStateToCatchModel = $.modState(_.copy(waitingForModel = true))
 
-      if(msg.startsWith("get "))
+      if (msg.startsWith("get "))
         setStateToCatchModel >> send(msg.replaceFirst("get ", "")) >> updateState
       else
         send(msg) >> updateState
@@ -135,12 +137,12 @@ object ReqTLog {
 
 
     def sendMessages(websocket: WebSocket, msg: Seq[String]): Unit = {
-      msg.foreach(sendMessage(websocket,_).runNow())
+      msg.foreach(sendMessage(websocket, _).runNow())
       $.accessDirect.modState(_.copy(isMethodRunning = true))
     }
 
     def receiveModel(S: State, P: Props, tree: Tree): Unit = {
-      if (S.isMethodRunning || S.waitingForModel){
+      if (S.isMethodRunning || S.waitingForModel) {
         P.openNewModelModal("rec", tree).runNow()
         $.modState(_.copy(isMethodRunning = false)).runNow()
       }
@@ -160,7 +162,7 @@ object ReqTLog {
 
 
         def onmessage(event: MessageEvent): Unit = {
-          if(event.data.toString.startsWith("{")){
+          if (event.data.toString.startsWith("{")) {
             val tree = read[Model](event.data.toString).tree
             receiveModel(direct.state, P, tree)
           } else {
@@ -197,6 +199,7 @@ object ReqTLog {
 
     def end: Callback = {
       def closeWebSocket = $.state.map(_.websocket.foreach(_.close()))
+
       def clearWebSocket = $.modState(_.copy(websocket = None))
 
       closeWebSocket >> clearWebSocket
@@ -205,13 +208,12 @@ object ReqTLog {
   }
 
 
-
   val component = ReactComponentB[Props]("ReqTLog")
     .initialState(State(None, Vector.empty, message = ""))
     .renderBackend[Backend]
-    .componentDidMount(x =>  x.backend.start(x.props))
+    .componentDidMount(x => x.backend.start(x.props))
     .componentWillReceiveProps(
-      x => if (x.nextProps.runMethod){
+      x => if (x.nextProps.runMethod) {
         x.$.backend.sendMessages(x.$.state.websocket.get, x.nextProps.getMethod())
         x.nextProps.methodDone
       }

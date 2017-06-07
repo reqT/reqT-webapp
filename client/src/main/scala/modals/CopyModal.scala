@@ -81,10 +81,10 @@ object CopyModal {
           ^.onKeyDown ==> handleKeyDown(P),
           copyModal(P),
           <.div(
-          backdropStyle,
-          ^.onClick --> onClose(P)
+            backdropStyle,
+            ^.onClick --> onClose(P)
+          )
         )
-      )
       else
         <.div()
     }

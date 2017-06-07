@@ -16,12 +16,22 @@ object RelationSelect {
   def selectStyle(P: Props) = Seq(
     ^.className := "form-control pull-right",
     ^.width := "155px",
-    ^.height := {if(P.isModelValue) "100%" else ""},
-    ^.color := {if(P.isModelValue) "black" else "#FF3636"},
-    ^.borderBottomLeftRadius := {if(P.isModelValue) "0px" else "5px"},
-    ^.borderTopLeftRadius := {if(P.isModelValue) "0px" else "5px"},
+    ^.height := {
+      if (P.isModelValue) "100%" else ""
+    },
+    ^.color := {
+      if (P.isModelValue) "black" else "#FF3636"
+    },
+    ^.borderBottomLeftRadius := {
+      if (P.isModelValue) "0px" else "5px"
+    },
+    ^.borderTopLeftRadius := {
+      if (P.isModelValue) "0px" else "5px"
+    },
     ^.boxShadow := "5px 6px 12px 0px rgba(0,0,0,0.2)",
-    ^.background := {if(P.isModelValue) "#FFC2C2" else "white"},
+    ^.background := {
+      if (P.isModelValue) "#FFC2C2" else "white"
+    },
     ^.textAlign.center,
     ^.textAlignLast.center
   )
@@ -31,13 +41,15 @@ object RelationSelect {
   case class State(value: String)
 
   val relationList = List("binds", "deprecates", "excludes", "has", "helps", "hurts", "impacts", "implements", "interactsWith", "is",
-  "precedes", "requires", "relatesTo", "superOf", "verifies")
+    "precedes", "requires", "relatesTo", "superOf", "verifies")
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
       <.select(
         selectStyle(P),
-        ^.value := { if(S.value.isEmpty) P.value else S.value},
+        ^.value := {
+          if (S.value.isEmpty) P.value else S.value
+        },
         ^.onChange ==> onChange(P, S)
       )(
         relationList.map(x => <.option(x))
@@ -57,9 +69,9 @@ object RelationSelect {
 
       val newRel = e.target.value
 
-      if(P.isModelValue)
+      if (P.isModelValue)
         P.dispatch match {
-          case Some(dispatch) =>  dispatch(P.updateRel.get(Some(RelationType(newRel)))) >> saveScrollPos(P)
+          case Some(dispatch) => dispatch(P.updateRel.get(Some(RelationType(newRel)))) >> saveScrollPos(P)
           case None => Callback(println("Error: Missing dispatch"))
         }
       else
@@ -77,7 +89,6 @@ object RelationSelect {
     .initialState(State(value = ""))
     .renderBackend[Backend]
     .build
-
 
 
   def apply(value: String, dispatch: Option[Action => Callback], updateRel: Option[Option[RelationType] => Action], isModelValue: Boolean, setNewRelation: Option[Option[RelationType] => Callback], saveScrollPosition: Option[Double => Callback])
