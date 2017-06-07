@@ -69,7 +69,7 @@ object ReqTLog {
           <.button(
             ^.disabled := sendVerify.isEmpty,
             ^.className := "btn btn-default",
-            "Verify Model",
+            "Send Model",
             ^.onClick -->? sendVerify
           ),
           <.button(
