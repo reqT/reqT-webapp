@@ -14,7 +14,7 @@ class ExprParser extends RegexParsers {
   val entityType: Regex = "(Ent|Meta|Item|Label|Section|Term|Actor|App|Component|Domain|Module|Product|Release|Resource|Risk|Service|Stakeholder|System|User|Class|Data|Input|Member|Output|Relationship|Design|Screen|MockUp|Function|Interface|State|Event|Epic|Feature|Goal|Idea|Issue|Req|Ticket|WorkPackage|Breakpoint|Barrier|Quality|Target|Scenario|Task|Test|Story|UseCase|VariationPoint|Variant)".r
   val intAttrType: Regex = "(Benefit|Capacity|Cost|Damage|Frequency|Min|Max|Order|Prio|Probability|Profit|Value)".r
   val stringAttrType: Regex = "(Comment|Deprecated|Example|Expectation|FileName|Gist|Image|Spec|Text|Title|Why)".r
-  //  val statusValue: Regex = "(ELICITED|SPECIFIED|VALIDATED|PLANNED|IMPLEMENTED|TESTED|RELEASED|FAILED|POSTPONED|DROPPED)".r
+  val statusValue: Regex = "(ELICITED|SPECIFIED|VALIDATED|PLANNED|IMPLEMENTED|TESTED|RELEASED|FAILED|POSTPONED|DROPPED)".r
 
   def Model: Parser[shared.Model] = "Model(" ~ opt(opt(rep(Elem ~ ",")) ~ Elem) ~ ")" ^^ {
     case _ ~ Some(Some(list) ~ elem) ~ _ => shared.Model(Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem])))
@@ -44,7 +44,7 @@ class ExprParser extends RegexParsers {
     case node: Node => node
   }
 
-  def Attribute: Parser[shared.Attribute] = IntAttribute | StringAttribute //|statusValueAttribute
+  def Attribute: Parser[shared.Attribute] = IntAttribute | StringAttribute | StatusValueAttribute
 
   def IntAttribute: Parser[shared.IntAttribute] = intAttrType ~ lpar ~ opt(int) ~ rpar ^^ {
     case tpe ~ _ ~ Some(value) ~ _ => shared.IntAttribute(tpe, value.toInt)
@@ -55,9 +55,9 @@ class ExprParser extends RegexParsers {
     case tpe ~ _ ~ _ ~ None ~ _ ~ _ => shared.StringAttribute(tpe)
   }
 
-  //  def StatusValueAttribute: Parser[shared.IntAttribute] = "Status" ~ lpar ~ statusValue ~ rpar ^^{
-  //    case _ ~ status ~ _ => shared.StatusValueAttribute(value = status)   // Måste göra StatusValue ifrån string
-  //  }
+  def StatusValueAttribute: Parser[shared.StatusValueAttribute] = "Status" ~ lpar ~ statusValue ~ rpar ^^{
+      case _ ~ value ~ _ => shared.StatusValueAttribute(value = value) // "Status" ~ i början
+  }
 
   def Entity: Parser[shared.Entity] = entityType ~ lpar ~ "\"" ~ opt(string) ~ "\"" ~ rpar ^^ {
     case tpe ~ _ ~ _ ~ Some(id) ~ _ ~ _ => shared.Entity(tpe, id)

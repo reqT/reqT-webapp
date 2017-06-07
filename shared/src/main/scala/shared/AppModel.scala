@@ -49,7 +49,7 @@ sealed trait Elem {
   var isAttribute = false
   var isStringAttribute = false
   var isIntAttribute = false
-  //  var isStatusValueAttribute = false
+  var isStatusValueAttribute = false
 
   var uuid: UUID = UUID.random()
 
@@ -166,13 +166,13 @@ case class IntAttribute(var attrType: String, var value: Int = 0) extends Attrib
   override def toString(): String = s"$attrType($value)"
 }
 
-//case class StatusValueAttribute(var attrType: String = "Status", var value: StatusValue) extends Attribute{
-//  isAttribute = true
-//  isStatusValueAttribute = true
-//
-//  override def toString(): String = s"$attrType($value)"
-//}
-//
+case class StatusValueAttribute(var attrType: String = "Status", var value: String) extends Attribute{
+  isAttribute = true
+  isStatusValueAttribute = true
+
+  override def toString(): String = s"$attrType($value)"
+}
+
 //class StatusValue extends Enumeration {
 //  val ELICITED,SPECIFIED,VALIDATED,PLANNED,IMPLEMENTED,TESTED,RELEASED,FAILED,POSTPONED,DROPPED = Value
 //}
