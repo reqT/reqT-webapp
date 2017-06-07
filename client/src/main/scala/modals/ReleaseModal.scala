@@ -48,15 +48,13 @@ object ReleaseModal {
     ^.textAlignLast.center
   )
 
-  val standardList = Seq("Release", "Feature", "Stakeholder", "Resource")
-
   sealed trait ReleaseType
 
   case object MAX extends ReleaseType
 
   case object MIN extends ReleaseType
 
-  case class State(newEntity: String, newAttribute: Option[Attribute], sortBy: Seq[String], releaseType: ReleaseType = MAX)
+  case class State(newEntity: String, newAttribute: Option[Attribute], releaseType: ReleaseType = MAX)
 
   case class Props(isOpen: Boolean, onClose: () => Callback, sendMethod: Seq[String] => Callback, currentModel: Tree)
 
@@ -68,6 +66,7 @@ object ReleaseModal {
           <.div(
             modalStyle,
             <.h4(
+              getDefaultValue(P.currentModel.children),
               "Release Planning",
               ^.textAlign.center
             ),
@@ -122,6 +121,7 @@ object ReleaseModal {
       .render($ =>
         <.select(
           selectStyle(),
+          ^.defaultValue := getDefaultValue($.props.currentModel.children).replaceAll("\"", ""),
           ^.onChange ==> changeEntity
         )(
           createOptions($.props)
@@ -129,11 +129,11 @@ object ReleaseModal {
       )
       .build
 
-    def createOptions(P: Props): Seq[TagMod] = {
-      val entities = getAllEntities(P.currentModel.children)
-      entities.map(e => <.option(e.toString.replaceAll("\"", "")))
-    }
+    def createOptions(P: Props): Seq[TagMod] = getEntities(P.currentModel.children).map(entity => <.option(entity.toString().replaceAll("\"", "")))
 
+    def getEntities(elems: Seq[Elem]): Seq[Entity] = getAllEntities(elems).distinct
+
+    def getDefaultValue(elems: Seq[Elem]): String = getEntities(elems).find(_.entityType == "Release").get.toString()
 
     def getAllEntities(elems: Seq[Elem]): Seq[Entity] = {
       if (elems.isEmpty) {
@@ -160,31 +160,32 @@ object ReleaseModal {
       }))
 
 
-    def changeOrder(index: Int)(e: ReactEventI): Callback = {
-      val newAttr = e.target.value
-      $.modState(S => S.copy(sortBy = S.sortBy.updated(index, newAttr)))
-    }
+    def prepRelease(P:Props, S: State): Seq[String] = {
 
+      val entity =
+        if(S.newEntity.nonEmpty)
+          S.newEntity.replaceFirst("\\(", "(\"").reverse.replaceFirst("\\)", ")\"").reverse
+        else
+          getDefaultValue(P.currentModel.children)
 
-    def prepRelease(state: State, model: String): Seq[String] = {
-      val entity = state.newEntity.replaceFirst("\\(", "(\"").reverse.replaceFirst("\\)", ")\"").reverse
-      val attribute = state.newAttribute.getOrElse("Benefit").toString.split('(').head
-      val problemType = state.releaseType match {
+      val model = P.currentModel.makeString.replaceAll("\n","")
+      val attribute = S.newAttribute.getOrElse("Benefit").toString.split('(').head
+      val problemType = S.releaseType match {
         case MAX => "maximize"
         case MIN => "minimize"
       }
 
       Seq(
         s"val releaseMethod=$model\n",
-        s"val solution = csp.releasePlan(releaseMethod).$problemType($entity/$attribute)\n"
+        s"val solution = csp.releasePlan(releaseMethod).$problemType($entity/$attribute).sortByTypes(Release, Feature, Stakeholder, Resource)\n"
       )
     }
 
-    def resetState: Callback = $.setState(State("", None, standardList))
+    def resetState: Callback = $.setState(State("", None))
 
     def setNewAttribute(attribute: Option[Attribute]): Callback = $.modState(_.copy(newAttribute = attribute))
 
-    def sendMethod(P: Props, S: State): Callback = P.sendMethod(prepRelease(S, P.currentModel.makeString)) >> onClose(P)
+    def sendMethod(P: Props, S: State): Callback = P.sendMethod(prepRelease(P,S)) >> onClose(P)
 
     def onClose(P: Props): Callback = P.onClose() >> resetState
 
@@ -198,7 +199,7 @@ object ReleaseModal {
 
 
   val component = ReactComponentB[Props]("Modal")
-    .initialState(State("", None, standardList))
+    .initialState(State("", None))
     .renderBackend[Backend]
     .build
 

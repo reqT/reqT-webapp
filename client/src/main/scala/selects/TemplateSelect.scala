@@ -65,7 +65,7 @@ object TemplateSelect {
 
     val template = ReactComponentB[(Props, String)]("template")
       .render(P =>
-        <.button(
+        <.div(
           ^.className := "list-group-item",
           ^.boxShadow := "0px 8px 16px 0px rgba(0,0,0,0.2)",
           P.props._2,

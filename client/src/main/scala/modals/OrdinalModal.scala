@@ -43,6 +43,7 @@ object OrdinalModal {
     ^.height := "100%",
     ^.color := "BLACK",
     ^.background := "white",
+    ^.overflow.hidden,
     ^.textAlign.center,
     ^.textAlignLast.center
   )
@@ -180,15 +181,15 @@ object OrdinalModal {
           ^.className := "btn-group",
           <.button(
             ^.backgroundColor := {
-              if ($.props.state.rankings($.props.index) == $.props.nbr) "green" else "white"
+              if ($.props.state.rankings($.props.index) == $.props.nbr) "#03EE7D" else "white"
             },
             ^.`type` := "button",
             ^.className := "btn btn-default",
             ^.onClick --> setRanking($.props.nbr, $.props.index), {
               $.props.nbr match {
-                case 0 => $.props.pair.head.toString()
+                case 0 => $.props.pair.head.id
                 case 1 => "Equal"
-                case 2 => $.props.pair.last.toString()
+                case 2 => $.props.pair.last.id
               }
             }
           )
@@ -244,7 +245,7 @@ object OrdinalModal {
     }
 
     def prepOrdinal(state: State, model: String): Seq[String] = {
-      Seq(s"val ordinalMethod =$model",
+      Seq(s"val ordinalMethod =${model.replaceAll("\n","")}",
         s"val ranked = reqT.parse.comparisonParser.parseAndSolve(ordinalMethod,allowedDeviation=${state.deviation})")
     }
 
