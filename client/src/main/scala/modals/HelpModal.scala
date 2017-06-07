@@ -10,7 +10,6 @@ object HelpModal {
   val textAreaStyle = Seq(
     ^.className := "form-control",
     ^.rows := 6,
-    //              ^.width := "95%",
     ^.maxWidth := "100%",
     ^.maxHeight := "200px",
     ^.border := "1px solid #CCC",

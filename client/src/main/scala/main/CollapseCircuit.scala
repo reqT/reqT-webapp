@@ -1,8 +1,8 @@
-package example
+package main
 
 import diode._
 import diode.react.ReactConnector
-import example.ReactTreeView.{AddTuple, RemoveTuple, ToggleCollapsed, Tuple}
+import main.ReactTreeView.{AddTuple, RemoveTuple, ToggleCollapsed, Tuple}
 import shared._
 
 case class ColModel(list: Seq[Tuple])
@@ -27,9 +27,9 @@ object CollapseCircuit extends Circuit[ColModel] with ReactConnector[ColModel] {
 
       case ToggleCollapsed(uuid: UUID) =>
 
-        updated(modelRW.value.map(x => if(x.uuid == uuid) {
-          Tuple(x.uuid, !x.collapsed)
-        } else x))
+        updated(modelRW.value.map(elem => if(elem.uuid == uuid) {
+          Tuple(elem.uuid, !elem.collapsed)
+        } else elem))
     }
     }
 

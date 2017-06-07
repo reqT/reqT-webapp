@@ -1,4 +1,4 @@
-package example
+package main
 
 /**
   * Created by phiped on 5/25/17.
@@ -44,8 +44,7 @@ object ElementList {
   val attributes: List[String] = intAttribute ++ stringAttribute
   val elems: List[String] = entities ++ attributes
 
-  case class State(elems: Seq[String], entityChecked : Boolean = false,
-                   attributeChecked: Boolean = false)
+  case class State(elems: Seq[String], showEntity : Boolean = false, showAttribute: Boolean = false)
 
   case class Props()
 
@@ -131,21 +130,21 @@ object ElementList {
       .build
 
     def toggleEntity(S: State)(event: ReactEventI): Callback = {
-      if(S.entityChecked && S.attributeChecked)
-        $.modState(_.copy(elems = attributes, entityChecked = !S.entityChecked))
-      else if(S.attributeChecked || S.entityChecked)
-        $.modState(_.copy(elems = elems, entityChecked = !S.entityChecked))
+      if(S.showEntity && S.showAttribute)
+        $.modState(_.copy(elems = attributes, showEntity = !S.showEntity))
+      else if(S.showAttribute || S.showEntity)
+        $.modState(_.copy(elems = elems, showEntity = !S.showEntity))
       else
-        $.modState(_.copy(elems = entities, entityChecked = !S.entityChecked))
+        $.modState(_.copy(elems = entities, showEntity = !S.showEntity))
     }
 
     def toggleAttribute(S: State)(event: ReactEventI): Callback = {
-      if(S.attributeChecked && S.entityChecked)
-        $.modState(_.copy(elems= entities, attributeChecked = !S.attributeChecked))
-      else if(S.attributeChecked || S.entityChecked)
-        $.modState(_.copy(elems= elems, attributeChecked = !S.attributeChecked))
+      if(S.showAttribute && S.showEntity)
+        $.modState(_.copy(elems= entities, showAttribute = !S.showAttribute))
+      else if(S.showAttribute || S.showEntity)
+        $.modState(_.copy(elems= elems, showAttribute = !S.showAttribute))
       else
-        $.modState(_.copy(elems = attributes, attributeChecked = !S.attributeChecked))
+        $.modState(_.copy(elems = attributes, showAttribute = !S.showAttribute))
     }
 
     def onTextChange(event: ReactEventI): Callback =

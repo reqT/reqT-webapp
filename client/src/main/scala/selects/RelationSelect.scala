@@ -64,8 +64,8 @@ object RelationSelect {
         }
       else
         P.setNewRelation match {
-          case Some(setRelation) => setRelation(Some(RelationType(newRel))) >> $.setState(s = S.copy(value = e.target.value)) >> saveScrollPos(P)
-          case None => Callback(println("Error: Missing setNewRelation method")) >> saveScrollPos(P)
+          case Some(setRelation) => setRelation(Some(RelationType(newRel))) >> $.setState(s = S.copy(value = e.target.value))
+          case None => Callback(println("Error: Missing setNewRelation method"))
         }
     }
 

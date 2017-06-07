@@ -32,13 +32,6 @@ object EntitySelect {
 
   case class State(value: String)
 
-//  def fromString(value: String): Option[Entity] = {
-//    Vector(Item(), Label(), Meta(), Section(), Term(), Actor(), App(), Component(), Domain(), Module(), Product(), Release(),
-//      Risk(), Service(), Stakeholder(), System(), User(), Class(), Data(), Input(), Member(), Output(), Relationship(), Design(), Screen(), MockUp(),
-//      Function(), Interface(), Epic(), Feature(), Goal(), Idea(), Issue(), Req(), Ticket(), WorkPackage(), Breakpoint(), Barrier(), Quality(), Target(),
-//      Scenario(), Task(), Test(), Story(), UseCase(), VariationPoint(), Variant()).find(_.toString.replace("(\"\")","") == value)
-//  }
-
 
   class Backend($: BackendScope[Props, State]) {
     def render(P: Props, S: State) =
@@ -58,9 +51,7 @@ object EntitySelect {
       val newEntity = e.target.value
       P.setNewEntity(Some(Entity(newEntity))) >> $.setState(s = S.copy(value = newEntity))
     }
-
   }
-
 
 
   val component = ReactComponentB[Props]("EntitySelect")

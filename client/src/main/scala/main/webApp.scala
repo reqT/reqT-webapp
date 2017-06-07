@@ -1,4 +1,4 @@
-package example
+package main
 
 import org.scalajs.dom._
 import org.scalajs.dom
@@ -183,9 +183,9 @@ object webApp extends js.JSApp {
     def saveModel(name: String, model: Tree, P: Props): Callback =
       $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, model, selected = false, UUID.random())))
 
-    def sendMethod(currentMethod: Seq[String]) = $.modState(_.copy(method = currentMethod, isMethodStarted = true))
+    def sendMethod(currentMethod: Seq[String]): Callback = $.modState(_.copy(method = currentMethod, isMethodStarted = true))
 
-    def methodDone = $.modState(_.copy(isMethodStarted = false))
+    def methodDone: Callback = $.modState(_.copy(isMethodStarted = false))
 
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)

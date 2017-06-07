@@ -116,22 +116,6 @@ object ReleaseModal {
         <.div()
 
 
-//    val orderSelect = ReactComponentB[Int]("orderSelect")
-//      .render($ =>
-//        <.select(
-//          selectStyle(),
-//          ^.defaultValue := standardList($.props),
-//          ^.onChange ==> changeOrder($.props)
-//        )(
-//          <.option("Release"),
-//          <.option("Feature"),
-//          <.option("Stakeholder"),
-//          <.option("Resource")
-//        )
-//      )
-//      .build
-
-
     val entitySelect = ReactComponentB[Props]("entitySelect")
       .render($ =>
         <.select(
@@ -192,7 +176,6 @@ object ReleaseModal {
       Seq(
         s"val releaseMethod=$model\n",
         s"val solution = csp.releasePlan(releaseMethod).$problemType($entity/$attribute)\n"
-//        s"val solution = CSPproblem.$problemType($entity/$attribute)\n"
       )
     }
 

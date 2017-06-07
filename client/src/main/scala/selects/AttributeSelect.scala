@@ -28,14 +28,6 @@ object AttributeSelect {
   val intAttributeList = List("Benefit", "Capacity", "Cost", "Damage", "Frequency", "Min", "Max", "Order", "Prio", "Probability", "Profit", "Value")
 
   val stringAttributeList = List("Code", "Comment", "Deprecated", "Example", "Expectation", "FileName", "Gist", "Image", "Spec", "Text", "Title", "Why")
-//
-//  def intAttrfromString(value: String): Option[IntAttribute] = {
-//    Vector("Benefit", "Capacity", "Cost", "Damage", "Frequency", "Min", "Max", "Order", "Prio", "Probability", "Profit", "Value").find(_ == value)
-//  }
-//
-//  def stringAttrfromString(value: String): Option[StringAttribute] = {
-//    Vector("Code", "Comment", "Deprecated", "Example", "Expectation", "FileName", "Gist", "Image", "Spec", "Text", "Title", "Why").find(_ == value)
-//  }
 
 
   class Backend($: BackendScope[Props, State]) {

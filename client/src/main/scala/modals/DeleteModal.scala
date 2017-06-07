@@ -1,7 +1,7 @@
 package modals
 
 import diode.Action
-import example.TreeItem
+import main.TreeItem
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import org.scalajs.dom.ext.KeyCode
@@ -88,7 +88,6 @@ object DeleteModal {
             ^.fontSize := "16px",
             ^.textAlign.center
           ),
-//          <.br,
           <.div(
             buttonAreaStyle,
             <.button("Cancel", ^.className := "btn btn-default", ^.bottom := "0px", ^.onClick --> P.onClose),
@@ -110,7 +109,7 @@ object DeleteModal {
               ^.color := {
                 if (item.isInstanceOf[IntAttribute] || item.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA"
               },
-              P.treeItem.entityToString),
+              P.treeItem.nodeToString),
             <.dd(
               ^.whiteSpace := "pre-line",
               P.treeItem.contentToString
@@ -131,7 +130,7 @@ object DeleteModal {
               P.treeItem.children.map(child => {
                 Seq(
                   <.dt(
-                    child.entityToString.replaceAll("TreeItem", ""),
+                    child.nodeToString.replaceAll("TreeItem", ""),
                     ^.textAlign := "center",
                     ^.color := {
                       if (child.item.isInstanceOf[IntAttribute] || child.item.isInstanceOf[StringAttribute]) "#03EE7D" else "#047BEA"
@@ -172,7 +171,6 @@ object DeleteModal {
   val component = ReactComponentB[Props]("Modal")
     .initialState(State())
     .renderBackend[Backend]
-//    .componentWillReceiveProps(i => i.$.backend.initStates(i.nextProps))
     .build
 
   def apply(isOpen: Boolean, onClose: Callback, treeItem: TreeItem, dispatch: (Action => Callback), path: Seq[String])

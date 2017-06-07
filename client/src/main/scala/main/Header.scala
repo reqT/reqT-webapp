@@ -1,4 +1,4 @@
-package example
+package main
 
 import diode.react.ModelProxy
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEvent, ReactEventI}
@@ -100,7 +100,7 @@ object Header {
               "Copy Model",
               ^.onClick --> openCopyModal
             )
-          case "Templates" => TemplateSelect(setTemplate, $.props._2.openNewModelModal)
+          case "Templates" => TemplateSelect($.props._2.openNewModelModal)
           case "100$" =>
             <.button(
               headerButtonStyle,
@@ -131,8 +131,6 @@ object Header {
             ^.onClick --> Callback()
           )
         }).build
-
-    def setTemplate(child: Seq[Elem]): Callback = Callback(println(child.toString()))
 
     // Klara inte specialtecken i strängar  ------------------------------------------------------------------!!!!!
 

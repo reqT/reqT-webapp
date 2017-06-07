@@ -54,9 +54,6 @@ class WebSocketActor(out: ActorRef) extends Actor {
       case _ if response.contains("dollarMethod") | response.contains("releaseMethod") | response.contains("ordinalMethod")  =>
         out ! response
 
-//      case Some(_) if response.contains("CSPproblem") =>
-//        out ! response
-
       case Some(m)  =>
         trimModel(m.matched.drop(m.matched.indexOf("Model")).replaceAll(" +", " ")) match {
           case Some(model) => out !  write[Model](parser.parseAll(parser.Model, model).get)

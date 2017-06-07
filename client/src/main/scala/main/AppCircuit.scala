@@ -1,4 +1,4 @@
-package example
+package main
 
 import diode._
 import diode.react.ReactConnector
@@ -210,17 +210,17 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         val elemToCopy: Elem = findElem(modelRW, oldPath.init.tail, elemUUID)
         val copiedElem = copyElem(elemToCopy)
 
-//        if(afterChildren){
-//          if (newPath.size == 1){
-//            updated(Tree(modelRW.value.children :+ copiedElem))
-//          }
-//          else{
-//            zoomToChildren(modelRW, newPath.tail.init) match {
-//              case Some(rw) => updated(rw.updated(addElem(copiedElem, rw.value, newPath.last)).tree)
-//              case None => noChange
-//            }
-//          }
-//        } else {
+        if(afterChildren){
+          if (newPath.size == 1){
+            updated(Tree(modelRW.value.children :+ copiedElem))
+          }
+          else{
+            zoomToChildren(modelRW, newPath.tail.init) match {
+              case Some(rw) => updated(rw.updated(addElem(copiedElem, rw.value, newPath.last)).tree)
+              case None => noChange
+            }
+          }
+        } else {
           zoomToChildren(modelRW, newPath.tail) match {
             case Some(rw) =>
               rw.value.find(_.uuid.toString == newPath.last) match {
@@ -229,7 +229,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
               }
             case None => noChange
           }
-//        }
+        }
 
       case SetModel(treeItem: Seq[Elem]) =>
         val model = Tree(treeItem)

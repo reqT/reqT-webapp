@@ -1,7 +1,7 @@
 package modals
 
 import diode.Action
-import example.TreeItem
+import main.TreeItem
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import org.scalajs.dom.ext.KeyCode
@@ -156,7 +156,7 @@ object EditModal {
               ^.color := "#03EE7D",
               AttributeSelect(stringAttr.getType, isIntAttr = false, setNewAttribute)
             )
-            case _: Entity => EntitySelect(P.treeItem.entityToString, setNewEntity, isModelValue = false)
+            case _: Entity => EntitySelect(P.treeItem.nodeToString, setNewEntity, isModelValue = false)
           }),
         <.dd(
           if (P.treeItem.item.isInstanceOf[IntAttribute]) {
@@ -196,7 +196,7 @@ object EditModal {
           P.treeItem.children.map(x => {
             Seq(
               <.dt(
-                x.entityToString.replaceAll("TreeItem", ""),
+                x.nodeToString.replaceAll("TreeItem", ""),
                 ^.textAlign := "center",
                 ^.paddingRight := "3.5%",
                 ^.color := {

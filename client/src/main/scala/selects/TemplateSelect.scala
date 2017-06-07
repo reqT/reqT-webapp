@@ -10,7 +10,7 @@ object TemplateSelect {
 
   case class State(isOpen: Boolean = false)
 
-  case class Props(saveTree: Seq[Elem] => Callback, openNewModelModal: (String, Tree) => Callback)
+  case class Props(openNewModelModal: (String, Tree) => Callback)
 
   def contentStyle = Seq(
     ^.marginTop := "11px",
@@ -92,25 +92,6 @@ object TemplateSelect {
       e.preventDefault()
       val template = e.target.textContent.toString
 
-//     val setTemplate = template match {
-//        case "Goal-Design scale" => P.saveTree(m1)
-//        case "Why + Spec + Example" => P.saveTree(m2)
-//        case "Context Diagram I" => P.saveTree(m3)
-//        case "Context Diagram II" => P.saveTree(m4)
-//        case "Data dictionary" => P.saveTree(m5)
-//        case "State transition model" => P.saveTree(m6)
-//        case "Model with section" => P.saveTree(m7)
-//        case "Prioritization $100 method" => P.saveTree(m8)
-//        case "Prioritization Ordinal Ranking" => P.saveTree(m9)
-//        case "Hotel Reception" => P.saveTree(m10)
-//        case "Quper" => P.saveTree(m11)
-//        case "Quality Requirements" => P.saveTree(m12)
-//        case "Variability Modelling" => P.saveTree(m13)
-//        case "Release Planning I" => P.saveTree(m14)
-//        case "Release Planning II" =>P.saveTree(m15)
-//      }
-//       setTemplate >> P.openNewModelModal("temp")
-
       val T = template match {
         case "Goal-Design scale" => m1
         case "Why + Spec + Example" => m2
@@ -138,7 +119,7 @@ object TemplateSelect {
     .renderBackend[Backend]
     .build
 
-  def apply(saveTree: Seq[Elem] => Callback, openNewModelModal: (String, Tree) => Callback) = component.set()(Props(saveTree, openNewModelModal))
+  def apply(openNewModelModal: (String, Tree) => Callback) = component.set()(Props(openNewModelModal))
 
 
   val m1 = Vector(Relation(Entity("Goal", "accuracy"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Our pre-calculations shall hit within 5%")))), Relation(Entity("Feature", "quotation"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Product shall support cost recording and quotation with experience data")))), Relation(Entity("Function", "experienceData"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Product shall have recording and retrieval functions for experience data")))), Relation(Entity("Design", "screenX"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "System shall have screen pictures as shown in Fig. X")))))

@@ -1,6 +1,6 @@
 package modals
 
-import example.AppCircuit
+import main.AppCircuit
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactKeyboardEventI, _}
 import org.scalajs.dom.ext.KeyCode

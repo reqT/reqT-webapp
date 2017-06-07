@@ -1,4 +1,4 @@
-package example
+package main
 
 import scalacss.Defaults._
 import scalacss.internal.mutable.GlobalRegistry

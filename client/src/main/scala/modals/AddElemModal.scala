@@ -1,7 +1,7 @@
 package modals
 
 import diode.Action
-import example.TreeItem
+import main.TreeItem
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import org.scalajs.dom.ext.KeyCode
@@ -147,16 +147,16 @@ object AddElemModal {
                 if (P.treeItem.item.isInstanceOf[Attribute]) "#03EE7D" else "#047BEA"
               },
               if (P.addToPlaceholder) {
-                P.treeItem.entityToString
+                P.treeItem.nodeToString
               } else {
-                P.treeItem.entityToString
+                P.treeItem.nodeToString
               }
             ),
             <.dd(
               ^.marginTop := "-18px",
               ^.whiteSpace := "pre-line",
               ^.wordBreak := "break-word", {
-                if (P.treeItem.entityToString != "Model") P.treeItem.contentToString else ""
+                if (P.treeItem.nodeToString != "Model") P.treeItem.contentToString else ""
               }
 
             ),
