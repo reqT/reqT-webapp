@@ -225,7 +225,7 @@ object webApp extends js.JSApp {
               ^.height := "0px",
               ^.className := "nav nav-pills",
               ^.listStyleType.none,
-              $.props._2.cachedModels.reverse.map(s => listModels((s, $.props._1, $.props._2)))
+              $.props._2.cachedModels.map(s => listModels((s, $.props._1, $.props._2)))
             )
           )
         )
