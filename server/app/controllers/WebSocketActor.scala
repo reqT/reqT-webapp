@@ -70,15 +70,24 @@ class WebSocketActor(out: ActorRef) extends Actor {
   val readThread = new Thread(new Runnable {
     override def run() = {
       while (reqTprocess.isAlive && !stopReadThread) {
-
+        var releasePlanDone = true
+        var counter = 0
         if (reqTis.available() > 0) {
           val nbrOfReadBytes = reqTis.read(buf, 0, 10000)
           val response = buf.take(nbrOfReadBytes).map(_.toChar).mkString
-
+          if(response.contains("releaseMethod")) releasePlanDone = false
+          if(response.contains("solution")) releasePlanDone = true
           sendResponse(response.replaceAll("<!-- reqT server ready for input -->", "").replaceAll("[\r\n]+", "\n"))
 
         } else {
           Thread.sleep(500)
+          if(!releasePlanDone){
+            counter += 1
+            if(counter > 5){
+              counter = 0
+              sendResponse("reqT is still evaluating")
+            }
+          }
         }
       }
     }
