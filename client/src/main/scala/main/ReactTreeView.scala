@@ -49,8 +49,6 @@ object ReactTreeView {
 
   case class AddTuple(tuple: Tuple) extends Action
 
-  case class RemoveTuple(tuple: Tuple) extends Action
-
   case class ToggleCollapsed(uuid: UUID) extends Action
 
   trait Style {

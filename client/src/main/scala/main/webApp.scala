@@ -298,6 +298,7 @@ object webApp extends js.JSApp {
 
   def main(): Unit = {
     Styles.addToDocument()
+    window.onbeforeunload = {beforeUnloadEvent: BeforeUnloadEvent => "Leave?"}
     ReactDOM.render(dc(proxy => pageContent(Props(proxy))), document.getElementById("content"))
   }
 }
