@@ -64,7 +64,6 @@ class WebSocketActor(out: ActorRef) extends Actor {
 
     }
   }
-
   @volatile var stopReadThread = false
 
   val readThread = new Thread(new Runnable {

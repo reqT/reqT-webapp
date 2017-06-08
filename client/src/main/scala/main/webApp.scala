@@ -180,8 +180,11 @@ object webApp extends js.JSApp {
     def getScroll: Callback = $.modState(_.copy(scrollPosition = document.getElementById("treeView").scrollTop))
 
 
-    def saveModel(name: String, model: Tree, P: Props): Callback =
-      $.modState(s => s.copy(cachedModels = s.cachedModels :+ CachedModel(name, model, selected = false, UUID.random())))
+    def saveModel(name: String, model: Tree, P: Props, S: State): Callback = {
+      var m = new CachedModel(name, model ,selected = false, UUID.random())
+      $.modState(s => s.copy(cachedModels = s.cachedModels :+ m))
+
+    }
 
     def sendMethod(currentMethod: Seq[String]): Callback = $.modState(_.copy(method = currentMethod, isMethodStarted = true))
 
@@ -190,7 +193,7 @@ object webApp extends js.JSApp {
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
       <.div(
-        NewModelModal(isOpen = S.isNewModelModalOpen, onClose = closeNewModelModal, saveModel = saveModel(_, _, P), S.newModel, S.saveModelType),
+        NewModelModal(isOpen = S.isNewModelModalOpen, onClose = closeNewModelModal, saveModel = saveModel(_, _, P, S), S.newModel, S.saveModelType),
         contentDivStyle,
         <.div(
           ^.className := "header",
