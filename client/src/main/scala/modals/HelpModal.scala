@@ -95,11 +95,29 @@ object HelpModal {
             "Help",
             ^.textAlign.center
           ),
-          <.dd(
-            <.a(^.href := "https://github.com/NilssonJohan/reqT.js/blob/master/README.md",
-              "ReadMe",
+          <.div(
+            <.ul(
+              <.li(
+              <.a(^.href := "https://github.com/NilssonJohan/reqT.js/blob/master/README.md",
+              "reqT application Guide",
               ^.target := "blank")
-          ),
+              ),
+              <.li(
+                <.a(^.href := "http://reqt.org/",
+                "reqT webpage",
+                ^.target := "blank")
+              ),
+              <.li(
+              <.a(^.href := "http://reqt.org/reqT-cheat-sheet.pdf",
+                "reqT cheat sheet",
+                ^.target := "blank")
+              ),
+            <.li(
+              <.a(^.href := "http://reqt.org/metamodel.html",
+                "reqT metamodel",
+                ^.target := "blank")
+            )
+          )),
           <.div(
             buttonAreaStyle,
             <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose($.props))
