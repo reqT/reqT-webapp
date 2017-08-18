@@ -96,6 +96,9 @@ object HelpModal {
             ^.textAlign.center
           ),
           <.dd(
+            <.a(^.href := "https://github.com/NilssonJohan/reqT.js/blob/master/README.md",
+              "ReadMe",
+              ^.target := "blank")
           ),
           <.div(
             buttonAreaStyle,

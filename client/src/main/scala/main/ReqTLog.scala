@@ -180,8 +180,8 @@ object ReqTLog {
           direct.modState(_.copy(websocket = None).log(s"Closed: ${event.reason}"))
         }
 
-        val url = "ws://vm45.cs.lth.se:9000/socket"
-
+        //val url = "ws://vm45.cs.lth.se:9000/socket"
+        val url = "ws://localhost:9000/socket"
         val websocket = new WebSocket(url)
         websocket.onopen = onopen _
         websocket.onclose = onclose(websocket: WebSocket) _

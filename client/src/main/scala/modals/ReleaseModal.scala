@@ -66,7 +66,7 @@ object ReleaseModal {
           <.div(
             modalStyle,
             <.h4(
-              getDefaultValue(P.currentModel.children),
+              //getDefaultValue(P.currentModel.children),
               "Release Planning",
               ^.textAlign.center
             ),
@@ -133,7 +133,7 @@ object ReleaseModal {
 
     def getEntities(elems: Seq[Elem]): Seq[Entity] = getAllEntities(elems).distinct
 
-    def getDefaultValue(elems: Seq[Elem]): String = getEntities(elems).find(_.entityType == "Release").get.toString()
+    def getDefaultValue(elems: Seq[Elem]): String = getEntities(elems).find(_.entityType == "Release").getOrElse("Could not find Release").toString()
 
     def getAllEntities(elems: Seq[Elem]): Seq[Entity] = {
       if (elems.isEmpty) {
