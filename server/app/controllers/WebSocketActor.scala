@@ -50,7 +50,7 @@ class WebSocketActor(out: ActorRef) extends Actor {
 
     """= *Model[(].*[)]""".r.findFirstMatchIn(response.replaceAll("\n", " ")) match {
 
-      case _ if response.contains("dollarMethod") | response.contains("releaseMethod") | response.contains("ordinalMethod") =>
+      case _ if response.contains("dollarMethod") | response.contains("releaseMethod") | response.contains("val ordinalMethod") =>
         out ! response
 
       case Some(m) =>

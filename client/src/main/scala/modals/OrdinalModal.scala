@@ -156,7 +156,6 @@ object OrdinalModal {
     def setState(P: Props, S: State): Callback = {
 
       val newPairs = generatePairs($, getEntities(P.currentModel.children, S.typeToRank))
-      println(newPairs)
 
       $.modState(_.copy(rankings = List.fill(newPairs.size)(1), pairs = newPairs, readyForRanking = true))
     }

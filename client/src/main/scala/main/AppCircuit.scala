@@ -183,7 +183,7 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
       case MoveElemToPlaceholder(oldPath: Seq[String], newPath: Seq[String], afterChildren: Boolean) =>
         val elemUUID = oldPath.last
         val elemToMove: Elem = copyElem(findElem(modelRW, oldPath.init.tail, elemUUID))
-        println("asdf")
+
         if (afterChildren) {
           if (newPath.size == 1) {
             updated(Tree(modelRW.value.children :+ elemToMove))
