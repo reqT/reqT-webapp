@@ -14,6 +14,7 @@ import upickle.default.read
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
+import shared.Global
 
 /**
   * Created by johan on 5/26/17.
@@ -180,8 +181,9 @@ object ReqTLog {
           direct.modState(_.copy(websocket = None).log(s"Closed: ${event.reason}"))
         }
 
-        //val url = "ws://vm45.cs.lth.se:9000/socket"
-        val url = "ws://localhost:9000/socket"
+
+        val url = Global().socketURL
+
         val websocket = new WebSocket(url)
         websocket.onopen = onopen _
         websocket.onclose = onclose(websocket: WebSocket) _
