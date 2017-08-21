@@ -153,7 +153,6 @@ object AddElemModal {
               }
             ),
             <.dd(
-              ^.marginTop := "-18px",
               ^.whiteSpace := "pre-line",
               ^.wordBreak := "break-word", {
                 if (P.treeItem.nodeToString != "Model") P.treeItem.contentToString else ""

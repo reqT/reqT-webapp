@@ -510,7 +510,7 @@ object ReactTreeView {
 
 
       def action = {
-        if (ctrlHeld)
+        if (ctrlHeld & !isAttribute)
           dispatch(CopyElem(pathFrom, pathTo, RelationType("has")))
         else if (isAttribute || dropOnSelf || dropOnItsChildren) {
           dispatch(NoAction)

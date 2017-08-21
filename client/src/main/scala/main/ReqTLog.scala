@@ -182,7 +182,8 @@ object ReqTLog {
         }
 
 
-        val url = Global().socketURL
+        //val url = Global().socketURL
+        val url = "ws://localhost:9000/socket"
 
         val websocket = new WebSocket(url)
         websocket.onopen = onopen _
