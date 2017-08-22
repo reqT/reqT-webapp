@@ -678,6 +678,7 @@ object ReactTreeView {
         else ""
 
       <.div(
+        ^.outline := "none",
         ^.width := "100%",
         ^.height := "100%",
         ^.onDragOver ==> onDragOver(P),
