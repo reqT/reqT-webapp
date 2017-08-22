@@ -769,8 +769,8 @@ object ReactTreeView {
                   S.draggedOver ?= dragOverStyle(P),
                   S.selected ?= selectedStyle(P),
                   ^.position.absolute,
-                  ^.top := "0%",
-                  ^.height := "100%",
+                  ^.top := "-1%",
+                  ^.height := "103%",
                   ^.left := "100%",
                   RelationSelect(relation, Some(dispatch), Some(updateRel), isModelValue = true, None, Some(P.saveScrollPosition(_)))
                 )
