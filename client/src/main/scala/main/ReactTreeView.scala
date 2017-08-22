@@ -53,7 +53,7 @@ object ReactTreeView {
   case class ToggleCollapsed(uuid: UUID) extends Action
 
   trait Style {
-    def reactTreeView = Seq[TagMod]()
+    def reactTreeView = Seq[TagMod]( ^.outline := "none")
 
     def treeGroup = Seq(^.padding := "0 0 0 40px")
 

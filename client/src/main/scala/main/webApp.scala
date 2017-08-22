@@ -156,7 +156,6 @@ object webApp extends js.JSApp {
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
         <.div(
-          ^.outline := "none",
           ^.width := "100%",
           ^.height := "100%",
           ReactTreeView(
