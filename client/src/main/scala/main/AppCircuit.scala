@@ -241,11 +241,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
         val elemToCopy: Elem = findElem(modelRW, oldPath.init.tail, elemUUID)
         val copiedElem = copyElem(elemToCopy)
 
-
-        if(findElem(modelRW, newPath.init.tail, newPath.last).isAttribute)
-          noChange
-        else {
-
           zoomToChildren(modelRW, newPath.tail) match {
             case Some(rw) =>
               rw.value.find(_.uuid.toString == newPath.last) match {
@@ -259,7 +254,6 @@ object AppCircuit extends Circuit[Model] with ReactConnector[Model] {
               }
             case None => noChange
           }
-        }
 
       case UpdateEntity(path: Seq[String], newEntity: Entity) =>
         val elemID = path.last
