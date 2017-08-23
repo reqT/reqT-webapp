@@ -117,7 +117,8 @@ class WebSocketActor(out: ActorRef) extends Actor {
 
   def receive = {
     case message: String if message.contains("val ordinalMethod") =>
-      reqTos.write((message + ".replace(\";\", \"\\n\")" + "\n").getBytes("UTF-8"))
+      val newmessage = message.replaceAll("ä","a").replaceAll("å","a").replaceAll("ö","o")
+      reqTos.write((newmessage + ".replace(\";\", \"\\n\")" + "\n").getBytes("UTF-8"))
       reqTos.flush()
 
     case message: String =>
