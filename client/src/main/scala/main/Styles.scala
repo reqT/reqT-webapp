@@ -58,7 +58,7 @@ object Styles extends StyleSheet.Inline {
     //    borderBottomRightRadius(0.px),
     //    borderTopRightRadius(0.px),
     position.absolute,
-    width(40.px),
+    width(8.%%),
     height(100.%%),
     top(0.px),
     left(92.%%)
