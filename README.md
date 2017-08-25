@@ -20,7 +20,7 @@ In order to run this application one is required to download SBT and JVM 8.
       sbt run
 
    
-  <li>SBT will now download all the required dependencies, while may take a while. </li>
+  <li>SBT will now download all the required dependencies, which may take a while. </li>
   <li>When the application has started, open a web browser and navigate to <i>hostname</i>:<i>port</i> </li>
 </ol>
 
