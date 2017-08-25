@@ -8,6 +8,14 @@ import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 import shared._
 
+
+/**
+  * Currently omitted from the final release because it opened collapsed tree items when used.
+  */
+
+
+
+
 object ReactSearchBox {
 
   class Style extends StyleSheet.Inline {

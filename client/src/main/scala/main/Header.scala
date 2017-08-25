@@ -141,7 +141,6 @@ object Header {
           )
         }).build
 
-    // Klara inte specialtecken i strängar  ------------------------------------------------------------------!!!!!
 
     def parseModel(newModel: String, P: Props): Callback = {
       Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete {

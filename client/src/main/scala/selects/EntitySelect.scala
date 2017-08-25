@@ -4,12 +4,6 @@ import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import shared._
 
-
-/**
-  * Created by johan on 4/4/17.
-  */
-
-
 object EntitySelect {
 
   val entityList = List("Item", "Label", "Meta", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release",

@@ -66,7 +66,6 @@ object ReleaseModal {
           <.div(
             modalStyle,
             <.h4(
-              //getDefaultValue(P.currentModel.children),
               "Release Planning",
               ^.textAlign.center
             ),

@@ -14,11 +14,8 @@ import upickle.default.read
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
-import shared.Global
+import shared.Config
 
-/**
-  * Created by johan on 5/26/17.
-  */
 object ReqTLog {
 
   case class State(websocket: Option[WebSocket], logLines: Vector[String], message: String, waitingForModel: Boolean = false, isMethodRunning: Boolean = false) {
@@ -182,7 +179,7 @@ object ReqTLog {
         }
 
 
-        val url = Global().socketURL
+        val url = Config().socketURL
 
         val websocket = new WebSocket(url)
         websocket.onopen = onopen _

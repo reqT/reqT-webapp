@@ -1,10 +1,10 @@
 package shared
 
 /**
-  * Created by phiped on 8/21/17.
+  * Configuration file for server host location.
   */
 
-case class Global() {
+case class Config() {
   val hostname= "vm45.cs.lth.se"
   val port = "9000"
   val localhost = "ws://localhost:9000/socket"

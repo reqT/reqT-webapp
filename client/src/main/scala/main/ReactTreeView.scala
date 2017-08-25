@@ -228,12 +228,6 @@ object ReactTreeView {
         } else {
           P.modelProxy.dispatchCB(CopyElem($.accessDirect.state.pathToCopiedElem, $.accessDirect.state.pathToSelected, RelationType("has")))
         }
-        //FutureWork
-//      } else if (e.nativeEvent.keyCode == KeyCode.Up) {
-//      } else if (e.nativeEvent.keyCode == KeyCode.Down) {
-//      } else if (e.nativeEvent.keyCode == KeyCode.Right) {
-//      } else if (e.nativeEvent.keyCode == KeyCode.Left) {
-
       } else
         Callback()
     }
@@ -342,34 +336,6 @@ object ReactTreeView {
       )
   }
 
-  //  var zoomFactor: Double = 1
-  //  def zoomIn: Callback = {
-  //    if(zoomFactor < 1)
-  //      Callback({
-  //        zoomFactor = zoomFactor + 0.05
-  //        val tree = document.getElementById("ReactTreeView").asInstanceOf[dom.html.LI]
-  //        var styleList = tree.getAttribute("style").split(";")
-  //        styleList = styleList.filter(p => !p.contains("transform"))
-  //        tree.setAttribute("style", (s"transform: scale($zoomFactor)" +: styleList).mkString(";"))
-  //        }
-  //      )
-  //    else
-  //      Callback()
-  //  }
-  //
-  //  def zoomOut: Callback = {
-  //    if(zoomFactor > 0)
-  //      Callback({
-  //        zoomFactor = zoomFactor - 0.05
-  //        val tree = document.getElementById("ReactTreeView").asInstanceOf[dom.html.LI]
-  //        var styleList = tree.getAttribute("style").split(";")
-  //        styleList = styleList.filter(p => !p.contains("transform"))
-  //        tree.setAttribute("style", (s"transform: scale($zoomFactor)" +: styleList).mkString(";"))
-  //      }
-  //      )
-  //    else
-  //      Callback()
-  //  }
 
   case class NodeBackend($: BackendScope[NodeProps, NodeState]) {
 
@@ -444,28 +410,33 @@ object ReactTreeView {
         .when(P.root.children.nonEmpty)
     }
 
-    //    def matchesFilterText(filterText: String, data: TreeItem): Boolean = {
-    //      def trim(data: String): String = data.toString.replaceAll("""(UUID\([^\)]*\))|TreeItem|List|None|[\(\),"]|Some""", " ").trim.replaceAll(" +", " ")
-    //
-    //      def matchesType(treeItem: TreeItem): Boolean =
-    //        treeItem.item match {
-    //          case _: Entity => filterText.toLowerCase.contains("entity") || filterText.toLowerCase.contains("entities")
-    //          case _: IntAttribute => filterText.toLowerCase.contains("attribute") && !filterText.toLowerCase.contains("stringattribute")
-    //          case _: StringAttribute => filterText.toLowerCase.contains("attribute") && !filterText.toLowerCase.contains("intattribute")
-    //          case _ => false
-    //        }
-    //
-    //      def matches(treeItem: TreeItem): Boolean = trim(treeItem.toString).toLowerCase.contains(filterText.toLowerCase)
-    //
-    //      def relationTypeMatches(treeItem: TreeItem): Boolean = trim(treeItem.linkToString).toLowerCase.contains(filterText.toLowerCase)
-    //
-    //      def loop(data: Seq[TreeItem]): Boolean =
-    //        data.view.exists(
-    //          item => matches(item) || loop(item.children) || relationTypeMatches(item) || matchesType(item)
-    //        )
-    //
-    //      (matches(data) || loop(data.children) || relationTypeMatches(data) || matchesType(data)) && (data.item != "Model")
-    //    }
+
+    /**
+      *  Filtering of the model used for searching in the model. Omitted from the final release because it opened collapsed tree items when used.
+      */
+/*
+        def matchesFilterText(filterText: String, data: TreeItem): Boolean = {
+          def trim(data: String): String = data.toString.replaceAll("""(UUID\([^\)]*\))|TreeItem|List|None|[\(\),"]|Some""", " ").trim.replaceAll(" +", " ")
+
+          def matchesType(treeItem: TreeItem): Boolean =
+            treeItem.item match {
+              case _: Entity => filterText.toLowerCase.contains("entity") || filterText.toLowerCase.contains("entities")
+              case _: IntAttribute => filterText.toLowerCase.contains("attribute") && !filterText.toLowerCase.contains("stringattribute")
+              case _: StringAttribute => filterText.toLowerCase.contains("attribute") && !filterText.toLowerCase.contains("intattribute")
+              case _ => false
+            }
+
+          def matches(treeItem: TreeItem): Boolean = trim(treeItem.toString).toLowerCase.contains(filterText.toLowerCase)
+
+          def relationTypeMatches(treeItem: TreeItem): Boolean = trim(treeItem.linkToString).toLowerCase.contains(filterText.toLowerCase)
+
+          def loop(data: Seq[TreeItem]): Boolean =
+            data.view.exists(
+              item => matches(item) || loop(item.children) || relationTypeMatches(item) || matchesType(item)
+            )
+
+          (matches(data) || loop(data.children) || relationTypeMatches(data) || matchesType(data)) && (data.item != "Model")
+*/
 
     def onDrop(P: NodeProps)(event: ReactDragEvent): Callback = {
 
@@ -683,11 +654,6 @@ object ReactTreeView {
         ^.onDragOver ==> onDragOver(P),
         ^.onDrop ==> onDrop(P),
         <.li(
-          //          if(P.root.item == "Model") {
-          //            ^.height := "100%"
-          //          } else {
-          //            EmptyTag
-          //          },
           ^.zIndex := "-1",
           ^.onDragEnter ==> onDragEnterLI(P),
           ^.onDragLeave ==> onDragLeaveLI(P),
@@ -796,7 +762,8 @@ object ReactTreeView {
               ^.onDragOver ==> onDragOver(P),
               ^.onDrop ==> dropOnPlaceholder(P, dropAfterChildren = true),
               S.children.map(child =>
-                //              (matchesFilterText(P.filterText, child) || matchesFilterText(P.filterText, P.root)) ?=
+                //    Filter the tree elements on the search word. See matchesFilterText above for explanation
+                //    (matchesFilterText(P.filterText, child) || matchesFilterText(P.filterText, P.root)) ?=
                 cc(proxy => TreeNode.withKey(s"$parent/${child.uuid}")(P.copy(
                   root = child,
                   open = P.open,
@@ -875,9 +842,6 @@ object ReactTreeView {
           .void
     }
     .shouldComponentUpdate(x => if (x.nextState.selected || x.nextState.shouldUpdate || x.currentState.draggedOver || x.currentState.shouldUpdate) true else false)
-    //      .componentWillUpdate(x => {
-    //        x.$.props.saveScrollPosition(document.getElementById("treeView").scrollTop)
-    //      })
     .build
 
   val component = ReactComponentB[Props]("ReactTreeView")

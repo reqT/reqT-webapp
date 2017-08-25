@@ -56,7 +56,7 @@ class ExprParser extends RegexParsers {
   }
 
   def StatusValueAttribute: Parser[shared.StatusValueAttribute] = "Status" ~ lpar ~ statusValue ~ rpar ^^{
-      case _ ~ value ~ _ => shared.StatusValueAttribute(value = value) // "Status" ~ i början
+      case _ ~ value ~ _ => shared.StatusValueAttribute(value = value) // ' "Status" ~ ' i början
   }
 
   def Entity: Parser[shared.Entity] = entityType ~ lpar ~ "\"" ~ opt(string) ~ "\"" ~ rpar ^^ {

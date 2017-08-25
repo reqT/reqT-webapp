@@ -5,10 +5,6 @@ import scalacss.internal.mutable.GlobalRegistry
 import shared._
 
 
-/**
-  * Created by johan on 2/23/17.
-  */
-
 object Styles extends StyleSheet.Inline {
 
   import dsl._
@@ -55,8 +51,6 @@ object Styles extends StyleSheet.Inline {
 
   val bootStrapRemoveButton = style(
     addClassName("btn glyphicon glyphicon-remove pull-right"),
-    //    borderBottomRightRadius(0.px),
-    //    borderTopRightRadius(0.px),
     position.absolute,
     width(8.%%),
     height(100.%%),
@@ -86,14 +80,6 @@ object Styles extends StyleSheet.Inline {
     border(1.px)
   )
 
-  /**
-    * Dropdown
-    */
-
-
-  /**
-    * Styles not in use yet, not validated
-    */
   val selectedTreeItemContent = style(
     backgroundColor(c"#1B8EB0"),
     color.white,

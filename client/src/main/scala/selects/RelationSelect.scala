@@ -6,9 +6,6 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, _}
 import org.scalajs.dom.document
 import shared._
 
-/**
-  * Created by johan on 4/4/17.
-  */
 
 
 object RelationSelect {

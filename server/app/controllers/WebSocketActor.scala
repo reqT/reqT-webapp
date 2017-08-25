@@ -98,22 +98,6 @@ class WebSocketActor(out: ActorRef) extends Actor {
     stopReadThread = true
   }
 
-  //  testUpickle
-  //  def testUpickle = {
-  //    val parser = new ExprParser
-  //
-  //    val empty = "Model()"
-  //    val m2 = "Model(\n  Stakeholder(\"X\") has (\n    Prio(1),\n    Feature(\"1\") has Benefit(4),\n    Feature(\"2\") has Benefit(2),\n    Feature(\"3\") has Benefit(1)),\n  Stakeholder(\"Y\") has (\n    Prio(2),\n    Feature(\"1\") has Benefit(2),\n    Feature(\"2\") has Benefit(1),\n    Feature(\"3\") has Benefit(1)),\n  Release(\"A\") precedes Release(\"B\"),  \n  Resource(\"dev\") has (\n    Feature(\"1\") has Cost(10),\n    Feature(\"2\") has Cost(70),\n    Feature(\"3\") has Cost(40),\n    Release(\"A\") has Capacity(100),\n    Release(\"B\") has Capacity(100)),\n  Resource(\"test\") has (\n    Feature(\"1\") has Cost(40),\n    Feature(\"2\") has Cost(10),\n    Feature(\"3\") has Cost(70),\n    Release(\"A\") has Capacity(100),\n    Release(\"B\") has Capacity(100)),\n  Feature(\"3\") precedes Feature(\"1\"))"
-  //    val result = parser.parseAll(parser.Model, empty)
-  //    out ! write[Model](result.get)
-  //
-  //    for(i <- 1 to 15){
-  //      print(i)
-  //      val result = parser.parseAll(parser.Model, templateHandler.getTemplate(i).get.drop(12))
-  //      out ! write[Model](result.get)
-  //      print(" succeded\n")
-  //    }
-  //  }
 
   def receive = {
     case message: String if message.contains("val ordinalMethod") =>

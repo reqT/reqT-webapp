@@ -2,9 +2,12 @@ package controllers
 
 import scala.io.Source
 
+
 /**
-  * Created by phiped on 4/13/17.
+  * Currently not in use.
+  * Could be used for loading templates from the server.
   */
+
 class TemplateHandler {
   val filePathTemplates = "server/app/controllers/templates.txt"
   val nbrOfTemplates = getAmountOfTemplates
@@ -23,9 +26,6 @@ class TemplateHandler {
       wanted
     }
 
-    //    if(templateNbr > getAmountOfTemplates)
-    //      None
-    //    else
     Some(contentIterator.filter(take).mkString("\n"))
   }
 

@@ -173,9 +173,14 @@ case class StatusValueAttribute(var attrType: String = "Status", var value: Stri
   override def toString(): String = s"$attrType($value)"
 }
 
-//class StatusValue extends Enumeration {
-//  val ELICITED,SPECIFIED,VALIDATED,PLANNED,IMPLEMENTED,TESTED,RELEASED,FAILED,POSTPONED,DROPPED = Value
-//}
+/**
+  * Will need further development but should be implemented
+  */
+/*
+class StatusValue extends Enumeration {
+  val ELICITED,SPECIFIED,VALIDATED,PLANNED,IMPLEMENTED,TESTED,RELEASED,FAILED,POSTPONED,DROPPED = Value
+}
+*/
 
 
 case class RelationType(relationType: String) {
@@ -186,8 +191,9 @@ case class RelationType(relationType: String) {
   override def toString: String = relationType
 }
 
+
 /**
-  * Actions
+  * Diode Actions
   */
 
 case class AddElem(path: Seq[String], elem: Elem, relationType: RelationType) extends Action
