@@ -136,7 +136,7 @@ To change the host location, the config class has to be updated accordingly.
 
 ## Run the application
 <ol>
-  <li> Open a web browser (Preferable Google Chrome).</li>
+  <li> Open a web browser (Preferably Google Chrome).</li>
   <li> Open <a href="http://vm45.cs.lth.se:9000/">http://vm45.cs.lth.se:9000/</a> </li> 
 </ol>
 
