@@ -1,6 +1,6 @@
 #!/bin/sh
 
-rm package.zip
+rm -f package.zip
 rm -rf ./package/*
 
 sbt dist
@@ -8,6 +8,8 @@ sbt dist
 mkdir package
 
 cp ./server/target/universal/server-0.1-SNAPSHOT.zip package/
+
+cp ./scripts/start.sh package/
 
 cd package
 
@@ -21,8 +23,10 @@ cp -r ../server/app ./server/
 mv server-0.1-SNAPSHOT/* .
 
 rm -rf server-0.1-SNAPSHOT
-rm server-0.1-SNAPSHOT.zip
+rm -f server-0.1-SNAPSHOT.zip
 
 cd ..
 
 zip -r -9 package.zip package
+
+rm -rf package
