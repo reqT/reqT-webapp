@@ -5,7 +5,7 @@ package shared
   */
 
 case class Config() {
-  val hostname= "vm45.cs.lth.se"
+  val hostname= "localhost"
   val port = "9000"
   val localhost = "ws://localhost:9000/socket"
   val socketURL = s"ws://$hostname:$port/socket"
