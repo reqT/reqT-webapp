@@ -152,7 +152,7 @@ object webApp extends js.JSApp {
     val treeView = ReactComponentB[ModelProxy[Tree]]("treeView")
       .render(P => <.pre(
         ^.className := "zoomViewport",
-        Styles.treeView,
+        GlobalStyle.treeView,
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
         <.div(
@@ -252,7 +252,7 @@ object webApp extends js.JSApp {
 
         <.button(
           modelTabsButtonStyle,
-          Styles.removeButtonSimple,
+          GlobalStyle.removeButtonSimple,
           ^.outline := "none",
           ^.onClick ==> removeCachedModel($.props._1, $.props._2, $.props._3)
         )
@@ -300,7 +300,7 @@ object webApp extends js.JSApp {
   val dc = AppCircuit.connect(_.tree)
 
   def main(): Unit = {
-    Styles.addToDocument()
+    AppCss.load
     window.onbeforeunload = {beforeUnloadEvent: BeforeUnloadEvent => "Leave?"}
     ReactDOM.render(dc(proxy => pageContent(Props(proxy))), document.getElementById("content"))
   }

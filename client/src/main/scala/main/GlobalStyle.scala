@@ -1,11 +1,8 @@
 package main
 
 import scalacss.Defaults._
-import scalacss.internal.mutable.GlobalRegistry
-import shared._
 
-
-object Styles extends StyleSheet.Inline {
+object GlobalStyle extends StyleSheet.Inline {
 
   import dsl._
 

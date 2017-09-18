@@ -4,6 +4,8 @@ package main
   * Created by phiped on 5/25/17.
   */
 
+import scalacss.Defaults._
+import scalacss.ScalaCssReact._
 import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 import japgolly.scalajs.react._
@@ -13,26 +15,31 @@ import upickle.default.write
 
 object ElementList {
 
-  val listElemStyle = Seq(
-    ^.draggable := "true",
-    ^.boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
-    ^.borderRadius := "5px",
-    ^.padding := 5.px
-  )
+  object Style extends StyleSheet.Inline {
 
-  val dragListStyle = Seq(
-    ^.overflow := "hidden",
-    ^.height := "46%",
-    ^.width := "100%"
-  )
+    import dsl._
 
-  val entityListStyle = Seq(
-    ^.className := "form-control",
-    ^.id := "dragList",
-    ^.height := "86%",
-    ^.marginTop := "5px",
-    ^.overflow := "auto"
-  )
+    val dragListStyle = style(
+      overflow.hidden,
+      height(46.%%),
+      width(100.%%)
+    )
+
+    val listElemStyle = style(
+      boxShadow := "0px 6px 12px 0px rgba(0,0,0,0.2)",
+      borderRadius(5.px),
+      padding(5.px),
+      cursor.grab
+    )
+
+    val entityListStyle = style(
+      height(86.%%),
+      marginTop(5.px),
+      overflow.auto
+    )
+  }
+
+
 
   val entities = List("Ent", "Meta", "Item", "Label", "Section", "Term", "Actor", "App", "Component", "Domain", "Module", "Product", "Release", "Resource", "Risk", "Service",
     "Stakeholder", "System", "User", "Class", "Data", "Input", "Member", "Output", "Relationship", "Design", "Screen", "MockUp", "Function", "Interface", "State", "Event",
@@ -72,7 +79,8 @@ object ElementList {
 
   val listElem = ReactComponentB[String]("listElem")
     .render($ => <.ul(
-      listElemStyle,
+      Style.listElemStyle,
+      ^.draggable := true,
       ^.id := $.props.toString,
       ^.classID := $.props.toString,
       $.props.toString.takeWhile(_ != '('),
@@ -88,7 +96,9 @@ object ElementList {
 
   val entityListView = ReactComponentB[Seq[String]]("entityList")
     .render(elems => <.pre(
-      entityListStyle,
+      Style.entityListStyle,
+      ^.className := "form-control",
+      ^.id := "dragList",
       elems.props.sorted.map(listElem(_))
     ))
     .build
@@ -97,7 +107,7 @@ object ElementList {
   class Backend($: BackendScope[Unit, State]) {
     def render(S: State) = {
       <.pre(
-        dragListStyle,
+        Style.dragListStyle,
         searchBox(),
         checkBoxes(S),
         entityListView(S.elems)
