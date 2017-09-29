@@ -8,7 +8,7 @@ In order to run this application one is required to download SBT and JVM 8.
 1. `git clone https://github.com/reqT/reqT-webapp`
 2. `cd reqT-webapp`
 3. _(Optional):_ Edit hostname and port in `Config.scala` located here: `shared/src/main/scala/shared/`
-4. `sbt run`, and for continuous compilation `sbt ~run`
+4. `sbt run` - auto compiles if webpage is visited & files diff
 5. When the application has started, open a web browser and navigate to [hostname:port](hostname:port)
 
 The webserver and application may be packaged to a more user-friendly zip format:
