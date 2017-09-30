@@ -159,21 +159,26 @@ object AddElemModal {
               }
 
             ),
-            <.hr,
-            <.dt(
-              P.treeItem.link match {
-                case Some(tpe) => tpe.getType
-                case None => RelationSelect("has", None, None, isModelValue = false, Some(setNewRelation), None)
-              },
-              ^.textAlign := "center",
-              ^.color := "#FF3636"
+            <.div(
+              if (P.treeItem.nodeToString != "Model") {
+                Seq(
+                  <.hr,
+                  <.dt(
+                    P.treeItem.link match {
+                      case Some(tpe) => tpe.getType
+                      case None => RelationSelect("has", None, None, isModelValue = false, Some(setNewRelation), None)
+                    },
+                    ^.textAlign := "center",
+                    ^.color := "#FF3636"
+                  )
+                )
+              } else { "" }
             ),
             <.dd(
 
             ),
             <.hr
           )
-
         } else {
           ""
         },

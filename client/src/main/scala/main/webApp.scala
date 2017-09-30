@@ -46,6 +46,7 @@ object webApp extends js.JSApp {
     ^.padding := "5px",
     ^.paddingRight := "5px",
     ^.height := "5%",
+    ^.minHeight := "40px",
     ^.overflow.hidden,
     ^.position.relative
   )
@@ -74,7 +75,8 @@ object webApp extends js.JSApp {
 
   val modelTabsStyle = Seq(
     ^.className := "navpill",
-    ^.display.inline,
+    ^.display.flex,
+    ^.flexDirection.row,
     ^.whiteSpace.nowrap,
     ^.position.relative,
     ^.marginLeft := "5px",
@@ -83,7 +85,6 @@ object webApp extends js.JSApp {
     ^.float.left,
     ^.overflow.hidden,
     ^.borderRadius := "5px",
-    ^.height := "30px",
     ^.top := "0px",
     ^.width := "200px",
     ^.background := "#CFEADD"
@@ -91,18 +92,22 @@ object webApp extends js.JSApp {
 
   val modelTabsSpanStyle = Seq(
     ^.className := "col",
-    ^.position.absolute,
     ^.width := "80%",
-    ^.height := "30px",
+    ^.height := "100%",
     ^.paddingTop := "2px",
-    ^.textAlign := "center"
+    ^.paddingLeft := "5px",
+    ^.cursor.pointer,
+    ^.display.flex,
+    ^.alignSelf.center,
+    ^.alignItems.center,
+    ^.fontSize.medium
   )
 
   val modelTabsButtonStyle = Seq(
     ^.className := "col",
     ^.position.absolute,
     ^.width := "20%",
-    ^.height := "30px",
+    ^.height := "100%",
     ^.left := "80%",
     ^.top := "0%",
     ^.paddingTop := "5px"
@@ -111,6 +116,7 @@ object webApp extends js.JSApp {
   val cachedModelsRowStyle = Seq(
     ^.whiteSpace.nowrap,
     ^.position.absolute,
+    ^.height := "100%",
     ^.className := "clickable-row"
   )
 
@@ -152,7 +158,7 @@ object webApp extends js.JSApp {
     val treeView = ReactComponentB[ModelProxy[Tree]]("treeView")
       .render(P => <.pre(
         ^.className := "zoomViewport",
-        Styles.treeView,
+        GlobalStyle.treeView,
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
         <.div(
@@ -225,7 +231,8 @@ object webApp extends js.JSApp {
             cachedModelsRowStyle,
             <.ul(
               ^.display.flex,
-              ^.height := "0px",
+              ^.height := "100%",
+              ^.paddingBottom := "5px",
               ^.className := "nav nav-pills",
               ^.listStyleType.none,
               $.props._2.cachedModels.map(s => listModels((s, $.props._1, $.props._2)))
@@ -252,7 +259,7 @@ object webApp extends js.JSApp {
 
         <.button(
           modelTabsButtonStyle,
-          Styles.removeButtonSimple,
+          GlobalStyle.removeButtonSimple,
           ^.outline := "none",
           ^.onClick ==> removeCachedModel($.props._1, $.props._2, $.props._3)
         )
@@ -300,7 +307,7 @@ object webApp extends js.JSApp {
   val dc = AppCircuit.connect(_.tree)
 
   def main(): Unit = {
-    Styles.addToDocument()
+    AppCss.load
     window.onbeforeunload = {beforeUnloadEvent: BeforeUnloadEvent => "Leave?"}
     ReactDOM.render(dc(proxy => pageContent(Props(proxy))), document.getElementById("content"))
   }

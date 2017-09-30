@@ -726,7 +726,7 @@ object ReactTreeView {
               }
             ),
             <.button(
-              Styles.bootStrapRemoveButton,
+              GlobalStyle.bootStrapRemoveButton,
               ^.onClick ==> removeElem(P)
             ),
             getRelationType(P.root) match {

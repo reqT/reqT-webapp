@@ -77,7 +77,7 @@ object NewModelModal {
                     ^.value := s"Model(${P.tree})"
                   )
                 ),
-                InputComponent(S),
+                inputComponent(S),
                 <.div(
                   buttonStyle,
                   <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
@@ -86,7 +86,7 @@ object NewModelModal {
               )
             } else if (P.modalType == "save") {
               <.div(
-                InputComponent(S),
+                inputComponent(S),
                 <.div(
                   buttonStyle,
                   <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
@@ -96,7 +96,7 @@ object NewModelModal {
               )
             } else {
               <.div(
-                InputComponent(S),
+                inputComponent(S),
                 <.div(
                   buttonStyle,
                   <.button("Cancel", ^.className := "btn btn-default pull-right", ^.bottom := "0px", ^.onClick --> onClose(P)),
@@ -114,8 +114,7 @@ object NewModelModal {
       } else
         <.div()
 
-    def InputComponent = ReactComponentB[State]("InputComponent")
-      .render($ =>
+    def inputComponent(S: State) = Seq(
         <.div(
           <.h4(
             "Specify name of the new model"
@@ -125,16 +124,15 @@ object NewModelModal {
             ^.`type` := "text",
             ^.className := "form-control",
             ^.placeholder := "Enter name",
-            ^.value := $.props.newModelName,
-            ^.onChange ==> onChange($.props)
+            ^.value := S.newModelName,
+            ^.onChange ==> onChange
           )
         )
-      ).build
+      )
 
-    def onChange(S: State)(e: ReactEventI): Callback = {
-      e.preventDefault()
+    def onChange(e: ReactEventI): Callback = {
       val newName = e.target.value
-      $.setState(s = S.copy(newModelName = newName))
+      $.modState(_.copy(newModelName = newName))
     }
 
     def addModel(newName: String, tree: shared.Tree, P: Props): Callback = P.saveModel(newName, tree) >> onClose(P)

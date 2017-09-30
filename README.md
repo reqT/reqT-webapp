@@ -5,24 +5,29 @@ In the Course ETS170 Requirement Engineering at Lund University, the Requirement
 # Developer guide
 In order to run this application one is required to download SBT and JVM 8. 
 
-<ol>
-  <li> Download the repository using:</li>
-  
-      
-      git clone
-      
+1. `git clone https://github.com/reqT/reqT-webapp`
+2. `cd reqT-webapp`
+3. _(Optional):_ Edit hostname and port in `Config.scala` located here: `shared/src/main/scala/shared/`
+4. `sbt run` - auto compiles if webpage is visited & files diff
+5. When the application has started, open a web browser and navigate to [hostname:port](hostname:port)
 
-  <li> Locate the repository folder in your terminal.</li>
+The webserver and application may be packaged to a more user-friendly zip format:
 
-  <li>(optional) If you want to change the host location, the Config class contains the url and port for the server. Change these to update the server location. i.e, if you want to run the application locally update the hostname to localhost</li>
-  <li> write the following in the terminal</li>
-  
-      sbt run
+1. Package the webserver and application using:
 
-   
-  <li>SBT will now download all the required dependencies, which may take a while. </li>
-  <li>When the application has started, open a web browser and navigate to <i>hostname</i>:<i>port</i> </li>
-</ol>
+	`./scripts/unsafe_package.sh`
+
+2. This will produce a `package.zip` which may be placed in a user environment
+
+3. This package may then be run by the user:
+
+	1. `unzip package.zip`
+	
+	2. `cd package`
+
+	3. `./start.sh`
+
+	4. Defaults to: [localhost:9000](localhost:9000)
 
 # User guide
 ## Add or Move Elements
