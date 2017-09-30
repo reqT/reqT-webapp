@@ -93,7 +93,7 @@ object Header {
             <.input(
               ^.`type` := "file",
               ^.display.none,
-              ^.accept := "text/plain, .txt",
+              ^.accept := "text/plain, text/x-scala, .txt, .scala",
               ^.onChange ==> importModel($.props._2)
             )
           )
@@ -153,7 +153,8 @@ object Header {
 
 
     def importModel(P: Props)(e: ReactEventI): Callback = {
-      if (e.currentTarget.files.item(0).`type` == "text/plain") {
+      val ftype = e.currentTarget.files.item(0).`type`
+      if (ftype == "text/plain" || ftype == "text/x-scala") {
         var newModel = "newModel empty, shouldn't happen"
         val fileReader = new FileReader
         fileReader.readAsText(e.currentTarget.files.item(0), "UTF-8")
@@ -164,7 +165,7 @@ object Header {
         }
         Callback(e.currentTarget.value = "")
       } else {
-        Callback(window.alert("Invalid file type, only .txt is supported"))
+        Callback(window.alert("Invalid file type, only .txt and .scala is supported"))
       }
     }
 
@@ -178,8 +179,8 @@ object Header {
       downloadElement.setAttribute("href", tempURL)
 
       P.getCurrentModelName match {
-        case Some(cachedModel) => downloadElement.setAttribute("download", s"${cachedModel.name}.txt")
-        case None => downloadElement.setAttribute("download", "reqTModel.txt")
+        case Some(cachedModel) => downloadElement.setAttribute("download", s"${cachedModel.name}.scala")
+        case None => downloadElement.setAttribute("download", "reqTModel.scala")
       }
 
       document.body.appendChild(downloadElement)
