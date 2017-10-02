@@ -32,8 +32,9 @@ class ExprParser extends RegexParsers {
     case elem: shared.Elem => Tree(Seq(elem))
   }
 
-  def RelationList: Parser[shared.Tree] = lpar ~ rep(Elem ~ ",") ~ Elem ~ rpar ^^ {
-    case _ ~ list ~ elem ~ _ => Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem]))
+  def RelationList: Parser[shared.Tree] = lpar ~ opt(rep(Elem ~ ",") ~ Elem) ~ rpar ^^ {
+    case _ ~ Some(list ~ elem) ~ _ => Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem]))
+    case _ ~ none ~ _ => Tree(Seq())
   }
 
   def RelationType: Parser[shared.RelationType] = reqType ^^ {
