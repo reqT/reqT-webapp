@@ -12,7 +12,8 @@ import shared._
 object EditModal {
 
   def modalStyle = Seq(
-    ^.width := "400px",
+    ^.width := "80%",
+    ^.minWidth := "400px",
     ^.padding := "5px",
     ^.position := "absolute",
     ^.border := "1px solid #CCC",
