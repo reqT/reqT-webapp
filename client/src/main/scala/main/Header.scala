@@ -161,7 +161,7 @@ object Header {
 
         fileReader.onload = (_: UIEvent) => {
           newModel = fileReader.result.asInstanceOf[String]
-          parseModel(newModel.replace("\n", "").trim, P)
+          parseModel(newModel.trim, P)
         }
         Callback(e.currentTarget.value = "")
       } else {

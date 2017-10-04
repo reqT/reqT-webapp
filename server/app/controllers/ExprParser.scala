@@ -6,6 +6,7 @@ import scala.util.matching.Regex
 import scala.util.parsing.combinator.RegexParsers
 
 class ExprParser extends RegexParsers {
+  protected override val whiteSpace = """(\s|//.*|(?m)/\*(\*(?!/)|[^*])*\*/)+""".r
   val int: Regex = "[0-9][0-9]*".r
   val string: Regex = "[a-zA-Z0-9~!@#$^%&*|;:'{}\\[\\]\\(\\) /_<,>.+?`-][a-zA-Z0-9~!@#$^%&*|;:'{}\\[\\]\\(\\) /_<,>.+?`-]*".r
   val reqType: Regex = "[a-zA-Z][a-zA-Z]*".r
