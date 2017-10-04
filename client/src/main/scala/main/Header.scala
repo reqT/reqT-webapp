@@ -13,7 +13,6 @@ import upickle.default.read
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
-import scala.scalajs.js.URIUtils.encodeURI
 import scala.util.{Failure, Success}
 
 /**
@@ -141,16 +140,17 @@ object Header {
           )
         }).build
 
-
     def parseModel(newModel: String, P: Props): Callback = {
-      Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete {
+      val getModelEndpoint = "/parsemodel"
+
+      Ajax.post(url = getModelEndpoint, data = newModel.trim).onComplete {
         case Success(r) => Callback(println(r.responseText))
           P.openNewModelModal("imp", read[Model](r.responseText).tree).runNow()
         case Failure(e) => Callback(println(e.toString))
       }
-      Callback()
-    }
 
+      Callback() // FIXME: Handle Ajax.post.failed
+    }
 
     def importModel(P: Props)(e: ReactEventI): Callback = {
       val ftype = e.currentTarget.files.item(0).`type`
