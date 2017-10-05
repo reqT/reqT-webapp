@@ -305,11 +305,16 @@ object webApp extends js.JSApp {
 
         setActiveModel(selectedBeginning.last, P, S) >>
           $.modState(_.copy(cachedModels = selectedBeginning ++ end))
+      } else if (beginning.isEmpty && end.isEmpty) {
+        // queue is empty - create a default Untitled model
+        val untitledModel = CachedModel("untitled", emptyTree, selected = true, UUID.random())
+
+        setActiveModel(untitledModel, P, S) >>
+          $.modState(_.copy(cachedModels = Queue(untitledModel)))
       } else {
         // else just remove the target model from state
         $.modState(_.copy(cachedModels = beginning ++ end))
       }
-      // FIXME: We should maybe create an 'Untitled' model when beginning & end is empty
     }
   }
 
