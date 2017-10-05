@@ -177,7 +177,6 @@ object webApp extends js.JSApp {
       ))
       .build
 
-
     def setScroll(scrollPosition: Double): Callback = {
       val pre = document.getElementById("treeView").asInstanceOf[dom.html.Pre]
       Callback(pre.scrollTop = scrollPosition)
@@ -185,11 +184,10 @@ object webApp extends js.JSApp {
 
     def getScroll: Callback = $.modState(_.copy(scrollPosition = document.getElementById("treeView").scrollTop))
 
-
     def saveModel(name: String, model: Tree, P: Props, S: State): Callback = {
-      var m = new CachedModel(name, model ,selected = false, UUID.random())
-      $.modState(s => s.copy(cachedModels = s.cachedModels :+ m))
-
+      val m = CachedModel(name, model, selected = true, UUID.random())
+      setActiveModel(m, P, S) >>
+        $.modState(s => s.copy(cachedModels = s.cachedModels :+ m))
     }
 
     def sendMethod(currentMethod: Seq[String]): Callback = $.modState(_.copy(method = currentMethod, isMethodStarted = true))
@@ -199,7 +197,12 @@ object webApp extends js.JSApp {
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
       <.div(
-        NewModelModal(isOpen = S.isNewModelModalOpen, onClose = closeNewModelModal, saveModel = saveModel(_, _, P, S), S.newModel, S.saveModelType),
+        NewModelModal(
+          isOpen = S.isNewModelModalOpen,
+          onClose = closeNewModelModal,
+          saveModel = saveModel(_, _, P, S),
+          S.newModel, S.saveModelType
+        ),
         contentDivStyle,
         <.div(
           ^.className := "header",
@@ -267,11 +270,9 @@ object webApp extends js.JSApp {
 
     def getActiveModelName: Option[CachedModel] = $.accessDirect.state.cachedModels.find(_.selected)
 
-
     def setActiveModel(cachedModel: CachedModel, P: Props, S: State): Callback = {
       updateActiveModel(cachedModel, P, S) >> P.proxy.dispatchCB(SetModel(cachedModel.model.children))
     }
-
 
     def updateActiveModel(cachedModel: CachedModel, P: Props, S: State): Callback = {
       val newModels: Queue[CachedModel] = S.cachedModels.map(model =>
@@ -289,9 +290,27 @@ object webApp extends js.JSApp {
       val beginning = S.cachedModels.take(index)
       val end = S.cachedModels.drop(index + 1)
 
-      $.modState(_.copy(cachedModels = beginning ++ end))
-    }
+      // if we removed selection we change the active model
+      if (modelToRemove.selected && end.nonEmpty) {
+        // try to select next model first (like Chrome tabs)
+        val selectedEnd = end.map(m =>
+          m.copy(selected = m.uUID.equals(end.head.uUID)))
 
+        setActiveModel(selectedEnd.head, P, S) >>
+          $.modState(_.copy(cachedModels = beginning ++ selectedEnd))
+      } else if (modelToRemove.selected && beginning.nonEmpty) {
+        // otherwise try to select previous model
+        val selectedBeginning = beginning.map(m =>
+          m.copy(selected = m.uUID.equals(beginning.last.uUID)))
+
+        setActiveModel(selectedBeginning.last, P, S) >>
+          $.modState(_.copy(cachedModels = selectedBeginning ++ end))
+      } else {
+        // else just remove the target model from state
+        $.modState(_.copy(cachedModels = beginning ++ end))
+      }
+      // FIXME: We should maybe create an 'Untitled' model when beginning & end is empty
+    }
   }
 
   val pageContent = ReactComponentB[Props]("Content")
