@@ -5,9 +5,11 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
-import japgolly.scalajs.react.vdom.prefix_<^.{<, _}
+import japgolly.scalajs.react.vdom.prefix_<^.{<, ^, _}
 import japgolly.scalajs.react._
 import diode.react.ModelProxy
+import main.components.ReqBox
+import main.components.SideViewTopHeader
 import modals.NewModelModal
 
 import scalacss.ScalaCssReact._
@@ -30,14 +32,14 @@ object webApp extends js.JSApp {
   val ListTerminalDivStyle = Seq(
     ^.className := "col-1",
     ^.float.left,
-    ^.width := "29%",
+    ^.width := "30%",
     ^.height := "100%",
     ^.paddingRight := "9px"
   )
 
   val cachedModelsDivStyle = Seq(
     ^.className := "col-2",
-    ^.width := "71%",
+    ^.width := "70%",
     ^.height := "100%",
     ^.float.left
   )
@@ -126,7 +128,12 @@ object webApp extends js.JSApp {
 
   case class State(cachedModels: Queue[CachedModel] = Queue(CachedModel("untitled", emptyTree, selected = true, uUID = UUID.random())),
                    isNewModelModalOpen: Boolean = false, saveModelType: String = "rec",
-                   isMethodStarted: Boolean = false, scrollPosition: Double = 0, newModel: Tree = emptyTree, method: Seq[String] = Seq())
+                   isMethodStarted: Boolean = false, scrollPosition: Double = 0, newModel: Tree = emptyTree,
+                   method: Seq[String] = Seq(), topSideView: SideViewTop.Value = SideViewTop.EntityListView)
+
+  object SideViewTop extends Enumeration {
+    val EntityListView, ReqBoxView = Value
+  }
 
   val emptyTree = Tree(Seq())
 
@@ -196,6 +203,11 @@ object webApp extends js.JSApp {
 
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
+      val sideViewTopHeader =
+        SideViewTopHeader(
+          setEntityListView = $.modState(_.copy(topSideView = SideViewTop.EntityListView)),
+          setReqBoxView = $.modState(_.copy(topSideView = SideViewTop.ReqBoxView)))
+
       <.div(
         NewModelModal(
           isOpen = S.isNewModelModalOpen,
@@ -210,7 +222,11 @@ object webApp extends js.JSApp {
         ),
         <.div(
           ListTerminalDivStyle,
-          ElementList(),
+          sideViewTopHeader,
+          S.topSideView match {
+            case SideViewTop.EntityListView => ElementList()
+            case SideViewTop.ReqBoxView => ReqBox()
+          },
           ReqTLog(P.proxy, openNewModelModal, () => S.method, S.isMethodStarted, methodDone)
         ),
         <.div(

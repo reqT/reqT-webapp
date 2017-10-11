@@ -818,12 +818,8 @@ object ReactTreeView {
                        collapseProxy: ModelProxy[Seq[Tuple]]
                       )
 
-
-  lazy val TreeNode = ReactComponentB[NodeProps]("ReactTreeNode")
-    .initialState_P(P => NodeState(P.root.children))
-    .renderBackend[NodeBackend]
-    .componentWillMount(x =>
-      x.props.collapseProxy.dispatchCB(AddTuple(Tuple(x.props.root.uuid, collapsed = false))) >> {
+  def setCollapseState(x: NodeC): Callback = {
+      x.props.collapseProxy.dispatchCB(AddTuple(Tuple(x.props.root.uuid, collapsed = true))) >> {
         x.props.collapseProxy.value.find(_.uuid == x.props.root.uuid) match {
           case Some(tuple) =>
             if (!tuple.collapsed)
@@ -834,14 +830,35 @@ object ReactTreeView {
             x.modState(_.copy(children = x.props.root.children))
         }
       }
-    )
+  }
+
+  lazy val TreeNode = ReactComponentB[NodeProps]("ReactTreeNode")
+    .initialState_P(P => NodeState(P.root.children))
+    .renderBackend[NodeBackend]
+    .componentWillMount(x => setCollapseState(x))
     .componentWillReceiveProps {
-      case ComponentWillReceiveProps(_$, newProps) =>
+      case ComponentWillReceiveProps(_$, newProps) => {
         _$.modState(_.copy(children = if (newProps.open) newProps.root.children else Nil))
           .when(newProps.filterMode)
-          .void
+          .void >> {
+          newProps.collapseProxy.value.find(_.uuid == newProps.root.uuid) match {
+            case Some(tuple) =>
+              if (!tuple.collapsed)
+                _$.modState(_.copy(children = newProps.root.children, shouldUpdate = true))
+              else
+                _$.modState(_.copy(children = Nil, shouldUpdate = true))
+            case None =>
+              _$.modState(_.copy(children = newProps.root.children, shouldUpdate = false))
+          }
+        }
+      }
     }
-    .shouldComponentUpdate(x => if (x.nextState.selected || x.nextState.shouldUpdate || x.currentState.draggedOver || x.currentState.shouldUpdate) true else false)
+    .shouldComponentUpdate(x => {
+      x.nextState.selected ||
+        x.nextState.shouldUpdate ||
+        x.currentState.draggedOver ||
+        x.currentState.shouldUpdate
+    })
     .build
 
   val component = ReactComponentB[Props]("ReactTreeView")
