@@ -23,9 +23,13 @@ class Application @Inject()(implicit system: ActorSystem, materializer: Material
     ActorFlow.actorRef(out => WebSocketActor.props(out))
   }
 
-  def getModelFromString(model: String) = Action {
-    println(model)
-    Ok(write[Model](parser.parseAll(parser.Model, model).getOrElse(null)))
+  def parseModel = Action { request =>
+    request.body.asText match {
+      case Some(txt) => Ok(write[Model](parser.parseAll(parser.Model, txt).getOrElse(null)))
+      // FIXME: Deliver proper parse fail message
+      case None => Ok("Invalid request, expected( model: String )")
+      // FIXME: Send proper HTTP fail code (api was accessed in a bad manner)
+    }
   }
 
   /**

@@ -6,6 +6,7 @@ import scala.util.matching.Regex
 import scala.util.parsing.combinator.RegexParsers
 
 class ExprParser extends RegexParsers {
+  protected override val whiteSpace = """(\s|//.*|(?m)/\*(\*(?!/)|[^*])*\*/)+""".r
   val int: Regex = "[0-9][0-9]*".r
   val string: Regex = "[a-zA-Z0-9~!@#$^%&*|;:'{}\\[\\]\\(\\) /_<,>.+?`-][a-zA-Z0-9~!@#$^%&*|;:'{}\\[\\]\\(\\) /_<,>.+?`-]*".r
   val reqType: Regex = "[a-zA-Z][a-zA-Z]*".r
@@ -32,8 +33,9 @@ class ExprParser extends RegexParsers {
     case elem: shared.Elem => Tree(Seq(elem))
   }
 
-  def RelationList: Parser[shared.Tree] = lpar ~ rep(Elem ~ ",") ~ Elem ~ rpar ^^ {
-    case _ ~ list ~ elem ~ _ => Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem]))
+  def RelationList: Parser[shared.Tree] = lpar ~ opt(rep(Elem ~ ",") ~ Elem) ~ rpar ^^ {
+    case _ ~ Some(list ~ elem) ~ _ => Tree(list.map(_._1) ++ Seq(elem.asInstanceOf[shared.Elem]))
+    case _ ~ none ~ _ => Tree(Seq())
   }
 
   def RelationType: Parser[shared.RelationType] = reqType ^^ {

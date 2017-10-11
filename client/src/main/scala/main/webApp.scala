@@ -46,6 +46,7 @@ object webApp extends js.JSApp {
     ^.padding := "5px",
     ^.paddingRight := "5px",
     ^.height := "5%",
+    ^.minHeight := "40px",
     ^.overflow.hidden,
     ^.position.relative
   )
@@ -74,7 +75,8 @@ object webApp extends js.JSApp {
 
   val modelTabsStyle = Seq(
     ^.className := "navpill",
-    ^.display.inline,
+    ^.display.flex,
+    ^.flexDirection.row,
     ^.whiteSpace.nowrap,
     ^.position.relative,
     ^.marginLeft := "5px",
@@ -83,7 +85,6 @@ object webApp extends js.JSApp {
     ^.float.left,
     ^.overflow.hidden,
     ^.borderRadius := "5px",
-    ^.height := "30px",
     ^.top := "0px",
     ^.width := "200px",
     ^.background := "#CFEADD"
@@ -91,18 +92,22 @@ object webApp extends js.JSApp {
 
   val modelTabsSpanStyle = Seq(
     ^.className := "col",
-    ^.position.absolute,
     ^.width := "80%",
-    ^.height := "30px",
+    ^.height := "100%",
     ^.paddingTop := "2px",
-    ^.textAlign := "center"
+    ^.paddingLeft := "5px",
+    ^.cursor.pointer,
+    ^.display.flex,
+    ^.alignSelf.center,
+    ^.alignItems.center,
+    ^.fontSize.medium
   )
 
   val modelTabsButtonStyle = Seq(
     ^.className := "col",
     ^.position.absolute,
     ^.width := "20%",
-    ^.height := "30px",
+    ^.height := "100%",
     ^.left := "80%",
     ^.top := "0%",
     ^.paddingTop := "5px"
@@ -111,6 +116,7 @@ object webApp extends js.JSApp {
   val cachedModelsRowStyle = Seq(
     ^.whiteSpace.nowrap,
     ^.position.absolute,
+    ^.height := "100%",
     ^.className := "clickable-row"
   )
 
@@ -152,7 +158,7 @@ object webApp extends js.JSApp {
     val treeView = ReactComponentB[ModelProxy[Tree]]("treeView")
       .render(P => <.pre(
         ^.className := "zoomViewport",
-        Styles.treeView,
+        GlobalStyle.treeView,
         ^.border := "1px solid #ccc",
         ^.id := "treeView",
         <.div(
@@ -171,7 +177,6 @@ object webApp extends js.JSApp {
       ))
       .build
 
-
     def setScroll(scrollPosition: Double): Callback = {
       val pre = document.getElementById("treeView").asInstanceOf[dom.html.Pre]
       Callback(pre.scrollTop = scrollPosition)
@@ -179,11 +184,10 @@ object webApp extends js.JSApp {
 
     def getScroll: Callback = $.modState(_.copy(scrollPosition = document.getElementById("treeView").scrollTop))
 
-
     def saveModel(name: String, model: Tree, P: Props, S: State): Callback = {
-      var m = new CachedModel(name, model ,selected = false, UUID.random())
-      $.modState(s => s.copy(cachedModels = s.cachedModels :+ m))
-
+      val m = CachedModel(name, model, selected = true, UUID.random())
+      setActiveModel(m, P, S) >>
+        $.modState(s => s.copy(cachedModels = s.cachedModels :+ m))
     }
 
     def sendMethod(currentMethod: Seq[String]): Callback = $.modState(_.copy(method = currentMethod, isMethodStarted = true))
@@ -193,7 +197,12 @@ object webApp extends js.JSApp {
     def render(P: Props, S: State) = {
       val sc = AppCircuit.connect(_.tree)
       <.div(
-        NewModelModal(isOpen = S.isNewModelModalOpen, onClose = closeNewModelModal, saveModel = saveModel(_, _, P, S), S.newModel, S.saveModelType),
+        NewModelModal(
+          isOpen = S.isNewModelModalOpen,
+          onClose = closeNewModelModal,
+          saveModel = saveModel(_, _, P, S),
+          S.newModel, S.saveModelType
+        ),
         contentDivStyle,
         <.div(
           ^.className := "header",
@@ -225,7 +234,8 @@ object webApp extends js.JSApp {
             cachedModelsRowStyle,
             <.ul(
               ^.display.flex,
-              ^.height := "0px",
+              ^.height := "100%",
+              ^.paddingBottom := "5px",
               ^.className := "nav nav-pills",
               ^.listStyleType.none,
               $.props._2.cachedModels.map(s => listModels((s, $.props._1, $.props._2)))
@@ -252,7 +262,7 @@ object webApp extends js.JSApp {
 
         <.button(
           modelTabsButtonStyle,
-          Styles.removeButtonSimple,
+          GlobalStyle.removeButtonSimple,
           ^.outline := "none",
           ^.onClick ==> removeCachedModel($.props._1, $.props._2, $.props._3)
         )
@@ -260,11 +270,9 @@ object webApp extends js.JSApp {
 
     def getActiveModelName: Option[CachedModel] = $.accessDirect.state.cachedModels.find(_.selected)
 
-
     def setActiveModel(cachedModel: CachedModel, P: Props, S: State): Callback = {
       updateActiveModel(cachedModel, P, S) >> P.proxy.dispatchCB(SetModel(cachedModel.model.children))
     }
-
 
     def updateActiveModel(cachedModel: CachedModel, P: Props, S: State): Callback = {
       val newModels: Queue[CachedModel] = S.cachedModels.map(model =>
@@ -282,9 +290,32 @@ object webApp extends js.JSApp {
       val beginning = S.cachedModels.take(index)
       val end = S.cachedModels.drop(index + 1)
 
-      $.modState(_.copy(cachedModels = beginning ++ end))
-    }
+      // if we removed selection we change the active model
+      if (modelToRemove.selected && end.nonEmpty) {
+        // try to select next model first (like Chrome tabs)
+        val selectedEnd = end.map(m =>
+          m.copy(selected = m.uUID.equals(end.head.uUID)))
 
+        setActiveModel(selectedEnd.head, P, S) >>
+          $.modState(_.copy(cachedModels = beginning ++ selectedEnd))
+      } else if (modelToRemove.selected && beginning.nonEmpty) {
+        // otherwise try to select previous model
+        val selectedBeginning = beginning.map(m =>
+          m.copy(selected = m.uUID.equals(beginning.last.uUID)))
+
+        setActiveModel(selectedBeginning.last, P, S) >>
+          $.modState(_.copy(cachedModels = selectedBeginning ++ end))
+      } else if (beginning.isEmpty && end.isEmpty) {
+        // queue is empty - create a default Untitled model
+        val untitledModel = CachedModel("untitled", emptyTree, selected = true, UUID.random())
+
+        setActiveModel(untitledModel, P, S) >>
+          $.modState(_.copy(cachedModels = Queue(untitledModel)))
+      } else {
+        // else just remove the target model from state
+        $.modState(_.copy(cachedModels = beginning ++ end))
+      }
+    }
   }
 
   val pageContent = ReactComponentB[Props]("Content")
@@ -300,7 +331,7 @@ object webApp extends js.JSApp {
   val dc = AppCircuit.connect(_.tree)
 
   def main(): Unit = {
-    Styles.addToDocument()
+    AppCss.load
     window.onbeforeunload = {beforeUnloadEvent: BeforeUnloadEvent => "Leave?"}
     ReactDOM.render(dc(proxy => pageContent(Props(proxy))), document.getElementById("content"))
   }

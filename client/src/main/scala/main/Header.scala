@@ -13,7 +13,6 @@ import upickle.default.read
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
-import scala.scalajs.js.URIUtils.encodeURI
 import scala.util.{Failure, Success}
 
 /**
@@ -93,7 +92,7 @@ object Header {
             <.input(
               ^.`type` := "file",
               ^.display.none,
-              ^.accept := "text/plain, .txt",
+              ^.accept := "text/plain, text/x-scala, .txt, .scala",
               ^.onChange ==> importModel($.props._2)
             )
           )
@@ -141,30 +140,32 @@ object Header {
           )
         }).build
 
-
     def parseModel(newModel: String, P: Props): Callback = {
-      Ajax.get("/getmodelfromstring/" + encodeURI(newModel.trim.replaceAll(" +", " "))).onComplete {
+      val getModelEndpoint = "/parsemodel"
+
+      Ajax.post(url = getModelEndpoint, data = newModel.trim).onComplete {
         case Success(r) => Callback(println(r.responseText))
           P.openNewModelModal("imp", read[Model](r.responseText).tree).runNow()
         case Failure(e) => Callback(println(e.toString))
       }
-      Callback()
+
+      Callback() // FIXME: Handle Ajax.post.failed
     }
 
-
     def importModel(P: Props)(e: ReactEventI): Callback = {
-      if (e.currentTarget.files.item(0).`type` == "text/plain") {
+      val ftype = e.currentTarget.files.item(0).`type`
+      if (ftype == "text/plain" || ftype == "text/x-scala") {
         var newModel = "newModel empty, shouldn't happen"
         val fileReader = new FileReader
         fileReader.readAsText(e.currentTarget.files.item(0), "UTF-8")
 
         fileReader.onload = (_: UIEvent) => {
           newModel = fileReader.result.asInstanceOf[String]
-          parseModel(newModel.replace("\n", "").trim, P)
+          parseModel(newModel.trim, P)
         }
         Callback(e.currentTarget.value = "")
       } else {
-        Callback(window.alert("Invalid file type, only .txt is supported"))
+        Callback(window.alert("Invalid file type, only .txt and .scala is supported"))
       }
     }
 
@@ -178,8 +179,8 @@ object Header {
       downloadElement.setAttribute("href", tempURL)
 
       P.getCurrentModelName match {
-        case Some(cachedModel) => downloadElement.setAttribute("download", s"${cachedModel.name}.txt")
-        case None => downloadElement.setAttribute("download", "reqTModel.txt")
+        case Some(cachedModel) => downloadElement.setAttribute("download", s"${cachedModel.name}.scala")
+        case None => downloadElement.setAttribute("download", "reqTModel.scala")
       }
 
       document.body.appendChild(downloadElement)
