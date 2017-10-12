@@ -819,17 +819,18 @@ object ReactTreeView {
                       )
 
   def setCollapseState(x: NodeC): Callback = {
-      x.props.collapseProxy.dispatchCB(AddTuple(Tuple(x.props.root.uuid, collapsed = true))) >> {
-        x.props.collapseProxy.value.find(_.uuid == x.props.root.uuid) match {
-          case Some(tuple) =>
-            if (!tuple.collapsed)
-              x.modState(_.copy(children = x.props.root.children))
-            else
-              x.modState(_.copy(children = Nil))
-          case None =>
+    x.props.collapseProxy.dispatchCB(AddTuple(
+      Tuple(x.props.root.uuid, collapsed = x.props.root.contentToString != "Model"))) >> {
+      x.props.collapseProxy.value.find(_.uuid == x.props.root.uuid) match {
+        case Some(tuple) =>
+          if (!tuple.collapsed)
             x.modState(_.copy(children = x.props.root.children))
-        }
+          else
+            x.modState(_.copy(children = Nil))
+        case None =>
+          x.modState(_.copy(children = x.props.root.children))
       }
+    }
   }
 
   lazy val TreeNode = ReactComponentB[NodeProps]("ReactTreeNode")
