@@ -25,10 +25,10 @@ object ReqBox {
       height(500.px)
     )
 
-    val outerRed = style(backgroundColor.darkred)
-    val outerGreen = style(backgroundColor.darkgreen)
-    val outerBlue = style(backgroundColor.darkblue)
-    val outerOrange = style(backgroundColor.darkorange)
+    val darkRed = style(backgroundColor(c"#a40000"))
+    val darkGreen = style(backgroundColor(c"#4e9a06"))
+    val darkBlue = style(backgroundColor(c"#204a87"))
+    val darkOrange = style(backgroundColor(c"#ce5c00"))
 
     val outerBox = style(
       display.flex,
@@ -36,13 +36,14 @@ object ReqBox {
       justifyContent.center,
       alignItems.center,
       width(50.%%),
-      height(50.%%)
+      height(50.%%),
+      border(1.px, solid, white)
     )
 
-    val innerRed = style(backgroundColor.red)
-    val innerGreen = style(backgroundColor.green)
-    val innerBlue = style(backgroundColor.blue)
-    val innerOrange = style(backgroundColor.orange)
+    val lightRed = style(backgroundColor(c"#cc0000"))
+    val lightGreen = style(backgroundColor(c"#73d216"))
+    val lightBlue = style(backgroundColor(c"#2b62b5"))
+    val lightOrange = style(backgroundColor(c"#f57900"))
 
     val innerBox = style(
       display.flex,
@@ -52,7 +53,8 @@ object ReqBox {
       fontSize(11.pt),
       width(45.%%),
       height(45.%%),
-      cursor.pointer
+      cursor.pointer,
+      border(1.px, solid, white)
     )
   }
 
@@ -155,32 +157,32 @@ object ReqBox {
         <.pre(
           Style.headBox,
           <.div(
-            Style.outerBox + Style.outerRed,
-            <.div(Style.innerBox + Style.innerRed, "Stakeholders", onClicks(0)),
-            <.div(Style.innerBox + Style.innerGreen, "Product", onClicks(1)),
-            <.div(Style.innerBox + Style.innerBlue, "Systems", onClicks(2)),
-            <.div(Style.innerBox + Style.innerOrange, "Interfaces", onClicks(3))
+            Style.outerBox + Style.darkRed,
+            <.div(Style.innerBox + Style.lightRed, "Stakeholders", onClicks(0)),
+            <.div(Style.innerBox + Style.darkGreen, "Product", onClicks(1)),
+            <.div(Style.innerBox + Style.darkBlue, "Systems", onClicks(2)),
+            <.div(Style.innerBox + Style.darkOrange, "Interfaces", onClicks(3))
           ),
           <.div(
-            Style.outerBox + Style.outerGreen,
-            <.div(Style.innerBox + Style.innerRed, "Goals", onClicks(4)),
-            <.div(Style.innerBox + Style.innerGreen, "Priorities", onClicks(5)),
-            <.div(Style.innerBox + Style.innerBlue, "Risks", onClicks(6)),
-            <.div(Style.innerBox + Style.innerOrange, "Commitments", onClicks(7))
+            Style.outerBox + Style.darkGreen,
+            <.div(Style.innerBox + Style.darkRed, "Goals", onClicks(4)),
+            <.div(Style.innerBox + Style.lightGreen, "Priorities", onClicks(5)),
+            <.div(Style.innerBox + Style.darkBlue, "Risks", onClicks(6)),
+            <.div(Style.innerBox + Style.darkOrange, "Commitments", onClicks(7))
           ),
           <.div(
-            Style.outerBox + Style.outerBlue,
-            <.div(Style.innerBox + Style.innerRed, "Functions", onClicks(8)),
-            <.div(Style.innerBox + Style.innerGreen, "Data", onClicks(9)),
-            <.div(Style.innerBox + Style.innerBlue, "Qualities", onClicks(10)),
-            <.div(Style.innerBox + Style.innerOrange, "Tests", onClicks(11))
+            Style.outerBox + Style.darkBlue,
+            <.div(Style.innerBox + Style.darkRed, "Functions", onClicks(8)),
+            <.div(Style.innerBox + Style.darkGreen, "Data", onClicks(9)),
+            <.div(Style.innerBox + Style.lightBlue, "Qualities", onClicks(10)),
+            <.div(Style.innerBox + Style.darkOrange, "Tests", onClicks(11))
           ),
           <.div(
-            Style.outerBox + Style.outerOrange,
-            <.div(Style.innerBox + Style.innerRed, "Road-map", onClicks(12)),
-            <.div(Style.innerBox + Style.innerGreen, "Resources", onClicks(13)),
-            <.div(Style.innerBox + Style.innerBlue, "Constraints", onClicks(14)),
-            <.div(Style.innerBox + Style.innerOrange, "Release plan", onClicks(15))
+            Style.outerBox + Style.darkOrange,
+            <.div(Style.innerBox + Style.darkRed, "Road-map", onClicks(12)),
+            <.div(Style.innerBox + Style.darkGreen, "Resources", onClicks(13)),
+            <.div(Style.innerBox + Style.darkBlue, "Constraints", onClicks(14)),
+            <.div(Style.innerBox + Style.lightOrange, "Release plan", onClicks(15))
           )
         )
       }))
