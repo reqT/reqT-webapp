@@ -31,7 +31,7 @@ object TemplateSelect {
     ^.zIndex := "9998"
   )
 
-  val templates = Seq("Goal-Design scale", "Why + Spec + Example", "Context Diagram I", "Context Diagram II",
+  val templates = Seq("ReqBox plain", "Goal-Design scale", "Why + Spec + Example", "Context Diagram I", "Context Diagram II",
     "Data dictionary", "State transition model", "Model with section", "Prioritization $100 method", "Prioritization Ordinal Ranking",
     "Hotel Reception", "Quper", "Quality Requirements", "Variability Modelling", "Release Planning I", "Release Planning II")
 
@@ -93,6 +93,7 @@ object TemplateSelect {
       val template = e.target.textContent.toString
 
       val T = template match {
+        case "ReqBox plain" => m0
         case "Goal-Design scale" => m1
         case "Why + Spec + Example" => m2
         case "Context Diagram I" => m3
@@ -121,6 +122,32 @@ object TemplateSelect {
 
   def apply(openNewModelModal: (String, Tree) => Callback) = component.set()(Props(openNewModelModal))
 
+  val m0 = Vector(Entity("Title", "ReqBox with webeditor compatability"),
+    Relation(Entity("Section", "context"), RelationType("has"), Tree(Seq(
+      Relation(Entity("Section", "stakeholders"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "product"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "systems"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "interfaces"), RelationType("has"), Tree(Seq()))
+    ))),
+    Relation(Entity("Section", "intentions"), RelationType("has"), Tree(Seq(
+      Relation(Entity("Section", "goals"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "priorities"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "risks"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "commitments"), RelationType("has"), Tree(Seq()))
+    ))),
+    Relation(Entity("Section", "requirements"), RelationType("has"), Tree(Seq(
+      Relation(Entity("Section", "functions"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "data"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "qualities"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "tests"), RelationType("has"), Tree(Seq()))
+    ))),
+    Relation(Entity("Section", "delivery"), RelationType("has"), Tree(Seq(
+      Relation(Entity("Section", "roadmap"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "resources"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "constraints"), RelationType("has"), Tree(Seq())),
+      Relation(Entity("Section", "releasePlan"), RelationType("has"), Tree(Seq()))
+    )))
+  )
 
   val m1 = Vector(Relation(Entity("Goal", "accuracy"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Our pre-calculations shall hit within 5%")))), Relation(Entity("Feature", "quotation"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Product shall support cost recording and quotation with experience data")))), Relation(Entity("Function", "experienceData"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "Product shall have recording and retrieval functions for experience data")))), Relation(Entity("Design", "screenX"), RelationType("has"), Tree(Seq(StringAttribute("Spec", "System shall have screen pictures as shown in Fig. X")))))
 
