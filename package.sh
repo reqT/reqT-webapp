@@ -1,20 +1,22 @@
 #!/bin/bash
 
+package_name="reqT"
+
 
 ### PWD: root/
 
-rm -f ./package.zip
-rm -rf ./package
+rm -f ./$package_name.zip
+rm -rf ./$package_name
 
 sbt dist
 
-mkdir package
+mkdir $package_name
 
-cp ./server/target/universal/server-0.1-SNAPSHOT.zip package/
+cp ./server/target/universal/server-0.1-SNAPSHOT.zip $package_name/
 
-cd package
+cd $package_name
 
-### PWD: root/package
+### PWD: root/package_name
 
 echo "#!/bin/bash
 rm -f RUNNING_PID
@@ -38,6 +40,6 @@ cd ..
 
 ### PWD: root/
 
-zip -r -9 package.zip package
+zip -r -9 $package_name.zip $package_name
 
-rm -rf package
+rm -rf $package_name
