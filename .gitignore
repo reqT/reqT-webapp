@@ -1,5 +1,7 @@
 package/
 package.zip
+reqT/
+reqT.zip
 
 logs
 project/project
@@ -124,3 +126,7 @@ project/plugins/project/
 
 # End of https://www.gitignore.io/api/playframework,scala,intellij+iml
 
+# ctags
+.lib-src
+tags
+ctags
