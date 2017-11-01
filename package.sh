@@ -14,15 +14,11 @@ mkdir $package_name
 
 cp ./server/target/universal/server-0.1-SNAPSHOT.zip $package_name/
 
+cp ./package-scripts/* $package_name/
+
 cd $package_name
 
 ### PWD: root/package_name
-
-echo "#!/bin/bash
-rm -f RUNNING_PID
-./bin/server" > start.sh
-
-chmod +x start.sh
 
 unzip server-0.1-SNAPSHOT.zip
 
