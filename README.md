@@ -2,32 +2,33 @@
 
 In the Course ETS170 Requirement Engineering at Lund University, the Requirement Engineering tool reqT has been used to model requirements but it ahs been identified that the tool in its current form is difficult to use for students with limited programming experience. To solve this problem, this application has been developed in order to appeal to both developers and non-developers. The application has primarily been built using Scala.js and React. 
 
-# Developer guide
-In order to run this application one is required to download SBT and JVM 8. 
+# How to install and run
+
+1. Download the latest release at https://github.com/reqT/reqT-webapp/releases
+2. Unzip the `reqT.zip`
+3. Make the `reqT` folder your working directory
+4. _On Windows_ you may use `reqT.bat` to start the REPL and `start.bat` to start the webapp (by double-clicking the files in the File Explorer)
+5. _On Linux or Mac OS X_ you may start the REPL using `java -jar reqT.jar` and the webapp using `./start.sh`
+
+# How to build
 
 1. `git clone https://github.com/reqT/reqT-webapp`
 2. `cd reqT-webapp`
-3. _(Optional):_ Edit hostname and port in `Config.scala` located here: `shared/src/main/scala/shared/`
-4. `sbt run` - auto compiles if webpage is visited & files diff
-5. When the application has started, open a web browser and navigate to [hostname:port](hostname:port)
+3. `sbt run` - this will build continously, so you may edit files while the webapp is running and then refresh your browser window
 
-The webserver and application may be packaged to a more user-friendly zip format:
+# How to contribute
 
-1. Package the webserver and application using:
+Substitute `{string}` with your information.
 
-	`./scripts/unsafe_package.sh`
+1. `git clone https://github.com/reqT/reqT-webapp`
+2. `cd reqT-webapp`
+3. `git checkout -b {myFeatureOrFix}`
+4. Fork the repository on github, you will get your own repo at `https://github.com/{myUsername}/reqT-webapp`
+5. Add your remote repo to git `git remote add myFork https://github.com/{myUsername}/reqT-webapp`
+6. Write your changes and commit them
+7. Push them to your fork `git push myFork {myFeatureOrFix}`
+8. Create a pull-request against the appropriate branch of the reqT-webapp repo (most of the time this will be master).
 
-2. This will produce a `package.zip` which may be placed in a user environment
-
-3. This package may then be run by the user:
-
-	1. `unzip package.zip`
-	
-	2. `cd package`
-
-	3. `./start.sh`
-
-	4. Defaults to: [localhost:9000](localhost:9000)
 
 # User guide
 ## Add or Move Elements
@@ -116,32 +117,9 @@ The <b>restart reqT</b>-button will restart the connection to the server if it d
 
 ***
 
-# Start the server
-
-To start the server you will need two passwords, to ssh into the virtual machine and the sudo password.
-
-<ol>
-  <li>To login in to the virtual machine write the following in a terminal. </li>
-
-```
-ssh -X reqtuser@vm45.cs.lth.se 
-```
-
-<li>Then write the following in the terminal. </li>
-
-```
-cd Desktop/reqT.js
-su
-sbt run
-```
-<li>The server is now running and you can start reqT.js at the URL <a href="http://vm45.cs.lth.se:9000/">http://vm45.cs.lth.se:9000/</a> </li> 
-
-To change the host location, the config class has to be updated accordingly.
-
-
 ## Run the application
 <ol>
-  <li> Open a web browser (Preferably Google Chrome).</li>
+  <li> Open a web browser (currently only supported on Google Chrome).</li>
   <li> Open <a href="http://vm45.cs.lth.se:9000/">http://vm45.cs.lth.se:9000/</a> </li> 
 </ol>
 
