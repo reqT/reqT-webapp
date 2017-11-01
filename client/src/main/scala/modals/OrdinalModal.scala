@@ -9,7 +9,7 @@ import shared._
 object OrdinalModal {
 
   def modalStyle = Seq(
-    ^.width := "400px",
+    ^.width := "auto",
     ^.padding := "5px",
     ^.position := "absolute",
     ^.border := "1px solid #CCC",
@@ -62,6 +62,13 @@ object OrdinalModal {
     ^.className := "form-control",
     ^.width := "60%",
     ^.borderRadius := "5px"
+  )
+
+  def idStyle = Seq(
+    ^.flex := "2 0 0",
+    ^.className := "btn-group",
+    ^.marginLeft := "10px",
+    ^.marginRight := "10px"
   )
 
   case class State(rankings: Seq[Int] = Seq(), pairs: Seq[Seq[Entity]] = Seq(), deviation: Int = 0, typeToRank: String = "", readyForRanking: Boolean = false)
@@ -165,10 +172,21 @@ object OrdinalModal {
     val pairSelect = ReactComponentB[pairProps]("pairSelect")
       .render($ =>
         <.div(
-          ^.className := "btn-group btn-group-justified",
-          entityButton($.props.copy(nbr = 0)),
-          entityButton($.props.copy(nbr = 1)),
-          entityButton($.props.copy(nbr = 2))
+          ^.display := "flex",
+          ^.flexDirection := "row",
+          ^.flexWrap := "no-wrap",
+          ^.className := "btn-group-justified",
+          <.p(idStyle, $.props.pair.head.id),
+          <.div(
+            ^.flex := "1 0 0",
+            ^.display := "flex",
+            ^.flexDirection := "row",
+            ^.flexWrap := "no-wrap",
+            entityButton($.props.copy(nbr = 0)),
+            entityButton($.props.copy(nbr = 1)),
+            entityButton($.props.copy(nbr = 2))
+          ),
+          <.p(idStyle, $.props.pair.last.id)
         )
       )
       .build
@@ -177,8 +195,8 @@ object OrdinalModal {
     def entityButton = ReactComponentB[pairProps]("entityButton")
       .render($ =>
         <.div(
-          ^.className := "btn-group",
           <.button(
+            ^.width := "60px",
             ^.backgroundColor := {
               if ($.props.state.rankings($.props.index) == $.props.nbr) "#03EE7D" else "white"
             },
@@ -186,9 +204,9 @@ object OrdinalModal {
             ^.className := "btn btn-default",
             ^.onClick --> setRanking($.props.nbr, $.props.index), {
               $.props.nbr match {
-                case 0 => $.props.pair.head.id
-                case 1 => "Equal"
-                case 2 => $.props.pair.last.id
+                case 0 => "<"
+                case 1 => "="
+                case 2 => ">"
               }
             }
           )
